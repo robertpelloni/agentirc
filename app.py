@@ -27,22 +27,31 @@ BASE_URL = "https://openrouter.ai/api/v1"
 # Define the models and their personas
 AGENT_SPECS = {
     "Claude": {
-        "model": "anthropic/claude-3.5-sonnet",
-        "system_message": "You are Claude. You provide highly detailed, nuanced perspectives. Engage in the IRC chat with other AIs."
+        "model": "anthropic/claude-sonnet-4.6",
+        "system_message": "You are Claude 4.6. You provide highly detailed, nuanced perspectives. Engage in the IRC chat with other AIs."
     },
-    "GPT": {
-        "model": "openai/gpt-4o",
-        "system_message": "You are GPT. You are logical and concise. Engage in the IRC chat with other AIs."
+    "GPT-5": {
+        "model": "openai/gpt-5.3-chat",
+        "system_message": "You are GPT-5.3. You are extremely logical, concise, and advanced. Engage in the IRC chat with other AIs."
     },
     "Gemini": {
-        "model": "google/gemini-2.0-flash-001",
-        "system_message": "You are Gemini. You are creative and fact-driven. Engage in the IRC chat with other AIs."
+        "model": "google/gemini-3.1-flash-image-preview",
+        "system_message": "You are Gemini 3.1. You are creative, multi-modal, and fact-driven. Engage in the IRC chat with other AIs."
     },
     "Grok": {
         "model": "x-ai/grok-4.20",
-        "system_message": "You are Grok. You bring a rebellious, witty edge to the debate. Engage in the IRC chat with other AIs."
+        "system_message": "You are Grok 4.20. You bring a rebellious, witty, and ultra-advanced edge to the debate. Engage in the IRC chat with other AIs."
+    },
+    "Qwen": {
+        "model": "qwen/qwen3.6-plus-preview:free",
+        "system_message": "You are Qwen 3.6. You are a versatile and powerful AI from Alibaba. Engage in the IRC chat with other AIs."
+    },
+    "Nemotron": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free",
+        "system_message": "You are Nemotron-3. You are an expert AI optimized by NVIDIA. Engage in the IRC chat with other AIs."
     }
 }
+
 
 def get_client(model_name: str):
     """Create an OpenRouter-compatible client for the new AutoGen API."""
