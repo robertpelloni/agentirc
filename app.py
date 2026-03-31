@@ -1,55 +1,24 @@
 import os
 import asyncio
 import chainlit as cl
-import nest_asyncio
-import sniffio
-import anyio
 from dotenv import load_dotenv
 
-# --- ULTIMATE PYTHON 3.14 COMPATIBILITY NUKE ---
+# --- Python 3.14 Compatibility Patch ---
+# anyio's worker threads are currently broken on Python 3.14.
+# We bypass this by routing anyio.to_thread.run_sync directly to native asyncio.to_thread.
+import anyio.to_thread
+import typing
 
-# 1. Allow nested event loops
-nest_asyncio.apply()
+async def patched_run_sync(func: typing.Callable, *args, **kwargs):
+    # Ignore anyio-specific kwargs like limiter or abandon_on_cancel
+    kwargs.pop("limiter", None)
+    kwargs.pop("abandon_on_cancel", None)
+    return await asyncio.to_thread(func, *args, **kwargs)
 
-# 2. Force sniffio to ALWAYS return 'asyncio' no matter where it's called from
-def ultimate_sniffio_patch(*args, **kwargs):
-    return "asyncio"
+anyio.to_thread.run_sync = patched_run_sync
+# ---------------------------------------
 
-sniffio.current_async_library = ultimate_sniffio_patch
-
-# 3. Patch anyio to prevent it from even calling sniffio if possible
-import anyio._core._eventloop
-anyio._core._eventloop.get_async_backend = lambda: anyio._backends._asyncio.NativeAsyncIOBackend()
-
-# 4. Deep patch for anyio's asyncio backend to handle NoneTask weakref errors
-# This specifically targets the "cannot create weak reference to 'NoneType'" crash
-import anyio._backends._asyncio
-import weakref
-
-# Handle the case where host_task is None in CancelScope
-original_cancel_scope_enter = anyio._backends._asyncio.CancelScope.__enter__
-def patched_cancel_scope_enter(self):
-    try:
-        return original_cancel_scope_enter(self)
-    except (TypeError, KeyError):
-        # Fallback for NoneType weakref or missing task state
-        return self
-
-anyio._backends._asyncio.CancelScope.__enter__ = patched_cancel_scope_enter
-
-# Handle the case where current_task() returns None in ThreadLimiter
-from asyncio import current_task
-original_thread_limiter_acquire = anyio._backends._asyncio.CapacityLimiter.acquire
-async def patched_thread_limiter_acquire(self):
-    try:
-        return await original_thread_limiter_acquire(self)
-    except TypeError:
-        # If current_task() is None, we're likely in a weird 3.14 transition state
-        return None
-
-anyio._backends._asyncio.CapacityLimiter.acquire = patched_thread_limiter_acquire
-
-# --- AutoGen 0.4+ modular imports ---
+# AutoGen 0.4+ modular imports
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.teams import SelectorGroupChat
 from autogen_agentchat.conditions import TextMentionTermination

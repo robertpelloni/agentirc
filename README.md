@@ -28,7 +28,7 @@ A multi-agent "IRC-style" chat room powered by **Microsoft AutoGen** and **Chain
    ```
 4. **Run:**
    ```bash
-   chainlit run app.py -w
+   python run.py
    ```
 
 ## Personas
