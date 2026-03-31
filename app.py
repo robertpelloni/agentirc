@@ -37,7 +37,7 @@ AGENT_SPECS = {
         "model": "anthropic/claude-sonnet-4.6",
         "system_message": "You are Claude 4.6. You provide highly detailed, nuanced perspectives. Engage in the IRC chat with other AIs."
     },
-    "GPT-5": {
+    "GPT_5": {
         "model": "openai/gpt-5.3-chat",
         "system_message": "You are GPT-5.3. You are extremely logical, concise, and advanced. Engage in the IRC chat with other AIs."
     },
@@ -70,6 +70,7 @@ def get_client(model_name: str):
             "vision": False,
             "function_calling": True,
             "json_output": True,
+            "structured_output": True,
             "family": "unknown"
         }
     )
