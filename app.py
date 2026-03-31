@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 nest_asyncio.apply()
 
 # Force sniffio to recognize asyncio (fixes detection issues on Python 3.14)
-sniffio.current_async_library_var.set("asyncio")
+sniffio.current_async_library_cvar.set("asyncio")
 
 # AutoGen 0.4+ modular imports
 from autogen_agentchat.agents import AssistantAgent
