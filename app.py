@@ -5,11 +5,19 @@ import nest_asyncio
 import sniffio
 from dotenv import load_dotenv
 
-# Allow nested event loops (crucial for some async environments)
+# Allow nested event loops
 nest_asyncio.apply()
 
-# Force sniffio to recognize asyncio (fixes detection issues on Python 3.14)
-sniffio.current_async_library_cvar.set("asyncio")
+# Global patch for sniffio to resolve detection issues on Python 3.14
+# This ensures anyio and starlette always recognize the asyncio backend.
+original_current_async_library = sniffio.current_async_library
+def patched_current_async_library():
+    try:
+        return original_current_async_library()
+    except sniffio.AsyncLibraryNotFoundError:
+        return "asyncio"
+
+sniffio.current_async_library = patched_current_async_library
 
 # AutoGen 0.4+ modular imports
 from autogen_agentchat.agents import AssistantAgent
