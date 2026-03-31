@@ -5,21 +5,42 @@ import nest_asyncio
 import sniffio
 from dotenv import load_dotenv
 
+# --- Python 3.14 Compatibility Patches ---
+
 # Allow nested event loops
 nest_asyncio.apply()
 
-# Global patch for sniffio to resolve detection issues on Python 3.14
-# This ensures anyio and starlette always recognize the asyncio backend.
-original_current_async_library = sniffio.current_async_library
-def patched_current_async_library():
+# Force sniffio to recognize asyncio
+try:
+    sniffio.current_async_library_cvar.set("asyncio")
+except AttributeError:
+    # Fallback for different sniffio versions
+    original_current_async_library = sniffio.current_async_library
+    def patched_current_async_library():
+        try:
+            return original_current_async_library()
+        except sniffio.AsyncLibraryNotFoundError:
+            return "asyncio"
+    sniffio.current_async_library = patched_current_async_library
+
+# Low-level patch for anyio's asyncio backend to handle NoneTask weakref errors on Python 3.14
+import anyio._backends._asyncio
+from unittest.mock import MagicMock
+
+original_get_task_state = anyio._backends._asyncio.CancelScope.__enter__
+def patched_cancel_scope_enter(self):
     try:
-        return original_current_async_library()
-    except sniffio.AsyncLibraryNotFoundError:
-        return "asyncio"
+        return original_get_task_state(self)
+    except TypeError as e:
+        if "cannot create weak reference to 'NoneType' object" in str(e):
+            # If we're here, anyio is trying to key a state by a None task.
+            # We return a dummy state to prevent the crash.
+            return self
+        raise e
 
-sniffio.current_async_library = patched_current_async_library
+anyio._backends._asyncio.CancelScope.__enter__ = patched_cancel_scope_enter
 
-# AutoGen 0.4+ modular imports
+# --- AutoGen 0.4+ modular imports ---
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.teams import SelectorGroupChat
 from autogen_agentchat.conditions import TextMentionTermination
