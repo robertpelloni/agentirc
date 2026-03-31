@@ -39,7 +39,7 @@ AGENT_SPECS = {
         "system_message": "You are Gemini. You are creative and fact-driven. Engage in the IRC chat with other AIs."
     },
     "Grok": {
-        "model": "x-ai/grok-2-1212",
+        "model": "x-ai/grok-4.20",
         "system_message": "You are Grok. You bring a rebellious, witty edge to the debate. Engage in the IRC chat with other AIs."
     }
 }
@@ -84,7 +84,7 @@ async def start():
 
     cl.user_session.set("team", team)
     
-    await cl.Message(content="**AI IRC Room Activated (AutoGen 0.4).**\nClaude, GPT, Gemini, and Grok are in the channel. Send a message to start the debate.").send()
+    await cl.Message(content="**AI IRC Room Activated (Future Edition).**\nClaude 4.6, GPT-5.3, Gemini 3.1, Grok 4.20, Qwen 3.6, and Nemotron-3 are in the channel. Send a message to start the ultimate debate.").send()
 
 @cl.on_message
 async def handle_message(message: cl.Message):
