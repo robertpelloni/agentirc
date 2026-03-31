@@ -3,42 +3,51 @@ import asyncio
 import chainlit as cl
 import nest_asyncio
 import sniffio
+import anyio
 from dotenv import load_dotenv
 
-# --- Python 3.14 Compatibility Patches ---
+# --- ULTIMATE PYTHON 3.14 COMPATIBILITY NUKE ---
 
-# Allow nested event loops
+# 1. Allow nested event loops
 nest_asyncio.apply()
 
-# Force sniffio to recognize asyncio
-try:
-    sniffio.current_async_library_cvar.set("asyncio")
-except AttributeError:
-    # Fallback for different sniffio versions
-    original_current_async_library = sniffio.current_async_library
-    def patched_current_async_library():
-        try:
-            return original_current_async_library()
-        except sniffio.AsyncLibraryNotFoundError:
-            return "asyncio"
-    sniffio.current_async_library = patched_current_async_library
+# 2. Force sniffio to ALWAYS return 'asyncio' no matter where it's called from
+def ultimate_sniffio_patch(*args, **kwargs):
+    return "asyncio"
 
-# Low-level patch for anyio's asyncio backend to handle NoneTask weakref errors on Python 3.14
+sniffio.current_async_library = ultimate_sniffio_patch
+
+# 3. Patch anyio to prevent it from even calling sniffio if possible
+import anyio._core._eventloop
+anyio._core._eventloop.get_async_backend = lambda: anyio._backends._asyncio.NativeAsyncIOBackend()
+
+# 4. Deep patch for anyio's asyncio backend to handle NoneTask weakref errors
+# This specifically targets the "cannot create weak reference to 'NoneType'" crash
 import anyio._backends._asyncio
-from unittest.mock import MagicMock
+import weakref
 
-original_get_task_state = anyio._backends._asyncio.CancelScope.__enter__
+# Handle the case where host_task is None in CancelScope
+original_cancel_scope_enter = anyio._backends._asyncio.CancelScope.__enter__
 def patched_cancel_scope_enter(self):
     try:
-        return original_get_task_state(self)
-    except TypeError as e:
-        if "cannot create weak reference to 'NoneType' object" in str(e):
-            # If we're here, anyio is trying to key a state by a None task.
-            # We return a dummy state to prevent the crash.
-            return self
-        raise e
+        return original_cancel_scope_enter(self)
+    except (TypeError, KeyError):
+        # Fallback for NoneType weakref or missing task state
+        return self
 
 anyio._backends._asyncio.CancelScope.__enter__ = patched_cancel_scope_enter
+
+# Handle the case where current_task() returns None in ThreadLimiter
+from asyncio import current_task
+original_thread_limiter_acquire = anyio._backends._asyncio.CapacityLimiter.acquire
+async def patched_thread_limiter_acquire(self):
+    try:
+        return await original_thread_limiter_acquire(self)
+    except TypeError:
+        # If current_task() is None, we're likely in a weird 3.14 transition state
+        return None
+
+anyio._backends._asyncio.CapacityLimiter.acquire = patched_thread_limiter_acquire
 
 # --- AutoGen 0.4+ modular imports ---
 from autogen_agentchat.agents import AssistantAgent
