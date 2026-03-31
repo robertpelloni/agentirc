@@ -1,7 +1,15 @@
 import os
 import asyncio
 import chainlit as cl
+import nest_asyncio
+import sniffio
 from dotenv import load_dotenv
+
+# Allow nested event loops (crucial for some async environments)
+nest_asyncio.apply()
+
+# Force sniffio to recognize asyncio (fixes detection issues on Python 3.14)
+sniffio.current_async_library_var.set("asyncio")
 
 # AutoGen 0.4+ modular imports
 from autogen_agentchat.agents import AssistantAgent
