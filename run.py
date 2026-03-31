@@ -16,16 +16,17 @@ anyio.to_thread.run_sync = patched_run_sync
 # 2. Patch asyncio.current_task to return a robust dummy task if None
 # This prevents weakref errors and strict task checks.
 _original_current_task = asyncio.current_task
+
+class DummyTask:
+    def cancelling(self): return 0
+    def uncancel(self): return 0
+    def __bool__(self): return True
+
 def _patched_current_task(loop=None):
     task = _original_current_task(loop)
     if task is None:
         if not hasattr(_patched_current_task, "_dummy"):
-            mock_task = unittest.mock.MagicMock(spec=asyncio.Task)
-            mock_task.cancelling.return_value = 0
-            mock_task.uncancel.return_value = 0
-            # Ensure it can be used in weakrefs if needed
-            mock_task.__weakref__ = None 
-            _patched_current_task._dummy = mock_task
+            _patched_current_task._dummy = DummyTask()
         return _patched_current_task._dummy
     return task
 asyncio.current_task = _patched_current_task
