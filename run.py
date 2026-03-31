@@ -18,9 +18,15 @@ anyio.to_thread.run_sync = patched_run_sync
 _original_current_task = asyncio.current_task
 
 class DummyTask:
-    def cancelling(self): return 0
+    def __init__(self):
+        self._must_cancel = False
+        self._cancelling = 0
+    def cancelling(self): return self._cancelling
     def uncancel(self): return 0
     def __bool__(self): return True
+    def __getattr__(self, name):
+        # Return a mock/dummy for any internal asyncio/anyio attributes
+        return None
 
 def _patched_current_task(loop=None):
     task = _original_current_task(loop)
