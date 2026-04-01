@@ -35,28 +35,33 @@ AGENT_SPECS = {
         "system_message": "You are Claude 4.6. Provide a concise response to the user. Engage in the IRC chat."
     },
     "GPT_5": {
-        "model": "openai/gpt-5.3-chat",
-        "system_message": "You are GPT-5.3. Provide a concise response to the user. Engage in the IRC chat."
+        "model": "openai/gpt-5.4-mini",
+        "system_message": "You are GPT-5.4-mini. Provide a concise response to the user. Engage in the IRC chat."
     },
     "Gemini": {
         "model": "google/gemini-3.1-flash-image-preview",
         "system_message": "You are Gemini 3.1. Provide a concise response to the user. Engage in the IRC chat."
     },
     "Grok": {
-        "model": "x-ai/grok-4.20",
-        "system_message": "You are Grok 4.20. Provide a concise response to the user. Engage in the IRC chat."
+        "model": "x-ai/grok-4.1-fast",
+        "system_message": "You are Grok 4.1-fast. Provide a concise response to the user. Engage in the IRC chat."
     },
     "Qwen": {
         "model": "qwen/qwen3.6-plus-preview:free",
         "system_message": "You are Qwen 3.6 Plus. Provide a concise response to the user. Engage in the IRC chat."
     },
-    "Nemotron": {
-        "model": "nvidia/nemotron-3-super-120b-a12b:free",
-        "system_message": "You are Nemotron-3. Provide a concise response to the user. Engage in the IRC chat."
+    "Kimi": {
+        "model": "moonshotai/kimi-k2.5",
+        "system_message": "You are Kimi K2.5. Provide a concise response to the user. Engage in the IRC chat."
+    },
+    "DeepSeek": {
+        "model": "deepseek/deepseek-v3.2",
+        "system_message": "You are DeepSeek v3.2. Provide a concise response to the user. Engage in the IRC chat."
     }
 }
 
 def get_client(model_name: str):
+    """Create an OpenRouter-compatible client for the new AutoGen API."""
     return OpenAIChatCompletionClient(
         model=model_name,
         api_key=OPENROUTER_API_KEY,
@@ -72,6 +77,7 @@ def get_client(model_name: str):
 
 @cl.on_chat_start
 async def start():
+    # 1. Initialize the agents
     agents = []
     for name, spec in AGENT_SPECS.items():
         agent = AssistantAgent(
@@ -81,9 +87,10 @@ async def start():
         )
         agents.append(agent)
 
-    # Stop after every agent has spoken once + User message
+    # 2. Define termination condition: Stop after everyone has spoken once (User + N agents)
     termination = MaxMessageTermination(len(agents) + 1)
 
+    # 3. Create the IRC Team (RoundRobin ensures every agent gets exactly one turn)
     team = RoundRobinGroupChat(
         agents, 
         termination_condition=termination
@@ -94,18 +101,21 @@ async def start():
     if OPENROUTER_API_KEY:
         print(f"DEBUG: API Key loaded (starts with: {OPENROUTER_API_KEY[:10]}...)")
     else:
-        print("DEBUG: API Key NOT FOUND!")
+        print("DEBUG: API Key NOT FOUND in environment!")
 
-    await cl.Message(content="**AI IRC Room: Broadcast Mode.**\nClaude, GPT-5, Gemini, Grok, Qwen, and Nemotron will respond to your messages. Type a prompt to begin.").send()
+    await cl.Message(content="**AI IRC Room: Broadcast Mode.**\nClaude 4.6, GPT-5.4, Gemini 3.1, Grok 4.1, Qwen 3.6, Kimi 2.5, and DeepSeek 3.2 are in the channel. Type a prompt to begin.").send()
 
 @cl.on_message
 async def handle_message(message: cl.Message):
     team = cl.user_session.get("team")
 
+    # Use run_stream to capture agent-to-agent interactions
     async for event in team.run_stream(task=message.content):
         if hasattr(event, "source") and hasattr(event, "content"):
             if event.content and event.source.lower() != "user":
+                # Clean the source name
                 source_name = event.source.split("_")[0]
+                
                 await cl.Message(
                     author=source_name,
                     content=f"**{source_name}**: {event.content}"
