@@ -4,8 +4,8 @@ import typing
 import unittest.mock
 from dotenv import load_dotenv
 
-# Load environment variables first
-load_dotenv()
+# Load environment variables first (with override to ensure local .env wins)
+load_dotenv(override=True)
 
 # --- ULTIMATE PYTHON 3.14 COMPATIBILITY PATCH ---
 

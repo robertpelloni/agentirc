@@ -25,7 +25,7 @@ from autogen_agentchat.conditions import TextMentionTermination
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.messages import AgentEvent, ChatMessage
 
-load_dotenv()
+load_dotenv(override=True)
 
 # --- Configuration ---
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
