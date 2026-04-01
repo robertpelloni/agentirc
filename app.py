@@ -1,6 +1,7 @@
 import os
 import asyncio
 import chainlit as cl
+from datetime import datetime
 from dotenv import load_dotenv
 
 # --- Python 3.14 Compatibility Patch ---
@@ -24,11 +25,40 @@ from autogen_agentchat.messages import AgentEvent, ChatMessage
 
 load_dotenv(override=True)
 
-# --- Configuration ---
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
-BASE_URL = "https://openrouter.ai/api/v1"
+# IRC Custom CSS for that 90s terminal feel
+IRC_CSS = """
+/* Force monospace font globally */
+* {
+    font-family: 'Courier New', Courier, monospace !important;
+}
 
-# Define the models and their personas
+/* Dark background */
+body {
+    background-color: #0c0c0c !important;
+    color: #00ff00 !important;
+}
+
+/* Adjust message containers to look more like a log */
+.step-container {
+    border-left: 2px solid #333 !important;
+    padding-left: 10px !important;
+    margin-bottom: 2px !important;
+}
+
+/* Style the author name */
+.author-name {
+    color: #ff00ff !important; /* Classic IRC Magenta */
+    font-weight: bold;
+}
+
+/* Remove avatars for a cleaner text-only look */
+.avatar {
+    display: none !important;
+}
+"""
+
+# --- Configuration ---
+# (Rest of specs remain the same...)
 AGENT_SPECS = {
     "Claude": {
         "model": "anthropic/claude-sonnet-4.6",
@@ -64,8 +94,8 @@ def get_client(model_name: str):
     """Create an OpenRouter-compatible client for the new AutoGen API."""
     return OpenAIChatCompletionClient(
         model=model_name,
-        api_key=OPENROUTER_API_KEY,
-        base_url=BASE_URL,
+        api_key=os.environ.get("OPENROUTER_API_KEY"),
+        base_url="https://openrouter.ai/api/v1",
         model_info={
             "vision": False,
             "function_calling": True,
@@ -77,6 +107,12 @@ def get_client(model_name: str):
 
 @cl.on_chat_start
 async def start():
+    # Set the IRC style
+    await cl.ChatSettings([]).send()
+    # Note: Chainlit might not support set_custom_css in all versions, 
+    # but we can try to inject it via Message or just rely on config.toml.
+    # For now, let's focus on message formatting.
+
     # 1. Initialize the agents
     agents = []
     for name, spec in AGENT_SPECS.items():
@@ -98,16 +134,24 @@ async def start():
 
     cl.user_session.set("team", team)
     
-    if OPENROUTER_API_KEY:
-        print(f"DEBUG: API Key loaded (starts with: {OPENROUTER_API_KEY[:10]}...)")
-    else:
-        print("DEBUG: API Key NOT FOUND in environment!")
-
-    await cl.Message(content="**AI IRC Room: Broadcast Mode.**\nClaude 4.6, GPT-5.4, Gemini 3.1, Grok 4.1, Qwen 3.6, Kimi 2.5, and DeepSeek 3.2 are in the channel. Type a prompt to begin.").send()
+    # Welcome banner
+    welcome_banner = """
+```
+*** Connected to #agentirc (AutoGen Network)
+*** Topic is 'The Future of Intelligence'
+*** Users: Claude, GPT_5, Gemini, Grok, Qwen, Kimi, DeepSeek
+```
+"""
+    await cl.Message(content=welcome_banner).send()
 
 @cl.on_message
 async def handle_message(message: cl.Message):
     team = cl.user_session.get("team")
+    
+    # Formatting user message like IRC
+    time_str = datetime.now().strftime("%H:%M:%S")
+    # Note: We don't resend the user message to Chainlit because it's already there, 
+    # but we can format it in the transcript.
 
     # Use run_stream to capture agent-to-agent interactions
     async for event in team.run_stream(task=message.content):
@@ -115,8 +159,12 @@ async def handle_message(message: cl.Message):
             if event.content and event.source.lower() != "user":
                 # Clean the source name
                 source_name = event.source.split("_")[0]
+                time_str = datetime.now().strftime("%H:%M:%S")
+                
+                # Full IRC format: [TIMESTAMP] <NICK> MESSAGE
+                irc_msg = f"[{time_str}] <{source_name}> {event.content}"
                 
                 await cl.Message(
                     author=source_name,
-                    content=f"**{source_name}**: {event.content}"
+                    content=irc_msg
                 ).send()
