@@ -1,7 +1,7 @@
 import sys
 import asyncio
 import typing
-import unittest.mock
+import anyio._backends._asyncio
 from dotenv import load_dotenv
 
 # Load environment variables first (with override to ensure local .env wins)
@@ -17,26 +17,27 @@ async def patched_run_sync(func: typing.Callable, *args, **kwargs):
     return await asyncio.to_thread(func, *args, **kwargs)
 anyio.to_thread.run_sync = patched_run_sync
 
-# 2. Patch asyncio.current_task to return unique dummy tasks if None
-# This prevents weakref errors and ensures each call has its own identity key for anyio.
-_original_current_task = asyncio.current_task
+# 2. Bypass strict CancelScope task identity checks in anyio
+# On Python 3.14, background networking tasks often lose their task identity,
+# causing anyio to crash when exiting a CancelScope.
+_original_cancel_exit = anyio._backends._asyncio.CancelScope.__exit__
 
-class DummyTask:
-    def __init__(self):
-        self._must_cancel = False
-        self._cancelling = 0
-    def cancelling(self): return self._cancelling
-    def uncancel(self): return 0
-    def __bool__(self): return True
-    def __getattr__(self, name): return None
+def _patched_cancel_exit(self, exc_type, exc_val, exc_tb):
+    try:
+        return _original_cancel_exit(self, exc_type, exc_val, exc_tb)
+    except RuntimeError as e:
+        if "Attempted to exit cancel scope in a different task" in str(e):
+            # Suppress this specific Python 3.14 transition error
+            # Ensure cancellation state is still cleaned up if needed
+            if hasattr(self, '_restart_cancellation_in_parent'):
+                try:
+                    self._restart_cancellation_in_parent()
+                except Exception:
+                    pass
+            return None
+        raise e
 
-def _patched_current_task(loop=None):
-    task = _original_current_task(loop)
-    if task is None:
-        # Return a fresh dummy task for unique identity
-        return DummyTask()
-    return task
-asyncio.current_task = _patched_current_task
+anyio._backends._asyncio.CancelScope.__exit__ = _patched_cancel_exit
 
 # 3. Patch asyncio.timeouts.Timeout to handle missing tasks gracefully
 import asyncio.timeouts
@@ -60,7 +61,6 @@ async def _patched_timeout_exit(self, exc_type, exc_val, exc_tb):
     try:
         return await _original_timeout_exit(self, exc_type, exc_val, exc_tb)
     except (AssertionError, RuntimeError):
-        # Python 3.14 state machine might be in a weird state
         return None
 
 asyncio.timeouts.Timeout.__aenter__ = _patched_timeout_enter
@@ -72,6 +72,6 @@ asyncio.timeouts.Timeout.__aexit__ = _patched_timeout_exit
 from chainlit.cli import cli
 
 if __name__ == "__main__":
-    # Force the arguments for chainlit run app.py (Removed -w for stability)
+    # Force the arguments for chainlit run app.py
     sys.argv = ["chainlit", "run", "app.py"]
     sys.exit(cli())
