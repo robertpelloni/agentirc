@@ -115,10 +115,18 @@ async def handle_message(message: cl.Message):
     # Use run_stream to capture agent-to-agent interactions
     async for event in team.run_stream(task=message.content):
         # In AutoGen 0.4, we check for 'source' and 'content' to identify chat messages
-        # directly, avoiding isinstance checks on subscripted generics.
         if hasattr(event, "source") and hasattr(event, "content"):
             if event.content:
+                # Clean the source name (remove any internal AutoGen suffixes)
+                source_name = event.source.split("_")[0]
+                
+                # Skip echoing the user's own message in the stream
+                if source_name.lower() == "user":
+                    continue
+                
+                # Send the message with the agent name clearly displayed as the author
+                # and also prefixed in the content for that true IRC feel
                 await cl.Message(
-                    author=event.source,
-                    content=str(event.content)
+                    author=source_name,
+                    content=f"**{source_name}**: {event.content}"
                 ).send()
