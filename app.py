@@ -29,6 +29,11 @@ load_dotenv()
 
 # --- Configuration ---
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+if OPENROUTER_API_KEY:
+    print(f"DEBUG: API Key loaded (starts with: {OPENROUTER_API_KEY[:10]}...)")
+else:
+    print("DEBUG: API Key NOT FOUND in environment!")
+
 BASE_URL = "https://openrouter.ai/api/v1"
 
 # Define the models and their personas

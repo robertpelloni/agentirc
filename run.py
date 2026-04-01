@@ -2,6 +2,10 @@ import sys
 import asyncio
 import typing
 import unittest.mock
+from dotenv import load_dotenv
+
+# Load environment variables first
+load_dotenv()
 
 # --- ULTIMATE PYTHON 3.14 COMPATIBILITY PATCH ---
 
