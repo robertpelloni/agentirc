@@ -25,17 +25,30 @@ async def patched_run_sync(func: typing.Callable, *args, **kwargs):
 anyio.to_thread.run_sync = patched_run_sync
 
 # 3. Bypass strict CancelScope task identity checks in anyio
+_original_cancel_enter = anyio._backends._asyncio.CancelScope.__enter__
 _original_cancel_exit = anyio._backends._asyncio.CancelScope.__exit__
+
+def _patched_cancel_enter(self):
+    try:
+        return _original_cancel_enter(self)
+    except TypeError as e:
+        if "cannot create weak reference to 'NoneType' object" in str(e):
+            return self
+        raise e
+
 def _patched_cancel_exit(self, exc_type, exc_val, exc_tb):
     try:
         return _original_cancel_exit(self, exc_type, exc_val, exc_tb)
-    except RuntimeError as e:
-        if "Attempted to exit cancel scope in a different task" in str(e):
+    except (RuntimeError, TypeError) as e:
+        if "Attempted to exit cancel scope in a different task" in str(e) or \
+           "cannot create weak reference to 'NoneType' object" in str(e):
             if hasattr(self, '_restart_cancellation_in_parent'):
                 try: self._restart_cancellation_in_parent()
                 except: pass
             return None
         raise e
+
+anyio._backends._asyncio.CancelScope.__enter__ = _patched_cancel_enter
 anyio._backends._asyncio.CancelScope.__exit__ = _patched_cancel_exit
 
 # 4. Patch asyncio.timeouts.Timeout to handle missing tasks gracefully
