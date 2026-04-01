@@ -9,6 +9,7 @@ import anyio.to_thread
 import typing
 
 async def patched_run_sync(func: typing.Callable, *args, **kwargs):
+    # Ignore anyio-specific kwargs like limiter or abandon_on_cancel
     kwargs.pop("limiter", None)
     kwargs.pop("abandon_on_cancel", None)
     return await asyncio.to_thread(func, *args, **kwargs)
@@ -25,40 +26,11 @@ from autogen_agentchat.messages import AgentEvent, ChatMessage
 
 load_dotenv(override=True)
 
-# IRC Custom CSS for that 90s terminal feel
-IRC_CSS = """
-/* Force monospace font globally */
-* {
-    font-family: 'Courier New', Courier, monospace !important;
-}
-
-/* Dark background */
-body {
-    background-color: #0c0c0c !important;
-    color: #00ff00 !important;
-}
-
-/* Adjust message containers to look more like a log */
-.step-container {
-    border-left: 2px solid #333 !important;
-    padding-left: 10px !important;
-    margin-bottom: 2px !important;
-}
-
-/* Style the author name */
-.author-name {
-    color: #ff00ff !important; /* Classic IRC Magenta */
-    font-weight: bold;
-}
-
-/* Remove avatars for a cleaner text-only look */
-.avatar {
-    display: none !important;
-}
-"""
-
 # --- Configuration ---
-# (Rest of specs remain the same...)
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+BASE_URL = "https://openrouter.ai/api/v1"
+
+# Define the models and their personas
 AGENT_SPECS = {
     "Claude": {
         "model": "anthropic/claude-sonnet-4.6",
@@ -83,10 +55,6 @@ AGENT_SPECS = {
     "Kimi": {
         "model": "moonshotai/kimi-k2.5",
         "system_message": "You are Kimi K2.5. Provide a concise response to the user. Engage in the IRC chat."
-    },
-    "DeepSeek": {
-        "model": "deepseek/deepseek-v3.2",
-        "system_message": "You are DeepSeek v3.2. Provide a concise response to the user. Engage in the IRC chat."
     }
 }
 
@@ -94,8 +62,8 @@ def get_client(model_name: str):
     """Create an OpenRouter-compatible client for the new AutoGen API."""
     return OpenAIChatCompletionClient(
         model=model_name,
-        api_key=os.environ.get("OPENROUTER_API_KEY"),
-        base_url="https://openrouter.ai/api/v1",
+        api_key=OPENROUTER_API_KEY,
+        base_url=BASE_URL,
         model_info={
             "vision": False,
             "function_calling": True,
@@ -107,12 +75,6 @@ def get_client(model_name: str):
 
 @cl.on_chat_start
 async def start():
-    # Set the IRC style
-    await cl.ChatSettings([]).send()
-    # Note: Chainlit might not support set_custom_css in all versions, 
-    # but we can try to inject it via Message or just rely on config.toml.
-    # For now, let's focus on message formatting.
-
     # 1. Initialize the agents
     agents = []
     for name, spec in AGENT_SPECS.items():
@@ -136,22 +98,25 @@ async def start():
     
     # Welcome banner
     welcome_banner = """
-```
-*** Connected to #agentirc (AutoGen Network)
-*** Topic is 'The Future of Intelligence'
-*** Users: Claude, GPT_5, Gemini, Grok, Qwen, Kimi, DeepSeek
-```
+Robert "Bob" Pelloni
+Indie Auteur. Systems Architect. Relentless Builder.
+Robert Pelloni is a 42-year-old, Detroit-born solo developer and tech polymath who operates at an intersection of staggering ambition and grounded reality. As the creator of the legendary indie project "bob's game" and the founder of the Hyper Beam Japanese music game arcade, he has shipped more software and built more complex systems independently than most mid-sized studios.
+He is a man of profound self-awareness and undeniable persistence. Navigating the contrast between past internet infamy and his current reality clocking hours at Dollar Tree in Michigan, he refuses to disengage. Instead, fueled by 174 BPM drum and bass, psytrance, and a deep alignment with niche rhythm game subcultures, his late nights are dedicated to aggressive, large-scale system architecture.
+Currently, he is quietly constructing the "Omni-Workspace"—an aspirational, self-healing, federated monorepo designed to automate entire software ecosystems from a single prompt. Utilizing a highly specialized multi-model AI pipeline (the Gemini → Claude → GPT "Handoff Cycle"), he is actively architecting a sprawling, centralized hub of independent projects.
+This one-man software civilization includes:
+The "bob-" Pantheon: A suite of unified tools intended to replace his entire tech stack, including bobcoin, bobtrader, bobium, and bobtorrent.
+Active Platform Rebuilds: The modernization of fwber, a hyperlocal dating app originally launched in 2011.
+Custom Game Engines & Forks: Active development on rhythm game engines, alongside ambitious forks of classics like Mario 64, Mario Kart 64, and Marble Blast.
+Systems Infrastructure: Custom trading bots and file managers built to operate seamlessly within his unified architecture.
+Guided by a Christian framework and an unapologetic drive for absolute stack ownership, he takes his hits, acknowledges his flaws, and keeps hammering the keyboard.
+TL;DR: A persistent, self-driven creative genius building a massive, AI-powered software empire from his bedroom, one node at a time. Underestimate him at your peril.
+Welcome to a multi-model IRC chat. Participants are: Claude, GPT_5, Gemini, Grok, Qwen, Kimi
 """
     await cl.Message(content=welcome_banner).send()
 
 @cl.on_message
 async def handle_message(message: cl.Message):
     team = cl.user_session.get("team")
-    
-    # Formatting user message like IRC
-    time_str = datetime.now().strftime("%H:%M:%S")
-    # Note: We don't resend the user message to Chainlit because it's already there, 
-    # but we can format it in the transcript.
 
     # Use run_stream to capture agent-to-agent interactions
     async for event in team.run_stream(task=message.content):
