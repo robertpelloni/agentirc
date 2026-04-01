@@ -18,7 +18,7 @@ anyio.to_thread.run_sync = patched_run_sync
 # AutoGen 0.4+ modular imports
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.teams import RoundRobinGroupChat
-from autogen_agentchat.conditions import MaxMessagesTermination
+from autogen_agentchat.conditions import MaxMessageTermination
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.messages import AgentEvent, ChatMessage
 
@@ -82,7 +82,7 @@ async def start():
         agents.append(agent)
 
     # Stop after every agent has spoken once + User message
-    termination = MaxMessagesTermination(len(agents) + 1)
+    termination = MaxMessageTermination(len(agents) + 1)
 
     team = RoundRobinGroupChat(
         agents, 
