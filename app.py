@@ -114,13 +114,11 @@ async def handle_message(message: cl.Message):
 
     # Use run_stream to capture agent-to-agent interactions
     async for event in team.run_stream(task=message.content):
-        # ChatMessage represents an actual message sent by an agent
-        if isinstance(event, ChatMessage):
-            await cl.Message(
-                author=event.source,
-                content=event.content
-            ).send()
-        # AgentEvent can represent internal thoughts or tool calls (optional to show)
-        elif isinstance(event, AgentEvent):
-            # We could show "Thinking..." indicators here if desired
-            pass
+        # In AutoGen 0.4, we check for 'source' and 'content' to identify chat messages
+        # directly, avoiding isinstance checks on subscripted generics.
+        if hasattr(event, "source") and hasattr(event, "content"):
+            if event.content:
+                await cl.Message(
+                    author=event.source,
+                    content=str(event.content)
+                ).send()
