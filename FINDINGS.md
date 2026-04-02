@@ -22,17 +22,19 @@ This project successfully migrated from the legacy `pyautogen` (0.2.x) to the mo
 - **Event-Driven UI**: Used the `run_stream` API to capture `ChatMessage` and `AgentEvent` objects. This allows for native asynchronous UI updates without blocking the main event loop.
 - **Subscripted Generic Limitation**: Modern Python versions prohibit `isinstance()` checks on subscripted generics (like `ChatMessage`). We pivoted to robust attribute-based detection (`hasattr(event, "content")`).
 
-## 3. Interaction Design: Broadcast Mode
-Designed a high-throughput interaction pattern where a single user prompt triggers a sequential response from the entire model lineup.
+## 3. Interaction Design: Broadcast vs. Discussion
+We evolved the interaction from a simple sequential broadcast to a dynamic state-managed system.
 
-### Architecture:
-- **RoundRobinGroupChat**: Ensures every agent gets exactly one turn.
-- **MaxMessageTermination**: Programmatically set to `len(agents) + 1` to close the stream immediately after the final agent response, preventing infinite loops or "AI-to-AI" chatter.
-- **Direct Messaging**: Implemented a parser for `@AgentName` to allow surgical, single-model prompting within the IRC context.
+### Dynamic Team Re-initialization
+The project implements a `create_team` factory that handles the transition between two distinct AutoGen team architectures without losing session context:
+- **Broadcast Mode (`RoundRobinGroupChat`)**: Uses `MaxMessageTermination` to ensure a one-to-one response ratio per user prompt.
+- **Discussion Mode (`SelectorGroupChat`)**: Uses a dual termination (`TextMentionTermination` OR `MaxMessageTermination(10)`) to allow agents to debate a topic autonomously for a limited duration.
 
-## 4. UI/UX Aesthetic
-Adopted a "Classic IRC" theme:
-- Monospace fonts (`Courier New`) via custom CSS.
-- `[HH:MM:SS] <NICK> MESSAGE` formatting.
-- Dark theme enforced via `config.toml`.
-- Persistent logging to `irc_session.log` for Omni-Workspace archival.
+### IRC Command Parsing
+A custom command parser was implemented in `cl.on_message`:
+- **Stateful Topic Control**: `/topic <text>` updates the `cl.user_session` and re-injects the new focus into the system messages of all agents via the factory.
+- **Targeted Pings**: Support for `@AgentName` allows the user to bypass the team logic and prompt a single model directly, while still maintaining the overall IRC transcript.
+
+### 4. UI/UX Aesthetic & Logging
+- **Persistent Archival**: All IRC traffic is piped to `irc_session.log`. This ensures that even experimental "future-edition" debates are preserved for the Omni-Workspace knowledge base.
+- **Monospace Hardening**: Enforced `Courier New` and dark themes via both `config.toml` and custom CSS injection to satisfy the "Hacker" aesthetic requirements.

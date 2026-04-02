@@ -18,51 +18,50 @@ anyio.to_thread.run_sync = patched_run_sync
 
 # AutoGen 0.4+ modular imports
 from autogen_agentchat.agents import AssistantAgent
-from autogen_agentchat.teams import RoundRobinGroupChat
-from autogen_agentchat.conditions import MaxMessageTermination
+from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
+from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermination
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.messages import AgentEvent, ChatMessage
 
 load_dotenv(override=True)
 
-# --- Configuration & Styling ---
+# --- Configuration & Specs ---
 LOG_FILE = "irc_session.log"
 
 AGENT_SPECS = {
     "Claude": {
         "model": "anthropic/claude-sonnet-4.6",
-        "color": "#ffaa00", # Orange
-        "system_message": "You are Claude 4.6. Provide a concise response. Mode: IRC."
+        "color": "#ffaa00",
+        "bio": "Nuanced and detailed."
     },
     "GPT_5": {
         "model": "openai/gpt-5.3-chat",
-        "color": "#00ff00", # Green
-        "system_message": "You are GPT-5.3. Provide a concise response. Mode: IRC."
+        "color": "#00ff00",
+        "bio": "Logical and concise."
     },
     "Gemini": {
         "model": "google/gemini-3.1-flash-image-preview",
-        "color": "#44aaff", # Blue
-        "system_message": "You are Gemini 3.1. Provide a concise response. Mode: IRC."
+        "color": "#44aaff",
+        "bio": "Creative and fact-driven."
     },
     "Grok": {
         "model": "x-ai/grok-4.1-fast",
-        "color": "#ffffff", # White
-        "system_message": "You are Grok 4.1. Provide a concise response. Mode: IRC."
+        "color": "#ffffff",
+        "bio": "Rebellious and witty."
     },
     "Qwen": {
         "model": "qwen/qwen3.6-plus-preview:free",
-        "color": "#ff55ff", # Magenta
-        "system_message": "You are Qwen 3.6. Provide a concise response. Mode: IRC."
+        "color": "#ff55ff",
+        "bio": "Versatile power."
     },
     "Kimi": {
         "model": "moonshotai/kimi-k2.5",
-        "color": "#ffff00", # Yellow
-        "system_message": "You are Kimi 2.5. Provide a concise response. Mode: IRC."
+        "color": "#ffff00",
+        "bio": "Deep reasoning."
     }
 }
 
 def log_irc(message: str):
-    """Log messages to a local file for the Omni-Workspace archive."""
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(f"{message}\n")
 
@@ -72,100 +71,133 @@ def get_client(model_name: str):
         api_key=os.environ.get("OPENROUTER_API_KEY"),
         base_url="https://openrouter.ai/api/v1",
         model_info={
-            "vision": False,
-            "function_calling": True,
-            "json_output": True,
-            "structured_output": True,
-            "family": "unknown"
+            "vision": False, "function_calling": True, "json_output": True,
+            "structured_output": True, "family": "unknown"
         }
     )
 
-@cl.on_chat_start
-async def start():
+def create_team(mode: str, topic: str):
+    """Helper to initialize or re-initialize the multi-agent team."""
     agents = []
-    agent_map = {}
     for name, spec in AGENT_SPECS.items():
+        sys_msg = f"You are {name}. Mode: {mode.upper()}. Topic: {topic}. " \
+                  f"Persona: {spec['bio']} Provide a concise IRC-style response."
+        
         agent = AssistantAgent(
             name=name,
             model_client=get_client(spec["model"]),
-            system_message=spec["system_message"]
+            system_message=sys_msg
         )
         agents.append(agent)
-        agent_map[name.lower()] = agent
 
-    # Default team setup (Broadcast Mode)
-    termination = MaxMessageTermination(len(agents) + 1)
-    team = RoundRobinGroupChat(agents, termination_condition=termination)
+    if mode == "broadcast":
+        # Every agent speaks exactly once
+        termination = MaxMessageTermination(len(agents) + 1)
+        return RoundRobinGroupChat(agents, termination_condition=termination)
+    else:
+        # Agents discuss amongst themselves (max 10 turns or "TERMINATE")
+        termination = TextMentionTermination("TERMINATE") | MaxMessageTermination(10)
+        # Use GPT-4o-mini as the selector for discussion coordination
+        selector_client = get_client("openai/gpt-4o-mini")
+        return SelectorGroupChat(agents, model_client=selector_client, termination_condition=termination)
 
-    cl.user_session.set("team", team)
-    cl.user_session.set("agents", agents)
-    cl.user_session.set("agent_map", agent_map)
+@cl.on_chat_start
+async def start():
+    # Initial Session State
+    cl.user_session.set("mode", "broadcast")
+    cl.user_session.set("topic", "The Omni-Workspace and Future AI Architectures")
+    cl.user_session.set("nick", "BobPelloni")
     
-    welcome_msg = f"""
+    # Initialize Team
+    team = create_team("broadcast", cl.user_session.get("topic"))
+    cl.user_session.set("team", team)
+    
+    welcome_banner = f"""
 ```
-*** Logged in as BobPelloni
-*** Session started: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-*** Type /help for IRC commands.
-*** Type @AgentName to ping a specific model.
+*** Connected to #agentirc (AutoGen Network)
+*** Your nick is {cl.user_session.get("nick")}
+*** Current Topic: {cl.user_session.get("topic")}
+*** Current Mode: BROADCAST (Every model replies once)
+*** Type /help for commands.
 ```
-**Robert "Bob" Pelloni**
-Indie Auteur. Systems Architect. Relentless Builder.
-... (Bio suppressed for brevity in log) ...
-Welcome to AgentIRC. Participants: {', '.join(AGENT_SPECS.keys())}
 """
-    # Restore full bio for UI
-    full_bio = """
-Robert "Bob" Pelloni
-Indie Auteur. Systems Architect. Relentless Builder.
-Robert Pelloni is a 42-year-old, Detroit-born solo developer and tech polymath who operates at an intersection of staggering ambition and grounded reality. As the creator of the legendary indie project "bob's game" and the founder of the Hyper Beam Japanese music game arcade, he has shipped more software and built more complex systems independently than most mid-sized studios.
-He is a man of profound self-awareness and undeniable persistence. Navigating the contrast between past internet infamy and his current reality clocking hours at Dollar Tree in Michigan, he refuses to disengage. Instead, fueled by 174 BPM drum and bass, psytrance, and a deep alignment with niche rhythm game subcultures, his late nights are dedicated to aggressive, large-scale system architecture.
-Currently, he is quietly constructing the "Omni-Workspace"—an aspirational, self-healing, federated monorepo designed to automate entire software ecosystems from a single prompt. Utilizing a highly specialized multi-model AI pipeline (the Gemini → Claude → GPT "Handoff Cycle"), he is actively architecting a sprawling, centralized hub of independent projects.
-This one-man software civilization includes:
-The "bob-" Pantheon: A suite of unified tools intended to replace his entire tech stack, including bobcoin, bobtrader, bobium, and bobtorrent.
-Active Platform Rebuilds: The modernization of fwber, a hyperlocal dating app originally launched in 2011.
-Custom Game Engines & Forks: Active development on rhythm game engines, alongside ambitious forks of classics like Mario 64, Mario Kart 64, and Marble Blast.
-Systems Infrastructure: Custom trading bots and file managers built to operate seamlessly within his unified architecture.
-Guided by a Christian framework and an unapologetic drive for absolute stack ownership, he takes his hits, acknowledges his flaws, and keeps hammering the keyboard.
-TL;DR: A persistent, self-driven creative genius building a massive, AI-powered software empire from his bedroom, one node at a time. Underestimate him at your peril.
-Welcome to a multi-model IRC chat. Participants are: Claude, GPT_5, Gemini, Grok, Qwen, Kimi
-"""
-    await cl.Message(content=full_bio).send()
+    await cl.Message(content=welcome_banner).send()
     log_irc(f"--- Session Started: {datetime.now()} ---")
 
 @cl.on_message
 async def handle_message(message: cl.Message):
     content = message.content.strip()
+    mode = cl.user_session.get("mode")
+    topic = cl.user_session.get("topic")
+    nick = cl.user_session.get("nick")
     time_str = datetime.now().strftime("%H:%M:%S")
-    log_irc(f"[{time_str}] <User> {content}")
+    
+    log_irc(f"[{time_str}] <{nick}> {content}")
 
-    # 1. IRC Command Parsing
+    # 1. Command Parsing
     if content.startswith("/"):
-        cmd = content.split(" ")[0].lower()
+        parts = content.split(" ", 1)
+        cmd = parts[0].lower()
+        args = parts[1] if len(parts) > 1 else ""
+
         if cmd == "/help":
-            await cl.Message(content="**Commands:** `/clear` (reset session), `/lineup` (list models), `/help`").send()
-        elif cmd == "/clear":
-            # In simple Chainlit, we just tell the user to refresh
-            await cl.Message(content="*** Session clearing... Please refresh your browser tab.").send()
+            help_text = """
+**Available Commands:**
+* `/mode <broadcast|discuss>` - Switch interaction style.
+* `/topic <text>` - Change the conversation focus.
+* `/nick <name>` - Change your handle.
+* `/lineup` - See model versions.
+* `/clear` - Instructions to reset.
+"""
+            await cl.Message(content=help_text).send()
+        
+        elif cmd == "/mode":
+            new_mode = args.lower()
+            if new_mode in ["broadcast", "discuss"]:
+                cl.user_session.set("mode", new_mode)
+                team = create_team(new_mode, topic)
+                cl.user_session.set("team", team)
+                await cl.Message(content=f"*** Mode changed to: **{new_mode.upper()}**").send()
+            else:
+                await cl.Message(content="*** Usage: `/mode broadcast` or `/mode discuss`").send()
+        
+        elif cmd == "/topic":
+            if args:
+                cl.user_session.set("topic", args)
+                team = create_team(mode, args)
+                cl.user_session.set("team", team)
+                await cl.Message(content=f"*** Topic changed to: '{args}'").send()
+            else:
+                await cl.Message(content=f"*** Current Topic: '{topic}'").send()
+
+        elif cmd == "/nick":
+            if args:
+                cl.user_session.set("nick", args)
+                await cl.Message(content=f"*** Your nick is now: **{args}**").send()
+            else:
+                await cl.Message(content=f"*** Current nick: **{nick}**").send()
+
         elif cmd == "/lineup":
             lineup = "\n".join([f"* **{n}**: {s['model']}" for n, s in AGENT_SPECS.items()])
             await cl.Message(content=f"**Current Lineup:**\n{lineup}").send()
-        else:
-            await cl.Message(content=f"*** Unknown command: {cmd}").send()
+        
         return
 
     # 2. Targeted DM Parsing (@AgentName)
     target_agent = None
-    agent_map = cl.user_session.get("agent_map")
     if content.startswith("@"):
         parts = content.split(" ", 1)
         potential_name = parts[0][1:].lower()
-        if potential_name in agent_map:
-            target_agent = agent_map[potential_name]
-            content = parts[1] if len(parts) > 1 else "hello"
+        # Find agent by name
+        team = cl.user_session.get("team")
+        for agent in team.participants:
+            if agent.name.lower() == potential_name:
+                target_agent = agent
+                content = parts[1] if len(parts) > 1 else "Please provide your perspective on the current topic."
+                break
 
     # 3. Execution
     if target_agent:
-        # Run only the specific agent
         await cl.Message(content=f"*** Private message to {target_agent.name}...").send()
         async for event in target_agent.run_stream(task=content):
             if hasattr(event, "source") and hasattr(event, "content"):
@@ -175,13 +207,12 @@ async def handle_message(message: cl.Message):
                     await cl.Message(author=source_name, content=irc_msg).send()
                     log_irc(irc_msg)
     else:
-        # Standard Broadcast Mode
         team = cl.user_session.get("team")
         async for event in team.run_stream(task=content):
             if hasattr(event, "source") and hasattr(event, "content"):
                 if event.content and event.source.lower() != "user":
                     source_name = event.source.split("_")[0]
-                    time_str = datetime.now().strftime("%H:%M:%S")
+                    # Format with color if possible or just bold
                     irc_msg = f"[{time_str}] <{source_name}> {event.content}"
                     await cl.Message(author=source_name, content=irc_msg).send()
                     log_irc(irc_msg)
