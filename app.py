@@ -3,13 +3,22 @@ import asyncio
 import chainlit as cl
 from datetime import datetime
 from dotenv import load_dotenv
+import io
+import random
+
+# PDF generation imports
+from reportlab.lib.pagesizes import LETTER
+from reportlab.pdfgen import canvas
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_CENTER
 
 # --- Python 3.14 Compatibility Patch ---
 import anyio.to_thread
 import typing
 
 async def patched_run_sync(func: typing.Callable, *args, **kwargs):
-    # Ignore anyio-specific kwargs like limiter or abandon_on_cancel
     kwargs.pop("limiter", None)
     kwargs.pop("abandon_on_cancel", None)
     return await asyncio.to_thread(func, *args, **kwargs)
@@ -17,7 +26,6 @@ async def patched_run_sync(func: typing.Callable, *args, **kwargs):
 anyio.to_thread.run_sync = patched_run_sync
 # ---------------------------------------
 
-# AutoGen 0.4+ modular imports
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_agentchat.conditions import MaxMessageTermination
@@ -26,40 +34,37 @@ from autogen_agentchat.messages import AgentEvent, ChatMessage
 
 load_dotenv(override=True)
 
-# --- Configuration ---
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 BASE_URL = "https://openrouter.ai/api/v1"
 
-# Define the models and their personas
 AGENT_SPECS = {
     "Claude": {
         "model": "anthropic/claude-sonnet-4.6",
-        "system_message": "You are Claude 4.6. Provide a concise response to the user. Engage in the IRC chat."
+        "system_message": "You are Claude 4.6. Provide a concise response. Engage in the IRC chat. ALWAYS use Markdown."
     },
     "GPT_5": {
         "model": "openai/gpt-5.4-mini",
-        "system_message": "You are GPT-5.4-mini. Provide a concise response to the user. Engage in the IRC chat."
+        "system_message": "You are GPT-5.4-mini. Provide a concise response. Engage in the IRC chat. ALWAYS use Markdown."
     },
     "Gemini": {
         "model": "google/gemini-3.1-flash-image-preview",
-        "system_message": "You are Gemini 3.1. Provide a concise response to the user. Engage in the IRC chat."
+        "system_message": "You are Gemini 3.1. Provide a concise response. Engage in the IRC chat. ALWAYS use Markdown."
     },
     "Grok": {
         "model": "x-ai/grok-4.1-fast",
-        "system_message": "You are Grok 4.1-fast. Provide a concise response to the user. Engage in the IRC chat."
+        "system_message": "You are Grok 4.1-fast. Provide a concise response. Engage in the IRC chat. ALWAYS use Markdown."
     },
     "Qwen": {
         "model": "qwen/qwen3.6-plus-preview:free",
-        "system_message": "You are Qwen 3.6 Plus. Provide a concise response to the user. Engage in the IRC chat."
+        "system_message": "You are Qwen 3.6 Plus. Provide a concise response. Engage in the IRC chat. ALWAYS use Markdown."
     },
     "Kimi": {
         "model": "moonshotai/kimi-k2.5",
-        "system_message": "You are Kimi K2.5. Provide a concise response to the user. Engage in the IRC chat."
+        "system_message": "You are Kimi K2.5. Provide a concise response. Engage in the IRC chat. ALWAYS use Markdown."
     }
 }
 
 def get_client(model_name: str):
-    """Create an OpenRouter-compatible client for the new AutoGen API."""
     return OpenAIChatCompletionClient(
         model=model_name,
         api_key=OPENROUTER_API_KEY,
@@ -75,7 +80,8 @@ def get_client(model_name: str):
 
 @cl.on_chat_start
 async def start():
-    # 1. Initialize the agents
+    cl.user_session.set("chat_history", [])
+    
     agents = []
     for name, spec in AGENT_SPECS.items():
         agent = AssistantAgent(
@@ -85,51 +91,120 @@ async def start():
         )
         agents.append(agent)
 
-    # 2. Define termination condition: Stop after everyone has spoken once (User + N agents)
     termination = MaxMessageTermination(len(agents) + 1)
-
-    # 3. Create the IRC Team (RoundRobin ensures every agent gets exactly one turn)
-    team = RoundRobinGroupChat(
-        agents, 
-        termination_condition=termination
-    )
-
+    team = RoundRobinGroupChat(agents, termination_condition=termination)
     cl.user_session.set("team", team)
+    cl.user_session.set("agents", agents)
     
-    # Welcome banner
     welcome_banner = """
-Robert "Bob" Pelloni
-Indie Auteur. Systems Architect. Relentless Builder.
-Robert Pelloni is a 42-year-old, Detroit-born solo developer and tech polymath who operates at an intersection of staggering ambition and grounded reality. As the creator of the legendary indie project "bob's game" and the founder of the Hyper Beam Japanese music game arcade, he has shipped more software and built more complex systems independently than most mid-sized studios.
-He is a man of profound self-awareness and undeniable persistence. Navigating the contrast between past internet infamy and his current reality clocking hours at Dollar Tree in Michigan, he refuses to disengage. Instead, fueled by 174 BPM drum and bass, psytrance, and a deep alignment with niche rhythm game subcultures, his late nights are dedicated to aggressive, large-scale system architecture.
-Currently, he is quietly constructing the "Omni-Workspace"—an aspirational, self-healing, federated monorepo designed to automate entire software ecosystems from a single prompt. Utilizing a highly specialized multi-model AI pipeline (the Gemini → Claude → GPT "Handoff Cycle"), he is actively architecting a sprawling, centralized hub of independent projects.
-This one-man software civilization includes:
-The "bob-" Pantheon: A suite of unified tools intended to replace his entire tech stack, including bobcoin, bobtrader, bobium, and bobtorrent.
-Active Platform Rebuilds: The modernization of fwber, a hyperlocal dating app originally launched in 2011.
-Custom Game Engines & Forks: Active development on rhythm game engines, alongside ambitious forks of classics like Mario 64, Mario Kart 64, and Marble Blast.
-Systems Infrastructure: Custom trading bots and file managers built to operate seamlessly within his unified architecture.
-Guided by a Christian framework and an unapologetic drive for absolute stack ownership, he takes his hits, acknowledges his flaws, and keeps hammering the keyboard.
-TL;DR: A persistent, self-driven creative genius building a massive, AI-powered software empire from his bedroom, one node at a time. Underestimate him at your peril.
-Welcome to a multi-model IRC chat. Participants are: Claude, GPT_5, Gemini, Grok, Qwen, Kimi
+# Robert "Bob" Pelloni
+### Indie Auteur. Systems Architect. Relentless Builder.
+
+Welcome to the **AgentIRC** hub. This is a multi-model real-time interaction environment.
+
+---
+**Available Convenience Features:**
+*   **Export MD:** Get the full transcript in clean Markdown.
+*   **Export PDF:** Professional document export for your sessions.
+*   **Spontaneous Debate:** Trigger a random topic discussion among the agents.
 """
-    await cl.Message(content=welcome_banner).send()
+    actions = [
+        cl.Action(name="export_md", label="Export MD", value="md"),
+        cl.Action(name="export_pdf", label="Export PDF", value="pdf"),
+        cl.Action(name="trigger_debate", label="Spontaneous Debate", value="debate")
+    ]
+    await cl.Message(content=welcome_banner, actions=actions).send()
+
+@cl.action_callback("trigger_debate")
+async def on_trigger_debate(action):
+    topics = [
+        "The future of AGI and its impact on indie developers.",
+        "Is the simulation hypothesis scientifically testable?",
+        "The cultural significance of drum and bass in the 21st century.",
+        "Should AI have its own version of the Turing test for humans?",
+        "The architectural merits of monolithic vs. federated repos."
+    ]
+    topic = random.choice(topics)
+    await cl.Message(content=f"🚀 **Topic Selected:** *{topic}*").send()
+    
+    # We trigger a message as if the user asked
+    await handle_message(cl.Message(content=f"Discuss this topic: {topic}"))
+
+@cl.action_callback("export_md")
+async def on_export_md(action):
+    history = cl.user_session.get("chat_history")
+    if not history:
+        await cl.Message(content="No chat history to export yet!").send()
+        return
+
+    md_content = "# AgentIRC Chat Export\n\n"
+    for msg in history:
+        md_content += f"**[{msg['time']}]** `<{msg['author']}>` {msg['content']}\n\n"
+
+    file_bytes = md_content.encode("utf-8")
+    await cl.Message(content="Here is your Markdown export:").send()
+    await cl.File(content=file_bytes, name=f"AgentIRC_Export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md").send()
+
+@cl.action_callback("export_pdf")
+async def on_export_pdf(action):
+    history = cl.user_session.get("chat_history")
+    if not history:
+        await cl.Message(content="No chat history to export yet!").send()
+        return
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=LETTER)
+    styles = getSampleStyleSheet()
+    
+    # Custom style for agent names
+    agent_style = ParagraphStyle(
+        'AgentStyle',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=10,
+        spaceAfter=2
+    )
+    
+    story = []
+    story.append(Paragraph("AgentIRC Chat Export", styles['Title']))
+    story.append(Paragraph(f"Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Italic']))
+    story.append(Spacer(1, 0.2*inch))
+
+    for msg in history:
+        header = f"<b>[{msg['time']}]</b> &lt;{msg['author']}&gt;"
+        story.append(Paragraph(header, agent_style))
+        content = msg['content'].replace('\n', '<br/>')
+        story.append(Paragraph(content, styles['Normal']))
+        story.append(Spacer(1, 0.15*inch))
+
+    doc.build(story)
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+
+    await cl.Message(content="Here is your PDF export:").send()
+    await cl.File(content=pdf_bytes, name=f"AgentIRC_Export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf").send()
 
 @cl.on_message
 async def handle_message(message: cl.Message):
     team = cl.user_session.get("team")
+    history = cl.user_session.get("chat_history")
+    
+    time_str = datetime.now().strftime("%H:%M:%S")
+    history.append({"time": time_str, "author": "User", "content": message.content})
 
-    # Use run_stream to capture agent-to-agent interactions
     async for event in team.run_stream(task=message.content):
         if hasattr(event, "source") and hasattr(event, "content"):
             if event.content and event.source.lower() != "user":
-                # Clean the source name
                 source_name = event.source.split("_")[0]
                 time_str = datetime.now().strftime("%H:%M:%S")
                 
-                # Full IRC format: [TIMESTAMP] <NICK> MESSAGE
-                irc_msg = f"[{time_str}] <{source_name}> {event.content}"
+                history.append({"time": time_str, "author": source_name, "content": event.content})
+                
+                irc_msg = f"**[{time_str}]** `<{source_name}>` {event.content}"
                 
                 await cl.Message(
                     author=source_name,
                     content=irc_msg
                 ).send()
+    
+    cl.user_session.set("chat_history", history)
