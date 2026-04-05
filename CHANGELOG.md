@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0 - 2026-04-05
+- Added `/dashboard` and `/room-summary` for operator-level multi-room visibility.
+- Added interactive replay stepping with `/replay-open` and `/replay-step` using session-scoped replay cursor state.
+- Added replay-window helpers and dashboard/room-summary rendering helpers.
+- Made README, design, implementation, testing, findings, changelog, and handoff documentation reflect dashboard and replay-step behavior.
+- Maintained passing unit and compile validation (23 tests passing).
+
 ## 0.6.0 - 2026-04-05
 - Added multi-room session support with `/rooms`, `/room`, `/new-room`, and `/delete-room`.
 - Added room-local config/history management with room-aware reset and clear behavior.

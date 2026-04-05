@@ -1,52 +1,48 @@
 # Multi-Model Simulator Expansion
 
 ## Summary
-This implementation pass extends AgentIRC beyond cost tracking and replay comparison into a more complete multi-room simulation console.
+This implementation pass extends AgentIRC beyond multi-room state into a more complete operator workflow with interactive replay stepping and dashboard-style room summaries.
 
 ## Newly Added Capabilities
-### Multi-Room Session Support
-- `/rooms`
-- `/room [name]`
-- `/new-room <name>`
-- `/delete-room <name>`
-- room-local config and transcript history held in session state
-- room-aware status, prompts, and welcome banner
-- room-scoped `/clear` and `/reset`
+### Dashboard and Cross-Room Views
+- `/dashboard`
+- `/room-summary [count]`
+- aggregate room/status/cost overview across the current session
+- recent transcript previews across rooms
 
-### Room Runtime Behavior
-- active room switching rebuilds the current AutoGen team
-- room switching stops any active automation task before activation changes
-- room deletion automatically falls back to another available room when needed
+### Interactive Replay Stepping
+- `/replay-open [latest|previous|file.json] [count]`
+- `/replay-step [next|prev|start|end|index] [count]`
+- replay cursor state stored in session state
+- replay windows rendered from export artifacts without mutating live room history
 
 ## Implementation Notes
 ### `simulator_core.py`
 This module now additionally owns:
-- room-state construction helpers
-- room create/switch/delete helpers
-- room list rendering
-- room name support in status and autonomous prompts
+- dashboard rendering helpers
+- room summary rendering helpers
+- replay-window resolution helpers
+- replay-window rendering helpers
 
 ### `app.py`
 This module now additionally handles:
-- session room registry state
-- active room activation logic
-- command handlers for room lifecycle
-- room-aware start/reset/clear behavior
-- room switching integrated with automation shutdown and team rebuilds
+- replay cursor session state
+- `/dashboard` and `/room-summary`
+- `/replay-open` and `/replay-step`
+- interactive replay stepping with bounded window navigation
 
 ## Findings and Analysis
-### 1. Room-scoped state is the right first step before multi-user channel persistence
-Adding rooms inside one session creates real parallel simulation contexts without prematurely building a networked channel layer.
+### 1. Cursor-based replay stepping is the right lightweight replay model
+A simple replay cursor gives operators meaningful navigation without forcing a heavy playback subsystem.
 
-### 2. Rebuilding the team on room activation is simpler than storing live team instances per room
-This keeps room switching deterministic and avoids maintaining long-lived runtime objects for inactive rooms.
+### 2. Dashboard views improve operational awareness once rooms exist
+After adding rooms, operators need a fast summary surface. Dashboard and room-summary commands provide that without requiring a graphical UI redesign.
 
-### 3. Rooms complement replay and jobs nicely
-Rooms handle live parallel experimentation, jobs handle repeated automation, and replay/compare handle retrospective analysis.
+### 3. Text-first control remains a strength
+The simulator continues to grow primarily through composable command surfaces, which keeps implementation velocity high and complexity manageable.
 
 ## Recommended Follow-Up
-- interactive replay stepping UI
 - external IRC/websocket bridge support
-- observer/dashboard views
+- richer observer/dashboard views
 - cross-room summaries or bridge agents
-- opt-in integration tests for live scheduling, room switching, and streaming
+- opt-in integration tests for live scheduling, room switching, replay stepping, and streaming

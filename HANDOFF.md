@@ -10,47 +10,46 @@
 ## What I Changed
 ### Core Code
 - Expanded `simulator_core.py` with:
-  - room-state construction helpers
-  - room create/switch/delete helpers
-  - room list rendering
-  - room-aware config defaults and status rendering
-  - room-aware autonomous prompts and export metadata
+  - dashboard rendering helpers
+  - room summary helpers
+  - replay-window resolution helpers
+  - replay-window rendering helpers
+  - help text updates for dashboard and replay-step commands
 - Reworked `app.py` to support:
-  - session room registry state
-  - `/rooms`, `/room`, `/new-room`, `/delete-room`
-  - active-room activation and room-local config/history switching
-  - room-aware startup banner
-  - room-scoped reset/clear behavior
-  - automation shutdown before room switching/deletion
-- Expanded `tests/test_simulator_core.py` from 22 to 23 tests.
+  - session-scoped replay cursor state
+  - `/dashboard`
+  - `/room-summary [count]`
+  - `/replay-open [latest|previous|file.json] [count]`
+  - `/replay-step [next|prev|start|end|index] [count]`
+- Extended helper-layer tests to validate dashboard, room-summary, and replay-window behavior while keeping total tests passing at 23.
 
 ### Documentation
-- Updated `README.md` with multi-room session support.
-- Updated `docs/ai/design/simulator-operations.md` with room architecture notes and flow updates.
+- Updated `README.md` with dashboard and replay-step features.
+- Updated `docs/ai/design/simulator-operations.md` with replay cursor and dashboard architecture notes.
 - Updated `docs/ai/implementation/multi-model-simulator-expansion.md`.
 - Updated `docs/ai/testing/multi-model-simulator-expansion.md`.
-- Updated `FINDINGS.md` with detailed analysis of room-scoped simulation state.
-- Bumped `VERSION` to `0.6.0` and updated `CHANGELOG.md`.
+- Updated `FINDINGS.md` with detailed analysis of dashboard views and cursor-based replay stepping.
+- Bumped `VERSION` to `0.7.0` and updated `CHANGELOG.md`.
 
 ## Validation Performed
 - Ran `python -m unittest discover -s tests -v` ✅ (23 tests passed)
 - Ran `python -m py_compile app.py run.py simulator_core.py tests/test_simulator_core.py` ✅
 
 ## Findings and Analysis
-1. Session-scoped rooms are the right first form of multi-channel support.
-2. Room-local config/history separation matters more than room persistence at this stage.
-3. Rebuilding the team on room activation is simpler and safer than storing live teams per room.
-4. Rooms, replay, comparison, and scheduling now combine into a much stronger simulation-lab workflow.
+1. Dashboard views became necessary once rooms existed.
+2. Cursor-based replay stepping is the right lightweight replay-navigation model.
+3. Text-first operator tooling continues to scale well for this simulator.
+4. Replay stepping, comparison, rooms, and scheduling now form a stronger operator workflow.
 
 ## Potential Risks / Follow-Up
-- rooms are not yet persisted across application restarts
+- replay cursor behavior is not yet integration-tested in a live Chainlit session
 - room switching is not yet integration-tested against a live Chainlit session
 - actual-cost behavior still depends on provider usage metadata appearing in streamed events
 - persistent state remains local-file based and not multi-user synchronized
 
 ## Recommended Next Steps
-1. Add interactive replay stepping and richer comparison UX.
-2. Add external IRC/websocket bridge support.
-3. Add observer/dashboard views.
-4. Add cross-room summaries or bridge agents.
-5. Add live opt-in integration tests for streaming, judging, scheduling, and room switching.
+1. Add external IRC/websocket bridge support.
+2. Add richer observer/dashboard views.
+3. Add cross-room summaries or bridge agents.
+4. Add tool-use plugins.
+5. Add live opt-in integration tests for streaming, judging, scheduling, room switching, and replay stepping.

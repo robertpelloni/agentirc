@@ -27,6 +27,7 @@ from simulator_core import (
     build_analytics_text,
     build_autonomous_prompt,
     build_costs_text,
+    build_dashboard_text,
     build_help_text,
     build_history_text,
     build_jobs_text,
@@ -37,7 +38,9 @@ from simulator_core import (
     build_personas_text,
     build_replay_comparison_text,
     build_replay_text,
+    build_replay_window_text,
     build_replays_text,
+    build_room_summary_text,
     build_rooms_text,
     build_schedule_status_text,
     build_scenarios_text,
@@ -72,6 +75,7 @@ from simulator_core import (
     render_entry,
     resolve_agent_name,
     resolve_replay_file,
+    resolve_replay_window,
     save_job,
     save_lineup,
     save_persistent_state,
@@ -104,6 +108,7 @@ SESSION_STATE_KEY = "persistent_state"
 SESSION_AUTOMATION_TASK_KEY = "automation_task"
 SESSION_ROOMS_KEY = "rooms"
 SESSION_ROOM_KEY = "room_name"
+SESSION_REPLAY_STATE_KEY = "replay_state"
 JUDGE_PRICING = {"input_per_million": 0.15, "output_per_million": 0.6}
 
 AGENT_SPECS = {
@@ -248,6 +253,16 @@ def get_automation_task() -> asyncio.Task | None:
 
 def set_automation_task(task: asyncio.Task | None):
     cl.user_session.set(SESSION_AUTOMATION_TASK_KEY, task)
+
+
+
+def get_replay_state() -> dict | None:
+    return cl.user_session.get(SESSION_REPLAY_STATE_KEY)
+
+
+
+def set_replay_state(state: dict | None):
+    cl.user_session.set(SESSION_REPLAY_STATE_KEY, state)
 
 
 async def stop_automation_task():
@@ -424,6 +439,21 @@ async def handle_command(command: str, args: str) -> bool:
 
     if command == "/status":
         await cl.Message(content=build_status_text(config, len(get_history()), persistent_state)).send()
+        return True
+
+    if command == "/dashboard":
+        await cl.Message(content=build_dashboard_text(get_rooms(), get_current_room_name(), persistent_state)).send()
+        return True
+
+    if command == "/room-summary":
+        count = 3
+        if args:
+            try:
+                count = max(1, min(10, int(args)))
+            except ValueError:
+                await send_system_notice("Room summary count must be an integer between 1 and 10.")
+                return True
+        await cl.Message(content=build_room_summary_text(get_rooms(), count)).send()
         return True
 
     if command == "/rooms":
@@ -709,6 +739,67 @@ async def handle_command(command: str, args: str) -> bool:
         await cl.Message(content=build_replay_text(payload, replay_path.name, count)).send()
         return True
 
+    if command == "/replay-open":
+        parts = args.split()
+        replay_name = parts[0] if parts else "latest"
+        count = 8
+        if len(parts) > 1:
+            try:
+                count = max(1, min(100, int(parts[1])))
+            except ValueError:
+                await send_system_notice("Replay window count must be an integer between 1 and 100.")
+                return True
+        replay_path = resolve_replay_file(replay_name, EXPORT_DIR)
+        if replay_path is None:
+            await send_system_notice("No matching replay export found.")
+            return True
+        payload = load_replay_payload(replay_path)
+        set_replay_state({"name": replay_path.name, "payload": payload, "index": 0, "count": count})
+        record_replay_view(config)
+        await cl.Message(content=build_replay_window_text(payload, replay_path.name, 0, count)).send()
+        return True
+
+    if command == "/replay-step":
+        replay_state = get_replay_state()
+        if not replay_state:
+            await send_system_notice("No replay is currently open. Use `/replay-open` first.")
+            return True
+        parts = args.split()
+        action = parts[0].lower() if parts else "next"
+        count = replay_state.get("count", 8)
+        if len(parts) > 1:
+            try:
+                count = max(1, min(100, int(parts[1])))
+            except ValueError:
+                await send_system_notice("Replay window count must be an integer between 1 and 100.")
+                return True
+
+        payload = replay_state["payload"]
+        history = payload.get("history", [])
+        current_index = replay_state.get("index", 0)
+        if action == "next":
+            new_index = current_index + count
+        elif action == "prev":
+            new_index = current_index - count
+        elif action == "start":
+            new_index = 0
+        elif action == "end":
+            new_index = max(0, len(history) - count)
+        else:
+            try:
+                new_index = int(action)
+            except ValueError:
+                await send_system_notice("Usage: `/replay-step [next|prev|start|end|index] [count]`")
+                return True
+
+        new_index, _ = resolve_replay_window(len(history), new_index, count)
+        replay_state["index"] = new_index
+        replay_state["count"] = count
+        set_replay_state(replay_state)
+        record_replay_view(config)
+        await cl.Message(content=build_replay_window_text(payload, replay_state["name"], new_index, count)).send()
+        return True
+
     if command == "/compare":
         parts = args.split()
         if len(parts) < 2:
@@ -834,6 +925,7 @@ async def start():
     cl.user_session.set(SESSION_CONFIG_KEY, rooms[DEFAULT_ROOM_NAME]["config"])
     cl.user_session.set(SESSION_HISTORY_KEY, rooms[DEFAULT_ROOM_NAME]["history"])
     cl.user_session.set(SESSION_AUTOMATION_TASK_KEY, None)
+    cl.user_session.set(SESSION_REPLAY_STATE_KEY, None)
     config = get_config()
     rebuild_team()
 

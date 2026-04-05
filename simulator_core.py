@@ -361,6 +361,8 @@ def build_help_text() -> str:
 - `/topic <text>` - Set or inspect the current topic.
 - `/nick <name>` - Change your IRC nick.
 - `/status` - Show the live simulator configuration.
+- `/dashboard` - Show a high-level operator dashboard across rooms.
+- `/room-summary [count]` - Summarize room activity across the session.
 - `/rooms` - List session rooms and show the active room.
 - `/room [name]` - Show the current room or switch to another room.
 - `/new-room <name>` - Create a new room and switch into it.
@@ -393,6 +395,8 @@ def build_help_text() -> str:
 - `/schedule stop` - Stop the active autonomous schedule.
 - `/replays` - List exported transcript files.
 - `/replay [latest|previous|file.json] [count]` - Show a replay excerpt from an exported transcript.
+- `/replay-open [latest|previous|file.json] [count]` - Open a replay for interactive stepping.
+- `/replay-step [next|prev|start|end|index] [count]` - Step through an opened replay window.
 - `/compare <left> <right> [count]` - Compare two exported transcript replays side by side.
 - `/history [count]` - Show recent transcript lines.
 - `/export [md|json|both]` - Export the transcript to `exports/`.
@@ -418,6 +422,51 @@ def build_rooms_text(rooms: dict[str, dict[str, Any]], current_room_name: str) -
             f"  Topic: {topic}"
         )
     return "**Rooms**\n" + "\n".join(lines)
+
+
+
+def build_room_summary_text(rooms: dict[str, dict[str, Any]], count: int = 3) -> str:
+    lines = []
+    for room_name in sorted(rooms.keys()):
+        room_state = rooms[room_name]
+        config = room_state.get("config", {})
+        history = room_state.get("history", [])
+        recent_entries = history[-count:]
+        preview = " | ".join(
+            render_entry(entry) for entry in recent_entries if isinstance(entry, dict)
+        ) or "(no recent entries)"
+        lines.append(
+            f"- **{room_name}** — mode `{config.get('mode', DEFAULT_MODE)}`, scenario `{config.get('scenario', 'omni')}`  \n"
+            f"  Topic: {config.get('topic', DEFAULT_TOPIC)}  \n"
+            f"  Entries: `{len(history)}`  \n"
+            f"  Recent: {preview}"
+        )
+    return "**Room Summary**\n" + "\n".join(lines)
+
+
+
+def build_dashboard_text(
+    rooms: dict[str, dict[str, Any]],
+    current_room_name: str,
+    persistent_state: dict[str, Any],
+) -> str:
+    total_entries = sum(len(room_state.get("history", [])) for room_state in rooms.values())
+    total_estimated_cost = sum(
+        room_state.get("config", {}).get("telemetry", {}).get("total_estimated_cost_usd", 0.0)
+        for room_state in rooms.values()
+    )
+    active_room = rooms[current_room_name]["config"]
+    return (
+        "**Operator Dashboard**\n"
+        f"- Active room: `{current_room_name}`\n"
+        f"- Total rooms: `{len(rooms)}`\n"
+        f"- Total retained transcript entries: `{total_entries}`\n"
+        f"- Saved lineups: `{len(persistent_state.get('saved_lineups', {}))}`\n"
+        f"- Saved jobs: `{len(persistent_state.get('saved_jobs', {}))}`\n"
+        f"- Aggregate estimated room cost: `{format_usd(total_estimated_cost)}`\n"
+        f"- Active topic: {active_room.get('topic', DEFAULT_TOPIC)}\n"
+        f"- Active mode: `{active_room.get('mode', DEFAULT_MODE)}`"
+    )
 
 
 
@@ -1210,20 +1259,39 @@ def load_replay_payload(path: Path) -> dict[str, Any]:
 
 
 
-def build_replay_text(payload: dict[str, Any], replay_name: str, count: int) -> str:
+def resolve_replay_window(total_entries: int, start_index: int, count: int) -> tuple[int, int]:
+    safe_count = max(1, count)
+    if total_entries <= 0:
+        return 0, 0
+    safe_start = max(0, min(start_index, max(0, total_entries - 1)))
+    safe_end = min(total_entries, safe_start + safe_count)
+    return safe_start, safe_end
+
+
+
+def build_replay_window_text(payload: dict[str, Any], replay_name: str, start_index: int, count: int) -> str:
     history = payload.get("history", [])
     config = payload.get("config", {})
-    recent_entries = history[-count:]
-    lines = [render_entry(entry) for entry in recent_entries if isinstance(entry, dict)]
+    start, end = resolve_replay_window(len(history), start_index, count)
+    window_entries = history[start:end]
+    lines = [render_entry(entry) for entry in window_entries if isinstance(entry, dict)]
     rendered = "\n".join(f"- `{line}`" for line in lines) if lines else "- `(no transcript lines found)`"
     return (
-        f"**Replay: `{replay_name}`**\n"
+        f"**Replay Window: `{replay_name}`**\n"
+        f"- Room: `{config.get('room_name', 'n/a')}`\n"
         f"- Topic: {config.get('topic', 'n/a')}\n"
         f"- Scenario: `{config.get('scenario', 'n/a')}`\n"
         f"- Mode: `{config.get('mode', 'n/a')}`\n"
-        f"- Showing last `{len(lines)}` line(s)\n\n"
+        f"- Window: `{start}` to `{max(start, end - 1)}` of `{max(0, len(history) - 1)}`\n\n"
         f"{rendered}"
     )
+
+
+
+def build_replay_text(payload: dict[str, Any], replay_name: str, count: int) -> str:
+    history = payload.get("history", [])
+    start_index = max(0, len(history) - max(1, count))
+    return build_replay_window_text(payload, replay_name, start_index, count)
 
 
 

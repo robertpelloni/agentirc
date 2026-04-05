@@ -14,6 +14,7 @@ from simulator_core import (
     build_analytics_text,
     build_autonomous_prompt,
     build_costs_text,
+    build_dashboard_text,
     build_jobs_text,
     build_judge_prompt,
     build_lineups_text,
@@ -21,7 +22,9 @@ from simulator_core import (
     build_personas_text,
     build_replay_comparison_text,
     build_replay_text,
+    build_replay_window_text,
     build_replays_text,
+    build_room_summary_text,
     build_rooms_text,
     build_schedule_status_text,
     build_status_text,
@@ -57,6 +60,7 @@ from simulator_core import (
     render_entry,
     resolve_agent_name,
     resolve_replay_file,
+    resolve_replay_window,
     save_job,
     save_lineup,
     save_persistent_state,
@@ -227,6 +231,8 @@ class SimulatorCoreTests(unittest.TestCase):
         self.assertTrue(changed)
         self.assertEqual(room_name, "war-room")
         self.assertIn("war-room", build_rooms_text(rooms, DEFAULT_ROOM_NAME))
+        self.assertIn("Operator Dashboard", build_dashboard_text(rooms, DEFAULT_ROOM_NAME, persistent_state))
+        self.assertIn("Room Summary", build_room_summary_text(rooms, 2))
         changed, message, room_name = switch_room(rooms, "war-room")
         self.assertTrue(changed)
         self.assertEqual(room_name, "war-room")
@@ -355,8 +361,12 @@ class SimulatorCoreTests(unittest.TestCase):
                 self.assertIsNotNone(previous)
                 payload = load_replay_payload(resolved)
                 replay_text = build_replay_text(payload, resolved.name, 2)
-                self.assertIn("Replay:", replay_text)
+                self.assertIn("Replay Window", replay_text)
                 self.assertIn("Claude", replay_text)
+                start, end = resolve_replay_window(len(payload["history"]), 0, 1)
+                self.assertEqual((start, end), (0, 1))
+                window_text = build_replay_window_text(payload, resolved.name, 1, 1)
+                self.assertIn("Window:", window_text)
                 comparison_text = build_replay_comparison_text(payload, resolved.name, payload, previous.name, 2)
                 self.assertIn("Replay Comparison", comparison_text)
             finally:
