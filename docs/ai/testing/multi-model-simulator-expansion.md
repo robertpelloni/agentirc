@@ -1,7 +1,7 @@
 # Testing: Multi-Model Simulator Expansion
 
 ## Scope
-Validate the helper layer that powers command parsing, room management, dashboard summaries, replay-window helpers, agent resolution, scenario switching, moderation controls, persona persistence, lineup persistence, job persistence, telemetry aggregation, hybrid cost tracking, judge prompt construction, replay support, replay comparison, autonomous scheduling helpers, transcript rendering, and transcript export.
+Validate the helper layer that powers command parsing, room management, dashboard summaries, room analytics, bridge-note generation, replay-window helpers, agent resolution, scenario switching, moderation controls, persona persistence, lineup persistence, job persistence, telemetry aggregation, hybrid cost tracking, judge prompt construction, replay support, replay comparison, autonomous scheduling helpers, transcript rendering, and transcript export.
 
 ## Test Commands
 ```bash
@@ -17,6 +17,8 @@ python -m py_compile app.py run.py simulator_core.py tests/test_simulator_core.p
 - slash-command parsing
 - room create/switch/delete flow
 - dashboard and room-summary helper rendering
+- room analytics helper rendering
+- bridge-note generation
 - replay window resolution and replay window rendering
 - agent alias and DM target resolution
 - enable/disable constraints
@@ -42,7 +44,7 @@ python -m py_compile app.py run.py simulator_core.py tests/test_simulator_core.p
 - no live integration test currently exercises Chainlit + AutoGen streaming
 - no API-backed end-to-end test currently validates OpenRouter model responses
 - background schedule execution is not yet integration-tested against a live Chainlit session
-- room switching and replay stepping are not yet integration-tested with live UI runtime state
+- room switching, bridge delivery, and replay stepping are not yet integration-tested with live UI runtime state
 - actual cost tracking depends on provider usage metadata that is not simulated in a live end-to-end environment yet
 - browser/UI verification remains manual
 
@@ -52,4 +54,5 @@ python -m py_compile app.py run.py simulator_core.py tests/test_simulator_core.p
 - add an integration test for the schedule loop with a fake streaming team
 - add a room-switch integration test validating history/config separation
 - add a replay-step integration test validating cursor behavior in live session state
+- add a bridge-delivery integration test validating inactive-room insertion behavior
 - add a live opt-in end-to-end test suite gated behind environment variables

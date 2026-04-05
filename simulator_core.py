@@ -183,6 +183,7 @@ def make_default_telemetry(agent_specs: dict[str, dict[str, Any]]) -> dict[str, 
         "scheduled_runs": 0,
         "replay_views": 0,
         "comparisons": 0,
+        "bridge_events": 0,
         "errors": 0,
         "last_prompt": "",
         "total_estimated_cost_usd": 0.0,
@@ -363,6 +364,8 @@ def build_help_text() -> str:
 - `/status` - Show the live simulator configuration.
 - `/dashboard` - Show a high-level operator dashboard across rooms.
 - `/room-summary [count]` - Summarize room activity across the session.
+- `/room-analytics [name]` - Show analytics for one room.
+- `/bridge <source> <target> [count]` - Send a summarized bridge note from one room into another.
 - `/rooms` - List session rooms and show the active room.
 - `/room [name]` - Show the current room or switch to another room.
 - `/new-room <name>` - Create a new room and switch into it.
@@ -455,17 +458,46 @@ def build_dashboard_text(
         room_state.get("config", {}).get("telemetry", {}).get("total_estimated_cost_usd", 0.0)
         for room_state in rooms.values()
     )
+    total_prompts = sum(
+        room_state.get("config", {}).get("telemetry", {}).get("prompts_sent", 0)
+        for room_state in rooms.values()
+    )
+    total_bridges = sum(
+        room_state.get("config", {}).get("telemetry", {}).get("bridge_events", 0)
+        for room_state in rooms.values()
+    )
     active_room = rooms[current_room_name]["config"]
     return (
         "**Operator Dashboard**\n"
         f"- Active room: `{current_room_name}`\n"
         f"- Total rooms: `{len(rooms)}`\n"
         f"- Total retained transcript entries: `{total_entries}`\n"
+        f"- Aggregate prompts sent: `{total_prompts}`\n"
+        f"- Aggregate bridge events: `{total_bridges}`\n"
         f"- Saved lineups: `{len(persistent_state.get('saved_lineups', {}))}`\n"
         f"- Saved jobs: `{len(persistent_state.get('saved_jobs', {}))}`\n"
         f"- Aggregate estimated room cost: `{format_usd(total_estimated_cost)}`\n"
         f"- Active topic: {active_room.get('topic', DEFAULT_TOPIC)}\n"
         f"- Active mode: `{active_room.get('mode', DEFAULT_MODE)}`"
+    )
+
+
+
+def build_room_analytics_text(
+    room_name: str,
+    room_state: dict[str, Any],
+    agent_specs: dict[str, dict[str, Any]],
+) -> str:
+    config = room_state.get("config", {})
+    history = room_state.get("history", [])
+    return (
+        f"**Room Analytics: `{room_name}`**\n"
+        f"- Topic: {config.get('topic', DEFAULT_TOPIC)}\n"
+        f"- Mode: `{config.get('mode', DEFAULT_MODE)}`\n"
+        f"- Scenario: `{config.get('scenario', 'omni')}`\n"
+        f"- Transcript entries: `{len(history)}`\n"
+        f"- Enabled agents: {', '.join(display_agent_name(name) for name in config.get('enabled_agents', []))}\n\n"
+        f"{build_analytics_text(config, history, agent_specs)}"
     )
 
 
@@ -900,6 +932,11 @@ def record_comparison_view(config: dict[str, Any]):
 
 
 
+def record_bridge_event(config: dict[str, Any]):
+    config["telemetry"]["bridge_events"] += 1
+
+
+
 def record_error(config: dict[str, Any]):
     config["telemetry"]["errors"] += 1
 
@@ -967,6 +1004,7 @@ def build_telemetry_text(config: dict[str, Any], agent_specs: dict[str, dict[str
         f"- Scheduled runs: `{telemetry['scheduled_runs']}`",
         f"- Replay views: `{telemetry['replay_views']}`",
         f"- Comparisons: `{telemetry['comparisons']}`",
+        f"- Bridge events: `{telemetry['bridge_events']}`",
         f"- Errors: `{telemetry['errors']}`",
         "",
         "**Per-Agent Telemetry**",
@@ -1035,6 +1073,7 @@ def build_analytics_text(config: dict[str, Any], history: list[dict[str, Any]], 
         f"- Most talkative agent: `{top_agent}`\n"
         f"- Scheduled runs completed: `{telemetry['scheduled_runs']}`\n"
         f"- Replay views: `{telemetry['replay_views']}`\n"
+        f"- Bridge events: `{telemetry['bridge_events']}`\n"
         f"- Estimated total cost: `{format_usd(telemetry['total_estimated_cost_usd'])}`\n"
         f"- Last prompt: {telemetry['last_prompt'] or 'n/a'}"
     )
@@ -1188,6 +1227,26 @@ def delete_job(persistent_state: dict[str, Any], raw_name: str) -> tuple[bool, s
 
     del saved_jobs[job_name]
     return True, f"Deleted job **{job_name}**."
+
+
+
+def build_bridge_note(
+    source_room_name: str,
+    target_room_name: str,
+    source_room_state: dict[str, Any],
+    count: int,
+) -> str:
+    config = source_room_state.get("config", {})
+    history = source_room_state.get("history", [])
+    recent_entries = history[-count:]
+    excerpt = " | ".join(
+        render_entry(entry) for entry in recent_entries if isinstance(entry, dict)
+    ) or "(no recent entries available)"
+    return (
+        f"Bridge from room `{source_room_name}` into `{target_room_name}`. "
+        f"Scenario: {config.get('scenario', 'omni')}. Mode: {config.get('mode', DEFAULT_MODE)}. "
+        f"Topic: {config.get('topic', DEFAULT_TOPIC)}. Recent activity: {excerpt}"
+    )
 
 
 
@@ -1356,6 +1415,7 @@ def export_transcript(
             f"- Scheduled runs: `{config['telemetry']['scheduled_runs']}`",
             f"- Replay views: `{config['telemetry']['replay_views']}`",
             f"- Comparisons: `{config['telemetry']['comparisons']}`",
+            f"- Bridge events: `{config['telemetry']['bridge_events']}`",
             f"- Estimated cost: `{format_usd(config['telemetry']['total_estimated_cost_usd'])}`",
             f"- Actual cost: `{format_usd(config['telemetry']['total_actual_cost_usd'])}`",
             "",

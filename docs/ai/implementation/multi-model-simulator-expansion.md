@@ -1,48 +1,48 @@
 # Multi-Model Simulator Expansion
 
 ## Summary
-This implementation pass extends AgentIRC beyond multi-room state into a more complete operator workflow with interactive replay stepping and dashboard-style room summaries.
+This implementation pass extends AgentIRC beyond replay stepping and dashboards into a more capable cross-room operator workflow with room analytics and bridge-note delivery.
 
 ## Newly Added Capabilities
-### Dashboard and Cross-Room Views
-- `/dashboard`
-- `/room-summary [count]`
-- aggregate room/status/cost overview across the current session
-- recent transcript previews across rooms
+### Cross-Room Operator Tools
+- `/room-analytics [name]`
+- `/bridge <source> <target> [count]`
+- room-specific analytics rendering
+- deterministic bridge-note generation from recent room history
+- bridge delivery into another room as a room-local system note
 
-### Interactive Replay Stepping
-- `/replay-open [latest|previous|file.json] [count]`
-- `/replay-step [next|prev|start|end|index] [count]`
-- replay cursor state stored in session state
-- replay windows rendered from export artifacts without mutating live room history
+### Dashboard Enhancements
+- aggregate prompt counts across rooms
+- aggregate bridge-event counts across rooms
+- richer operator dashboard metrics
 
 ## Implementation Notes
 ### `simulator_core.py`
 This module now additionally owns:
-- dashboard rendering helpers
-- room summary rendering helpers
-- replay-window resolution helpers
-- replay-window rendering helpers
+- room analytics rendering helpers
+- bridge-note generation helpers
+- expanded dashboard metrics including bridge activity
+- bridge-event telemetry accounting
 
 ### `app.py`
 This module now additionally handles:
-- replay cursor session state
-- `/dashboard` and `/room-summary`
-- `/replay-open` and `/replay-step`
-- interactive replay stepping with bounded window navigation
+- `/room-analytics`
+- `/bridge <source> <target> [count]`
+- inactive-room message insertion via room-local history mutation
+- bridge-event telemetry updates on the target room
 
 ## Findings and Analysis
-### 1. Cursor-based replay stepping is the right lightweight replay model
-A simple replay cursor gives operators meaningful navigation without forcing a heavy playback subsystem.
+### 1. Deterministic bridge notes are the right first cross-room feature
+They transfer context between rooms with low complexity and without requiring another expensive model call.
 
-### 2. Dashboard views improve operational awareness once rooms exist
-After adding rooms, operators need a fast summary surface. Dashboard and room-summary commands provide that without requiring a graphical UI redesign.
+### 2. Room analytics become valuable once rooms accumulate distinct histories and telemetry
+Operators need a room-specific inspection surface in addition to global dashboards.
 
-### 3. Text-first control remains a strength
-The simulator continues to grow primarily through composable command surfaces, which keeps implementation velocity high and complexity manageable.
+### 3. Cross-room workflows are becoming a real differentiator
+Rooms, jobs, replay, comparison, dashboard views, and bridge notes together move the simulator beyond chat into an actual experimentation environment.
 
 ## Recommended Follow-Up
 - external IRC/websocket bridge support
 - richer observer/dashboard views
-- cross-room summaries or bridge agents
-- opt-in integration tests for live scheduling, room switching, replay stepping, and streaming
+- model-generated bridge agents
+- opt-in integration tests for live scheduling, room switching, replay stepping, bridge delivery, and streaming

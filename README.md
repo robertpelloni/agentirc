@@ -1,6 +1,6 @@
 # AgentIRC: The Multi-Model Broadcast Network
 
-AgentIRC is an IRC-style multi-model simulation environment built with **Microsoft AutoGen 0.4+**, **Chainlit**, and **OpenRouter**. It lets a human operator run coordinated conversations across multiple model personas, switch between broadcast and discussion modes, inspect telemetry, persist lineups/personas/jobs, export transcripts, replay and compare old runs, estimate costs, manage multiple rooms, inspect a dashboard, and trigger autonomous scheduled simulations.
+AgentIRC is an IRC-style multi-model simulation environment built with **Microsoft AutoGen 0.4+**, **Chainlit**, and **OpenRouter**. It lets a human operator run coordinated conversations across multiple model personas, switch between broadcast and discussion modes, inspect telemetry, persist lineups/personas/jobs, export transcripts, replay and compare old runs, estimate costs, manage multiple rooms, inspect operator dashboards, bridge context between rooms, and trigger autonomous scheduled simulations.
 
 ## 🚀 Feature Overview
 
@@ -16,7 +16,7 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Room Switching**: Move between rooms without losing each room’s topic, mode, history, or automation config.
 - **Room Lifecycle Commands**: Create, list, switch, and delete rooms on demand.
 - **Room-Scoped Reset/Clear**: `/clear` and `/reset` operate on the active room rather than the whole session.
-- **Room Dashboard Views**: Inspect room inventory and room summaries from the operator dashboard layer.
+- **Cross-Room Bridge Notes**: Summarize recent activity from one room into another with `/bridge`.
 
 ### Agent Control
 - **Dynamic Lineup Management**: Enable or disable agents at runtime.
@@ -27,11 +27,12 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 
 ### Analysis & Operations
 - **Session Status**: Inspect room, mode, scenario, moderator, lineup, job count, persistent-state counts, and cost summary.
-- **Operator Dashboard**: `/dashboard` provides a top-level summary across rooms, jobs, lineups, active context, and aggregate estimated cost.
+- **Operator Dashboard**: `/dashboard` provides a top-level summary across rooms, jobs, active context, aggregate prompts, bridge activity, and aggregate estimated cost.
 - **Room Summary**: `/room-summary [count]` shows recent activity snapshots across rooms.
-- **Telemetry**: Per-agent response counts, character volume, token totals, average response latency, scheduled-run count, replay-view count, and comparison-view count.
+- **Room Analytics**: `/room-analytics [name]` shows one room’s specific analytics view.
+- **Telemetry**: Per-agent response counts, character volume, token totals, average response latency, scheduled-run count, replay-view count, comparison-view count, and bridge-event count.
 - **Hybrid Cost Tracking**: Uses provider usage data when available and falls back to estimated tokens plus configurable pricing hints.
-- **Analytics**: Aggregate session summaries, talkativeness ranking, output volume, autonomous-run volume, and last-prompt context.
+- **Analytics**: Aggregate room/session summaries, talkativeness ranking, output volume, autonomous-run volume, bridge activity, and last-prompt context.
 - **Judge Evaluations**: Ask a dedicated judge model to assess recent transcript quality and propose next steps.
 - **Replay Mode**: Browse exported JSON transcripts and replay the latest, previous, or named run as a transcript excerpt.
 - **Replay Stepping**: Open a replay and step through it interactively using replay windows.
@@ -42,8 +43,8 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 
 ## 🧠 Architecture Notes
 - **Chainlit session state** holds the live simulator config, transcript history, active team, current room name, room registry, replay cursor state, persistent settings, and the current automation task handle.
-- **`simulator_core.py`** isolates session defaults, room helpers, command parsing, persona/lineup/job persistence, telemetry logic, cost tracking, replay helpers, replay-window helpers, comparison helpers, scheduling helpers, export helpers, and transcript formatting.
-- **`app.py`** focuses on Chainlit wiring, room activation, replay cursor state, AutoGen team construction, command dispatch, autonomous scheduling, replay/compare commands, dashboard commands, and model streaming.
+- **`simulator_core.py`** isolates session defaults, room helpers, command parsing, persona/lineup/job persistence, telemetry logic, cost tracking, replay helpers, replay-window helpers, comparison helpers, dashboard helpers, bridge-note helpers, scheduling helpers, export helpers, and transcript formatting.
+- **`app.py`** focuses on Chainlit wiring, room activation, replay cursor state, AutoGen team construction, command dispatch, autonomous scheduling, replay/compare commands, dashboard commands, bridge commands, and model streaming.
 - **Persistent state** is stored in `data/simulator_state.json` and currently tracks saved lineups, persona overrides, and saved jobs.
 - **Exports** include transcript content plus session telemetry snapshot so old runs can be replayed, compared, and analyzed.
 
@@ -70,6 +71,8 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/status`
 - `/dashboard`
 - `/room-summary [count]`
+- `/room-analytics [name]`
+- `/bridge <source> <target> [count]`
 - `/rooms`
 - `/room [name]`
 - `/new-room <name>`
@@ -114,9 +117,9 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/reset`
 
 ## 📁 Important Files
-- `app.py` - Chainlit app, command handling, room activation, replay state, AutoGen orchestration, autonomous scheduling, replay/compare commands, dashboard commands, and judge execution.
+- `app.py` - Chainlit app, command handling, room activation, replay state, bridge delivery, AutoGen orchestration, autonomous scheduling, replay/compare commands, dashboard commands, and judge execution.
 - `run.py` - Python 3.14 compatibility launcher for Chainlit.
-- `simulator_core.py` - Shared simulator logic, room helpers, persistence, telemetry, hybrid cost tracking, analytics, replay helpers, replay-window helpers, job helpers, scheduling helpers, exports, and transcript utilities.
+- `simulator_core.py` - Shared simulator logic, room helpers, persistence, telemetry, hybrid cost tracking, analytics, dashboard helpers, bridge helpers, replay helpers, replay-window helpers, job helpers, scheduling helpers, exports, and transcript utilities.
 - `tests/test_simulator_core.py` - Regression coverage for helper-layer behavior.
 - `docs/ai/design/simulator-operations.md` - feature-pass architecture notes and flow diagram.
 - `docs/ai/implementation/` - implementation pass documentation.
@@ -141,8 +144,8 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 
 ## 🧭 Recommended Next Feature Passes
 - external IRC / websocket bridging
-- observer/dashboard views with richer metrics panels
-- cross-room summaries or bridge agents
+- richer observer/dashboard views with live metrics panels
+- cross-room bridge agents using model-generated summaries
 - tool-use plugins and structured tasks
 - opt-in live integration tests for Chainlit + provider calls
 - persistent archived room snapshots across restarts

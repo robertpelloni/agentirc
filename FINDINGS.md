@@ -18,7 +18,7 @@ The simulator became significantly easier to extend after splitting general-purp
 
 ### Findings
 - **Live UI code and reusable domain logic should not live in the same file** once command surface area grows.
-- **Streaming model events are runtime-specific**, but transcript formatting, persistence, telemetry, replay, comparison, room management, dashboard rendering, and preset logic are not.
+- **Streaming model events are runtime-specific**, but transcript formatting, persistence, telemetry, replay, comparison, room management, dashboard rendering, bridge-note generation, and preset logic are not.
 - **Helper extraction increases testability immediately** because most simulator rules can be validated without a live Chainlit or OpenRouter session.
 
 ### Result
@@ -65,8 +65,9 @@ As soon as the simulator gained multiple live contexts, operators needed a quick
 - Text-first dashboards remain surprisingly effective for a command-driven simulator and avoid needing immediate UI redesign.
 
 ### Current Dashboard Model
-- `/dashboard` gives a top-level summary across rooms, jobs, active context, and aggregate estimated cost
+- `/dashboard` gives a top-level summary across rooms, jobs, active context, aggregate prompts, bridge activity, and aggregate estimated cost
 - `/room-summary [count]` previews recent activity across rooms
+- `/room-analytics [name]` drills into one room’s local metrics and analytics
 
 ## 6. Prompt-Shaped Moderation Is Still a Strong Interim Control Plane
 Instead of adding a separate moderator agent immediately, we injected moderation rules into each agent’s system prompt.
@@ -134,7 +135,21 @@ Once replay existed, comparison became the next highest-value analytical operati
 - Even a transcript-excerpt comparison is useful for spotting prompt drift, scenario changes, room differences, and conversation-shape differences.
 - Comparison can be built on top of the same export artifacts and replay schema, which keeps implementation complexity low.
 
-## 12. Bounded Scheduling Remains the Right First Automation Primitive
+## 12. Deterministic Bridge Notes Are the Right First Cross-Room Primitive
+Bridge notes were the next practical feature after multi-room state and dashboards.
+
+### Findings
+- Operators need a lightweight way to transfer context from one room into another.
+- Deterministic bridge notes are cheap, predictable, and easy to validate.
+- Model-generated bridge agents can come later, once operators prove they need abstraction instead of literal context transfer.
+
+### Current Bridge Model
+- `/bridge <source> <target> [count]`
+- uses recent transcript lines from the source room
+- inserts a room-local system note into the target room
+- increments bridge telemetry on the target room
+
+## 13. Bounded Scheduling Remains the Right First Automation Primitive
 The simulator supports autonomous scheduled runs, but deliberately in a constrained way.
 
 ### Findings
@@ -142,7 +157,7 @@ The simulator supports autonomous scheduled runs, but deliberately in a constrai
 - Requiring both interval and run-count intent creates a cleaner operator contract.
 - Scheduling can live entirely in session state for now; it does not need persistent global orchestration yet.
 
-## 13. Saved Jobs Are the Right Level of Automation Persistence
+## 14. Saved Jobs Are the Right Level of Automation Persistence
 Saved jobs bundle simulator configuration with automation settings.
 
 ### Findings
@@ -150,7 +165,7 @@ Saved jobs bundle simulator configuration with automation settings.
 - Jobs are more useful than raw interval persistence because they preserve simulation context as well as timing.
 - Keeping jobs local and explicit is safer than trying to auto-restore background automation across sessions.
 
-## 14. Room Switching Should Rebuild Runtime State, Not Preserve Live Teams
+## 15. Room Switching Should Rebuild Runtime State, Not Preserve Live Teams
 A key design choice in this pass was to rebuild the AutoGen team whenever the active room changes.
 
 ### Findings
@@ -158,7 +173,7 @@ A key design choice in this pass was to rebuild the AutoGen team whenever the ac
 - Rebuilding the team on room activation is simpler, deterministic, and easier to reason about.
 - This also keeps room switching compatible with room-local persona, scenario, and lineup changes.
 
-## 15. Replay, Comparison, Rooms, Dashboards, and Scheduling Reinforce Each Other
+## 16. Replay, Comparison, Rooms, Dashboards, Bridge Notes, and Scheduling Reinforce Each Other
 These additions work best together rather than independently.
 
 ### Findings
@@ -168,15 +183,17 @@ These additions work best together rather than independently.
 - Replay stepping improves the precision of that inspection.
 - Comparison makes it possible to reason about differences across runs.
 - Dashboard views make it possible to monitor the whole session at a glance.
-- Together they move AgentIRC toward a genuine simulation-lab workflow: branch context, run experiments, export, inspect, compare, monitor, iterate.
+- Bridge notes make it possible to transfer context between experiments.
+- Together they move AgentIRC toward a genuine simulation-lab workflow: branch context, run experiments, export, inspect, compare, monitor, bridge, iterate.
 
-## 16. Testing Strategy: Prioritize Helper-Layer Confidence First
+## 17. Testing Strategy: Prioritize Helper-Layer Confidence First
 The project now has stronger unit coverage around the deterministic parts of the simulator.
 
 ### Covered Areas
 - command parsing
 - room creation/switching/deletion
 - room summary and dashboard rendering
+- room analytics rendering
 - alias resolution
 - scenario switching
 - moderator mode validation
@@ -191,6 +208,7 @@ The project now has stronger unit coverage around the deterministic parts of the
 - replay discovery and replay rendering
 - replay window resolution and replay-window rendering
 - replay comparison rendering
+- bridge-note generation
 - transcript export
 - persistent state round trips
 
@@ -200,14 +218,15 @@ The project now has stronger unit coverage around the deterministic parts of the
 - no browser automation verification yet
 - schedule-loop execution has not been integration-tested against a live session
 - room switching has not yet been validated in a live Chainlit integration test
+- bridge delivery has not yet been validated in a live Chainlit integration test
 - actual-cost behavior has not been verified end-to-end against provider usage metadata
 - replay cursor behavior is not yet integration-tested in a live session loop
 
-## 17. Recommended Next Architecture Moves
+## 18. Recommended Next Architecture Moves
 Based on the current shape of the project, the next strongest additions would be:
 1. **external IRC/websocket bridges** for non-Chainlit clients
-2. **observer/dashboard views with richer metrics panels**
-3. **cross-room summaries or bridge agents**
+2. **richer observer/dashboard views with live metrics panels**
+3. **cross-room bridge agents** using model-generated summaries
 4. **tool-use plugins** for structured tasks inside simulations
-5. **live opt-in integration tests** for streaming, judging, scheduling, room switching, and replay stepping
+5. **live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, and replay stepping
 6. **persistent archived room snapshots** across restarts

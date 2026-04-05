@@ -1,7 +1,7 @@
 # Simulator Operations Design
 
 ## Objective
-Evolve AgentIRC from a simple multi-model chat room into a reusable simulation platform with configurable orchestration, durable operator presets, autonomous scheduling, replayable analytical artifacts, hybrid cost tracking, reusable autonomous jobs, room-scoped simulation workflows, and operator dashboard/replay-window tools.
+Evolve AgentIRC from a simple multi-model chat room into a reusable simulation platform with configurable orchestration, durable operator presets, autonomous scheduling, replayable analytical artifacts, hybrid cost tracking, reusable autonomous jobs, room-scoped simulation workflows, operator dashboard tools, and cross-room context sharing.
 
 ## Architecture Summary
 The simulator now separates into eight distinct concerns:
@@ -31,7 +31,19 @@ This approach:
 - keeps the model textual and command-driven
 - lets operators jump, step, rewind, and inspect replay windows incrementally
 
-### 3. Keep persistence small and explicit
+### 3. Dashboards should be summary-first, not UI-heavy
+The operator dashboard and room-summary surfaces are intentionally text-first.
+
+This approach:
+- keeps implementation cost low
+- fits the IRC/control-console aesthetic
+- provides value before a custom visual dashboard exists
+- remains easy to test at the helper layer
+
+### 4. Cross-room bridge notes are deterministic first, model-generated later
+The current bridge mechanism summarizes recent room activity deterministically and injects it into another room as a system note. This avoids introducing another dependency-heavy summarization loop before operators prove they need it.
+
+### 5. Keep persistence small and explicit
 Persistent state currently stores:
 - saved lineups
 - saved persona overrides
@@ -39,21 +51,15 @@ Persistent state currently stores:
 
 This preserves high-value reusable operator assets without persisting volatile room histories or live automation state.
 
-### 4. Use hybrid cost tracking instead of pretending heuristics are truth
+### 6. Use hybrid cost tracking instead of pretending heuristics are truth
 The simulator attempts to read model usage metadata from events when available. If provider-native usage is missing, it falls back to estimated token counts based on text length.
 
 This creates a layered model:
 - **actual cost** when usage metadata exists and pricing hints are configured
 - **estimated cost** otherwise
 
-### 5. Make autonomous scheduling opt-in and bounded
+### 7. Make autonomous scheduling opt-in and bounded
 The schedule system is configured explicitly through `/schedule` or `/run-job`. Each scheduled run is bounded by a configured run count and interval. This reduces the risk of runaway autonomous activity while still enabling repeated unattended simulations.
-
-### 6. Prefer replay and comparison from export artifacts over live transcript mutation
-Replay mode, replay stepping, and comparison mode read exported JSON transcript snapshots rather than mutating the live transcript state. This keeps retrospective analysis separate from active-session simulation and preserves a clean operational model.
-
-### 7. Persist reusable jobs instead of inventing a job server
-Saved jobs are local presets that bundle schedule parameters with simulation state. This captures high-value operator workflows without requiring a full distributed scheduler.
 
 ### 8. Room switching rebuilds active runtime state
 When the operator switches rooms, the app swaps in the selected room’s config and history, then rebuilds the active AutoGen team. This preserves room-local behavior without duplicating long-lived model runtime objects per room.
@@ -69,10 +75,12 @@ flowchart TD
     Core --> Persist{Persistent change?}
     Persist -- Yes --> State[data/simulator_state.json]
     Persist -- No --> Session[Active room config + history + telemetry]
+    Cmd -- Dashboard --> Rooms
+    Cmd -- Room Summary --> Rooms
+    Cmd -- Bridge --> Rooms
     Cmd -- Replay --> Exports[exports/*.json replay artifacts]
     Cmd -- Replay Step --> ReplayState
     Cmd -- Compare --> Exports
-    Cmd -- Dashboard --> Rooms
     Cmd -- Schedule --> Task[Async automation task]
     Cmd -- Run Job --> Jobs[Saved jobs]
     Cmd -- Judge --> Judge[Dedicated judge agent]
@@ -146,26 +154,28 @@ flowchart TD
 - actual cost
 - usage sample count
 - average latency
+- bridge events
 
 ## Tradeoffs
 ### Pros
 - room separation enables parallel what-if contexts inside one session
 - replay stepping adds operator control without a heavy playback subsystem
+- dashboard and room-summary commands provide immediate control-tower value
+- bridge notes enable context transfer without full cross-room orchestration
 - persistence footprint stays small
 - autonomous runs are bounded and explicit
-- replay/compare mode leverages existing export artifacts
-- cost tracking is useful even when only partially backed by provider metadata
 
 ### Cons
 - rooms are not yet persisted across application restarts
+- bridge notes are deterministic summaries, not model-generated abstractions
 - autonomous scheduling still depends on live Chainlit runtime behavior
 - actual cost depends on provider usage metadata being present
 - replay mode is still textual rather than visual/graphical
 - saved jobs are local-file based, not multi-user shared
 
 ## Recommended Future Extensions
-- add external IRC/websocket bridges and observer dashboards
-- add richer metrics panels and multi-room dashboards
-- add cross-room summaries or bridge agents
+- add external IRC/websocket bridges and richer observer dashboards
+- add cross-room bridge agents using model-generated summaries
 - add provider-backed live integration tests behind environment flags
 - add persistent archived room snapshots when session-level room history becomes strategically valuable
+- add visual dashboard panels if the command-first interface stops being sufficient

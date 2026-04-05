@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.0 - 2026-04-05
+- Added `/room-analytics [name]` for room-specific analytics inspection.
+- Added `/bridge <source> <target> [count]` for deterministic cross-room bridge-note delivery.
+- Expanded `/dashboard` with aggregate prompt and bridge metrics across rooms.
+- Expanded telemetry with bridge-event tracking.
+- Expanded unit coverage from 23 to 24 tests.
+- Expanded README, findings, design, implementation, testing, changelog, and handoff documentation for bridge notes and room analytics.
+
 ## 0.7.0 - 2026-04-05
 - Added `/dashboard` and `/room-summary` for operator-level multi-room visibility.
 - Added interactive replay stepping with `/replay-open` and `/replay-step` using session-scoped replay cursor state.

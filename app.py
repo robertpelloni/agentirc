@@ -26,6 +26,7 @@ from simulator_core import (
     build_agents_text,
     build_analytics_text,
     build_autonomous_prompt,
+    build_bridge_note,
     build_costs_text,
     build_dashboard_text,
     build_help_text,
@@ -40,6 +41,7 @@ from simulator_core import (
     build_replay_text,
     build_replay_window_text,
     build_replays_text,
+    build_room_analytics_text,
     build_room_summary_text,
     build_rooms_text,
     build_schedule_status_text,
@@ -66,6 +68,7 @@ from simulator_core import (
     parse_command,
     parse_direct_message,
     record_agent_response,
+    record_bridge_event,
     record_comparison_view,
     record_error,
     record_judge_run,
@@ -237,6 +240,26 @@ def activate_room(room_name: str):
     cl.user_session.set(SESSION_CONFIG_KEY, room_state["config"])
     cl.user_session.set(SESSION_HISTORY_KEY, room_state["history"])
     rebuild_team()
+
+
+
+def append_entry_to_room(
+    room_name: str,
+    author: str,
+    content: str,
+    kind: str = "message",
+    target: str | None = None,
+) -> dict:
+    rooms = get_rooms()
+    room_state = rooms[room_name]
+    history = room_state["history"]
+    entry = append_history(history, make_entry(author=author, content=content, kind=kind, target=target))
+    room_state["history"] = history
+    log_irc(render_entry(entry))
+    if room_name == get_current_room_name():
+        cl.user_session.set(SESSION_HISTORY_KEY, history)
+    cl.user_session.set(SESSION_ROOMS_KEY, rooms)
+    return entry
 
 
 
@@ -454,6 +477,50 @@ async def handle_command(command: str, args: str) -> bool:
                 await send_system_notice("Room summary count must be an integer between 1 and 10.")
                 return True
         await cl.Message(content=build_room_summary_text(get_rooms(), count)).send()
+        return True
+
+    if command == "/room-analytics":
+        room_name = get_current_room_name()
+        if args:
+            changed, response, resolved_room_name = switch_room(get_rooms(), args)
+            if not changed or resolved_room_name is None:
+                await send_system_notice(response)
+                return True
+            room_name = resolved_room_name
+        await cl.Message(content=build_room_analytics_text(room_name, get_rooms()[room_name], AGENT_SPECS)).send()
+        return True
+
+    if command == "/bridge":
+        parts = args.split()
+        if len(parts) < 2:
+            await send_system_notice("Usage: `/bridge <source> <target> [count]`")
+            return True
+        source_room_name = parts[0]
+        target_room_name = parts[1]
+        count = 5
+        if len(parts) > 2:
+            try:
+                count = max(1, min(20, int(parts[2])))
+            except ValueError:
+                await send_system_notice("Bridge count must be an integer between 1 and 20.")
+                return True
+        changed, response, resolved_source = switch_room(get_rooms(), source_room_name)
+        if not changed or resolved_source is None:
+            await send_system_notice(response)
+            return True
+        changed, response, resolved_target = switch_room(get_rooms(), target_room_name)
+        if not changed or resolved_target is None:
+            await send_system_notice(response)
+            return True
+        bridge_note = build_bridge_note(resolved_source, resolved_target, get_rooms()[resolved_source], count)
+        append_entry_to_room(resolved_target, author="system", content=bridge_note, kind="system")
+        record_bridge_event(get_rooms()[resolved_target]["config"])
+        if resolved_target == get_current_room_name():
+            await cl.Message(content=f"*** {bridge_note}").send()
+        else:
+            await send_system_notice(
+                f"Delivered bridge summary from **{resolved_source}** to **{resolved_target}**."
+            )
         return True
 
     if command == "/rooms":

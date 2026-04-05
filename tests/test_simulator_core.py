@@ -13,6 +13,7 @@ from simulator_core import (
     append_history,
     build_analytics_text,
     build_autonomous_prompt,
+    build_bridge_note,
     build_costs_text,
     build_dashboard_text,
     build_jobs_text,
@@ -24,6 +25,7 @@ from simulator_core import (
     build_replay_text,
     build_replay_window_text,
     build_replays_text,
+    build_room_analytics_text,
     build_room_summary_text,
     build_rooms_text,
     build_schedule_status_text,
@@ -52,6 +54,7 @@ from simulator_core import (
     parse_command,
     parse_direct_message,
     record_agent_response,
+    record_bridge_event,
     record_comparison_view,
     record_judge_run,
     record_prompt_telemetry,
@@ -249,6 +252,7 @@ class SimulatorCoreTests(unittest.TestCase):
         record_scheduled_run(config, "scheduled autonomous prompt")
         record_replay_view(config)
         record_comparison_view(config)
+        record_bridge_event(config)
         record_agent_response(
             config,
             "Claude",
@@ -273,8 +277,10 @@ class SimulatorCoreTests(unittest.TestCase):
         self.assertIn("Scheduled runs: `1`", telemetry_text)
         self.assertIn("Replay views: `1`", telemetry_text)
         self.assertIn("Comparisons: `1`", telemetry_text)
+        self.assertIn("Bridge events: `1`", telemetry_text)
         self.assertIn("Judge", telemetry_text)
         self.assertIn("Most talkative agent", analytics_text)
+        self.assertIn("Bridge events: `1`", analytics_text)
         self.assertIn("Total estimated cost", costs_text)
         self.assertIn("usage samples `1`", costs_text)
 
@@ -294,6 +300,17 @@ class SimulatorCoreTests(unittest.TestCase):
         prompt = build_autonomous_prompt(config)
         self.assertIn("Autonomous simulation run #1", prompt)
         self.assertIn(config["scenario"], prompt)
+
+    def test_room_analytics_and_bridge_note(self):
+        persistent_state = make_default_store()
+        rooms = make_initial_rooms(AGENT_SPECS, persistent_state)
+        rooms[DEFAULT_ROOM_NAME]["history"].append(make_entry("Claude", "hello lobby"))
+        create_room(rooms, "war room", AGENT_SPECS, persistent_state)
+        analytics_text = build_room_analytics_text(DEFAULT_ROOM_NAME, rooms[DEFAULT_ROOM_NAME], AGENT_SPECS)
+        bridge_note = build_bridge_note(DEFAULT_ROOM_NAME, "war-room", rooms[DEFAULT_ROOM_NAME], 1)
+        self.assertIn("Room Analytics", analytics_text)
+        self.assertIn("Bridge from room", bridge_note)
+        self.assertIn("hello lobby", bridge_note)
 
     def test_usage_parsing_and_cost_calculation(self):
         normalized = normalize_usage_payload({"input_tokens": 11, "output_tokens": 7})
