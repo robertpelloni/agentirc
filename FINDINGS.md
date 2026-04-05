@@ -1,40 +1,104 @@
 # AgentIRC Technical Findings & Analysis
 
-## 1. Python 3.14.3 "Hardening"
-Operating on the experimental Python 3.14.3 runtime revealed several critical breaking changes in the `asyncio` and `anyio` ecosystems.
+## 1. Python 3.14.3 Runtime Hardening
+Operating on the experimental Python 3.14.3 runtime continues to expose breaking changes in `asyncio` and `anyio` assumptions used by Chainlit and related libraries.
 
-### Findings:
-- **Strict Task Context**: Python 3.14 enforces a valid `asyncio.Task` context for operations like `asyncio.wait_for` and `asyncio.timeouts`. 
-- **The EngineIO Clash**: `engineio` (used by Chainlit) runs service loops in background threads/loops that lack formal task registration. This previously resulted in `RuntimeError: Timeout should be used inside a task`.
-- **AnyIO Identity Mismatch**: `anyio`'s `CancelScope` tracks the "host task" using weak references. On Python 3.14, if the task is `None`, this triggers a `TypeError: cannot create weak reference to 'NoneType' object`.
+### Findings
+- **Strict Task Context**: Python 3.14 more aggressively enforces valid `asyncio.Task` state for timeout and cancellation flows.
+- **Background Loop Mismatch**: `engineio` / Chainlit paths still assume looser task semantics than Python 3.14 currently tolerates.
+- **Weakref Sensitivity**: `anyio` cancellation machinery is brittle when task identity is absent or malformed.
 
-### Solutions (The "Task Identity Lie"):
-We implemented a multi-layered bootstrapper in `run.py`:
-1. **Singleton Dummy Task**: Created a `GLOBAL_DUMMY_TASK` class that mimics the minimum `asyncio.Task` interface (`cancelling()`, `uncancel()`) and is weak-referencable.
-2. **Context Synchronization**: Patched `anyio._backends._asyncio.CancelScope.__enter__` and `__exit__` to forcibly synchronize `_host_task` with the current context (even if it's our dummy task).
-3. **State Machine Repair**: Patched `asyncio.timeouts.Timeout` to manually transition state to `ENTERED` if the native enter fails, preventing subsequent `AssertionError` during cleanup.
+### Current Approach
+- `run.py` applies broad compatibility shims to preserve startup.
+- `app.py` also patches `anyio.to_thread.run_sync` so sync-to-thread behavior remains usable inside the app runtime.
+- We preserved process safety and did not terminate any background processes while working in this environment.
 
-## 2. AutoGen 0.4 (Modular) Migration
-This project successfully migrated from the legacy `pyautogen` (0.2.x) to the modular `autogen-agentchat` (0.4+) API.
+## 2. AutoGen Modular Architecture Works Best with Explicit Boundaries
+The simulator became significantly easier to extend after splitting general-purpose simulator logic out of `app.py`.
 
-### Findings:
-- **Identifier Consistency**: Agent names must now be valid Python identifiers (e.g., `GPT_5` instead of `GPT-5`). Failure to comply causes a `ValueError`.
-- **Event-Driven UI**: Used the `run_stream` API to capture `ChatMessage` and `AgentEvent` objects. This allows for native asynchronous UI updates without blocking the main event loop.
-- **Subscripted Generic Limitation**: Modern Python versions prohibit `isinstance()` checks on subscripted generics (like `ChatMessage`). We pivoted to robust attribute-based detection (`hasattr(event, "content")`).
+### Findings
+- **Live UI code and reusable domain logic should not live in the same file** once command surface area grows.
+- **Streaming model events are runtime-specific**, but transcript formatting, persistence, telemetry, and preset logic are not.
+- **Helper extraction increases testability immediately** because most simulator rules can be validated without a live Chainlit or OpenRouter session.
 
-## 3. Interaction Design: Broadcast vs. Discussion
-We evolved the interaction from a simple sequential broadcast to a dynamic state-managed system.
+### Result
+- `app.py` now focuses on Chainlit hooks, AutoGen team construction, command dispatch, and event streaming.
+- `simulator_core.py` now owns the simulator’s domain behavior.
 
-### Dynamic Team Re-initialization
-The project implements a `create_team` factory that handles the transition between two distinct AutoGen team architectures without losing session context:
-- **Broadcast Mode (`RoundRobinGroupChat`)**: Uses `MaxMessageTermination` to ensure a one-to-one response ratio per user prompt.
-- **Discussion Mode (`SelectorGroupChat`)**: Uses a dual termination (`TextMentionTermination` OR `MaxMessageTermination(10)`) to allow agents to debate a topic autonomously for a limited duration.
+## 3. Stateful Operator Features Deliver Outsized Value
+The highest-leverage additions were not new models but operator workflow improvements.
 
-### IRC Command Parsing
-A custom command parser was implemented in `cl.on_message`:
-- **Stateful Topic Control**: `/topic <text>` updates the `cl.user_session` and re-injects the new focus into the system messages of all agents via the factory.
-- **Targeted Pings**: Support for `@AgentName` allows the user to bypass the team logic and prompt a single model directly, while still maintaining the overall IRC transcript.
+### Findings
+- Re-entering personas and preferred lineups every session creates friction and slows experimentation.
+- Durable presets make the simulator feel like a real operations console rather than a toy chat room.
+- A small local state file is enough to unlock repeatable workflows without overengineering the persistence layer.
 
-### 4. UI/UX Aesthetic & Logging
-- **Persistent Archival**: All IRC traffic is piped to `irc_session.log`. This ensures that even experimental "future-edition" debates are preserved for the Omni-Workspace knowledge base.
-- **Monospace Hardening**: Enforced `Courier New` and dark themes via both `config.toml` and custom CSS injection to satisfy the "Hacker" aesthetic requirements.
+### Implemented Capabilities
+- persistent persona overrides
+- saved lineups
+- lineup load/delete operations
+- richer status inspection
+
+## 4. Prompt-Shaped Moderation Is a Strong Interim Control Plane
+Instead of adding a separate moderator agent immediately, we injected moderation rules into each agent’s system prompt.
+
+### Findings
+- This gives operators useful control over tone and discipline at much lower complexity.
+- It avoids another active speaker competing for turns in every simulation.
+- It keeps costs lower and preserves clearer causal reasoning about why a response changed.
+
+### Implemented Modes
+- `off`
+- `facilitator`
+- `strict`
+- `critic`
+- `chaos`
+
+## 5. Lightweight Telemetry Is Operationally Valuable Even When Approximate
+True provider billing or token-accounting data is not yet wired in, but approximate telemetry already improves observability.
+
+### Findings
+- Message count reveals who is dominating a conversation.
+- Character and estimated-token totals help identify verbose agents.
+- Average response latency helps compare responsiveness across models and runs.
+- Error and judge counters provide a lightweight session health view.
+
+### Important Caveat
+The current token metric is heuristic (`~chars/4`) and should be treated as directional, not authoritative.
+
+## 6. On-Demand Judging Is Better Than Always-On Judging
+A judge is useful, but constantly inserting a judge into every simulation would add cost, latency, and noise.
+
+### Findings
+- Operators usually want evaluation after a run, not during every turn.
+- A `/judge` command makes evaluation explicit and intentional.
+- Keeping judge evaluation separate from the core team preserves flexibility for future upgrades like multiple judges or scoring rubrics.
+
+## 7. Testing Strategy: Prioritize Helper-Layer Confidence First
+The project now has solid unit coverage around the parts of the simulator that are deterministic.
+
+### Covered Areas
+- command parsing
+- alias resolution
+- scenario switching
+- moderator mode validation
+- persona persistence logic
+- lineup persistence logic
+- telemetry aggregation
+- judge prompt construction
+- transcript export
+- persistent state round trips
+
+### Remaining Gaps
+- no live Chainlit + AutoGen integration tests yet
+- no provider-backed end-to-end tests yet
+- no browser automation verification yet
+
+## 8. Recommended Next Architecture Moves
+Based on the current shape of the project, the next strongest additions would be:
+1. **real token/cost telemetry** from provider metadata where available
+2. **scheduled autonomous runs** for nightly or scenario-driven simulations
+3. **replay mode** for exported transcripts
+4. **multi-room support** for parallel simulations
+5. **external IRC/websocket bridges** for non-Chainlit clients
+6. **observer dashboards** or comparison panels for side-by-side run analysis
