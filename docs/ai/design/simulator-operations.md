@@ -11,8 +11,8 @@ The simulator now separates into nine distinct concerns:
 4. **Replay cursor state** in Chainlit session state
 5. **Persistent operator state** in `data/simulator_state.json`
 6. **Exported analytical artifacts** in `exports/`
-7. **External bridge payload outbox** in `outbox/`
-8. **In-session autonomous scheduling** managed by a background asyncio task handle in Chainlit session state
+7. **External bridge payload outbox/inbox/processed directories**
+8. **Standalone bridge runtime scaffold** in `bridge_runtime.py`
 9. **Hybrid telemetry and cost accounting** derived from provider usage data where available and heuristics otherwise
 
 ## Design Decisions
@@ -42,20 +42,23 @@ This approach:
 - remains easy to test at the helper layer
 
 ### 4. Cross-room bridges have two modes: deterministic and model-generated
-The simulator now supports two bridge styles:
+The simulator supports two bridge styles:
 - **deterministic bridge note**: low-cost, predictable context transfer from recent transcript lines
 - **model-generated bridge note**: higher-level abstraction using a bridge agent prompt
 
 This dual approach gives operators a practical cost/quality tradeoff.
 
-### 5. External connectors should start as payload artifacts, not servers
-Instead of immediately embedding websocket or IRC runtime infrastructure, this pass adds standardized external payload generation plus an `outbox/` directory.
+### 5. External connectors should start with payload contracts, then a runtime scaffold, then live transports
+This pass extends the earlier outbox idea by adding:
+- `outbox/` for outbound payloads
+- `inbox/` for inbound payloads
+- `processed/` for consumed payloads
+- `bridge_runtime.py` as a standalone polling scaffold
 
-This approach:
-- keeps the foundation testable
-- avoids introducing long-lived network services prematurely
-- creates a stable boundary for future connector implementations
-- makes external integration observable through files first
+This layered approach:
+- keeps transport concerns decoupled from simulation logic
+- makes connector state visible on disk
+- creates a stable contract before adding live websocket or IRC network code
 
 ### 6. Keep persistence small and explicit
 Persistent state currently stores:
@@ -95,6 +98,7 @@ flowchart TD
     Cmd -- Bridge --> Rooms
     Cmd -- Bridge AI --> BridgeAgent[Bridge Agent]
     Cmd -- Bridge Export --> Outbox[outbox/*.json]
+    Cmd -- Import Bridge --> Inbox[inbox/*.json]
     Cmd -- Replay --> Exports[exports/*.json replay artifacts]
     Cmd -- Replay Step --> ReplayState
     Cmd -- Compare --> Exports
@@ -102,6 +106,8 @@ flowchart TD
     Cmd -- Run Job --> Jobs[Saved jobs]
     Cmd -- Judge --> Judge[Dedicated judge agent]
     Cmd -- No --> Team[AutoGen team or single agent]
+    Outbox --> Runtime[bridge_runtime.py]
+    Runtime --> Processed[processed/*.json]
     Rooms --> Team
     Jobs --> Task
     Task --> Team
@@ -180,6 +186,7 @@ flowchart TD
 - bridge ai events
 - observer views
 - external exports
+- external imports
 
 ## Tradeoffs
 ### Pros
@@ -187,21 +194,22 @@ flowchart TD
 - replay stepping adds operator control without a heavy playback subsystem
 - dashboard and observer commands provide immediate control-tower value
 - deterministic and model-generated bridge modes give a useful quality/cost tradeoff
-- external payload outbox creates a stable connector boundary without introducing network daemons
+- outbox/inbox/processed directories create a stable connector boundary before live transports are added
+- standalone runtime scaffold enables incremental external integration without daemon complexity inside the main app
 - persistence footprint stays small
 - autonomous runs are bounded and explicit
 
 ### Cons
 - rooms are not yet persisted across application restarts
 - bridge AI depends on live model availability and cost
-- connector runtime is not implemented yet; only the outbox foundation exists
+- live IRC/websocket transports are still not implemented; only the scaffold exists
 - autonomous scheduling still depends on live Chainlit runtime behavior
 - actual cost depends on provider usage metadata being present
 - replay mode is still textual rather than visual/graphical
 - saved jobs are local-file based, not multi-user shared
 
 ## Recommended Future Extensions
-- add external IRC/websocket bridge runtime on top of `outbox/`
+- add external IRC/websocket bridge runtime on top of the current outbox/inbox contract
 - add richer observer dashboards with live metrics panels
 - add role-specific bridge agents and routing policies
 - add provider-backed live integration tests behind environment flags

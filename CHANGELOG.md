@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.11.0 - 2026-04-05
+- Added `/bridge-runtime` for external bridge directory status visibility.
+- Added `/inbox` and `/import-bridge <file> [room]` for inbound external payload inspection and import.
+- Added `bridge_runtime.py` as a standalone outbox-processing runtime scaffold.
+- Added `inbox/` and `processed/` directory concepts alongside the existing `outbox/` foundation.
+- Expanded telemetry with `external_imports` tracking.
+- Expanded build tooling to compile `bridge_runtime.py`.
+- Expanded unit coverage from 25 to 26 tests.
+- Expanded README, findings, design, implementation, testing, changelog, and handoff documentation for inbox/runtime scaffolding.
+
 ## 0.10.0 - 2026-04-05
 - Added `/bridge-export <room> [count]` for external room snapshot payload generation.
 - Added `/outbox` for inspecting generated external bridge payload files.

@@ -32,8 +32,10 @@ from simulator_core import (
     build_external_bridge_payload,
     build_external_room_payload,
     build_dashboard_text,
+    build_bridge_runtime_status_text,
     build_help_text,
     build_history_text,
+    build_imported_payload_text,
     build_jobs_text,
     build_judge_prompt,
     build_observer_text,
@@ -44,6 +46,7 @@ from simulator_core import (
     build_replay_comparison_text,
     build_replay_text,
     build_replay_window_text,
+    build_inbox_text,
     build_outbox_text,
     build_replays_text,
     build_room_analytics_text,
@@ -63,7 +66,9 @@ from simulator_core import (
     export_transcript,
     extract_usage_metrics,
     list_export_files,
+    list_inbox_files,
     list_outbox_files,
+    load_external_payload,
     load_job,
     load_lineup,
     load_persistent_state,
@@ -79,6 +84,7 @@ from simulator_core import (
     record_comparison_view,
     record_error,
     record_external_export,
+    record_external_import,
     record_judge_run,
     record_observer_view,
     record_prompt_telemetry,
@@ -635,8 +641,42 @@ async def handle_command(command: str, args: str) -> bool:
         await send_system_notice(f"Exported room payload to `{outbox_path}`.")
         return True
 
+    if command == "/bridge-runtime":
+        await cl.Message(content=build_bridge_runtime_status_text()).send()
+        return True
+
     if command == "/outbox":
         await cl.Message(content=build_outbox_text(list_outbox_files())).send()
+        return True
+
+    if command == "/inbox":
+        await cl.Message(content=build_inbox_text(list_inbox_files())).send()
+        return True
+
+    if command == "/import-bridge":
+        parts = args.split()
+        if not parts:
+            await send_system_notice("Usage: `/import-bridge <file> [room]`")
+            return True
+        file_name = parts[0]
+        target_room_name = parts[1] if len(parts) > 1 else get_current_room_name()
+        inbox_files = {path.name: path for path in list_inbox_files(limit=200)}
+        payload_path = inbox_files.get(file_name)
+        if payload_path is None:
+            await send_system_notice("Inbox payload not found.")
+            return True
+        changed, response, resolved_target = switch_room(get_rooms(), target_room_name)
+        if not changed or resolved_target is None:
+            await send_system_notice(response)
+            return True
+        payload = load_external_payload(payload_path)
+        imported_text = build_imported_payload_text(payload)
+        append_entry_to_room(resolved_target, author="system", content=imported_text, kind="system")
+        record_external_import(get_rooms()[resolved_target]["config"])
+        if resolved_target == get_current_room_name():
+            await cl.Message(content=f"*** {imported_text}").send()
+        else:
+            await send_system_notice(f"Imported `{file_name}` into **{resolved_target}**.")
         return True
 
     if command == "/rooms":

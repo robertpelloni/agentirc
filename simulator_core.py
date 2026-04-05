@@ -20,6 +20,8 @@ HISTORY_LIMIT = 200
 STATE_FILE = Path("data/simulator_state.json")
 EXPORT_DIR = Path("exports")
 OUTBOX_DIR = Path("outbox")
+INBOX_DIR = Path("inbox")
+PROCESSED_DIR = Path("processed")
 
 SCENARIO_PRESETS: dict[str, dict[str, Any]] = {
     "omni": {
@@ -188,6 +190,7 @@ def make_default_telemetry(agent_specs: dict[str, dict[str, Any]]) -> dict[str, 
         "bridge_ai_events": 0,
         "observer_views": 0,
         "external_exports": 0,
+        "external_imports": 0,
         "errors": 0,
         "last_prompt": "",
         "total_estimated_cost_usd": 0.0,
@@ -373,7 +376,10 @@ def build_help_text() -> str:
 - `/bridge <source> <target> [count]` - Send a summarized bridge note from one room into another.
 - `/bridge-ai <source> <target> [focus]` - Use a model-generated bridge note between rooms.
 - `/bridge-export <room> [count]` - Export a room snapshot as an external bridge payload.
+- `/bridge-runtime` - Show external bridge runtime directory status.
 - `/outbox` - List recent external bridge payload files.
+- `/inbox` - List inbound bridge payload files.
+- `/import-bridge <file> [room]` - Import an inbox payload into a room.
 - `/rooms` - List session rooms and show the active room.
 - `/room [name]` - Show the current room or switch to another room.
 - `/new-room <name>` - Create a new room and switch into it.
@@ -483,6 +489,7 @@ def build_dashboard_text(
         f"- Aggregate prompts sent: `{total_prompts}`\n"
         f"- Aggregate bridge events: `{total_bridges}`\n"
         f"- External exports: `{sum(room_state.get('config', {}).get('telemetry', {}).get('external_exports', 0) for room_state in rooms.values())}`\n"
+        f"- External imports: `{sum(room_state.get('config', {}).get('telemetry', {}).get('external_imports', 0) for room_state in rooms.values())}`\n"
         f"- Saved lineups: `{len(persistent_state.get('saved_lineups', {}))}`\n"
         f"- Saved jobs: `{len(persistent_state.get('saved_jobs', {}))}`\n"
         f"- Aggregate estimated room cost: `{format_usd(total_estimated_cost)}`\n"
@@ -512,7 +519,7 @@ def build_observer_text(
         lines.append(
             f"- **{room_name}** ({marker}) — entries `{len(room_state.get('history', []))}`, "
             f"prompts `{telemetry.get('prompts_sent', 0)}`, bridges `{telemetry.get('bridge_events', 0)}`, "
-            f"exports `{telemetry.get('external_exports', 0)}`, est cost `{format_usd(telemetry.get('total_estimated_cost_usd', 0.0))}`"
+            f"exports `{telemetry.get('external_exports', 0)}`, imports `{telemetry.get('external_imports', 0)}`, est cost `{format_usd(telemetry.get('total_estimated_cost_usd', 0.0))}`"
         )
     return "\n".join(lines)
 
@@ -990,6 +997,11 @@ def record_external_export(config: dict[str, Any]):
 
 
 
+def record_external_import(config: dict[str, Any]):
+    config["telemetry"]["external_imports"] += 1
+
+
+
 def record_error(config: dict[str, Any]):
     config["telemetry"]["errors"] += 1
 
@@ -1061,6 +1073,7 @@ def build_telemetry_text(config: dict[str, Any], agent_specs: dict[str, dict[str
         f"- Bridge AI events: `{telemetry['bridge_ai_events']}`",
         f"- Observer views: `{telemetry['observer_views']}`",
         f"- External exports: `{telemetry['external_exports']}`",
+        f"- External imports: `{telemetry['external_imports']}`",
         f"- Errors: `{telemetry['errors']}`",
         "",
         "**Per-Agent Telemetry**",
@@ -1133,6 +1146,7 @@ def build_analytics_text(config: dict[str, Any], history: list[dict[str, Any]], 
         f"- Bridge AI events: `{telemetry['bridge_ai_events']}`\n"
         f"- Observer views: `{telemetry['observer_views']}`\n"
         f"- External exports: `{telemetry['external_exports']}`\n"
+        f"- External imports: `{telemetry['external_imports']}`\n"
         f"- Estimated total cost: `{format_usd(telemetry['total_estimated_cost_usd'])}`\n"
         f"- Last prompt: {telemetry['last_prompt'] or 'n/a'}"
     )
@@ -1405,12 +1419,22 @@ def write_outbox_payload(payload: dict[str, Any], outbox_dir: Path = OUTBOX_DIR)
 
 
 
-def list_outbox_files(outbox_dir: Path = OUTBOX_DIR, limit: int = 25) -> list[Path]:
-    if not outbox_dir.exists():
+def list_payload_files(directory: Path, limit: int = 25) -> list[Path]:
+    if not directory.exists():
         return []
-    files = [path for path in outbox_dir.glob("agentirc-*.json") if path.is_file()]
+    files = [path for path in directory.glob("agentirc-*.json") if path.is_file()]
     files.sort(key=lambda path: path.stat().st_mtime, reverse=True)
     return files[:limit]
+
+
+
+def list_outbox_files(outbox_dir: Path = OUTBOX_DIR, limit: int = 25) -> list[Path]:
+    return list_payload_files(outbox_dir, limit)
+
+
+
+def list_inbox_files(inbox_dir: Path = INBOX_DIR, limit: int = 25) -> list[Path]:
+    return list_payload_files(inbox_dir, limit)
 
 
 
@@ -1418,6 +1442,54 @@ def build_outbox_text(paths: list[Path]) -> str:
     if not paths:
         return "*** No external bridge payloads found in `outbox/`."
     return "**Outbox Payloads**\n" + "\n".join(f"- `{path.name}`" for path in paths)
+
+
+
+def build_inbox_text(paths: list[Path]) -> str:
+    if not paths:
+        return "*** No inbound bridge payloads found in `inbox/`."
+    return "**Inbox Payloads**\n" + "\n".join(f"- `{path.name}`" for path in paths)
+
+
+
+def build_bridge_runtime_status_text() -> str:
+    outbox_count = len(list_outbox_files())
+    inbox_count = len(list_inbox_files())
+    processed_count = len(list_payload_files(PROCESSED_DIR, limit=1000))
+    return (
+        "**Bridge Runtime Status**\n"
+        f"- Outbox files: `{outbox_count}`\n"
+        f"- Inbox files: `{inbox_count}`\n"
+        f"- Processed files: `{processed_count}`\n"
+        f"- Outbox directory: `{OUTBOX_DIR}`\n"
+        f"- Inbox directory: `{INBOX_DIR}`\n"
+        f"- Processed directory: `{PROCESSED_DIR}`"
+    )
+
+
+
+def load_external_payload(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("External payload is not a JSON object.")
+    return payload
+
+
+
+def build_imported_payload_text(payload: dict[str, Any]) -> str:
+    kind = payload.get("kind", "payload")
+    if kind == "room_snapshot":
+        room = payload.get("room", "unknown")
+        topic = payload.get("topic", DEFAULT_TOPIC)
+        entries = payload.get("entries", [])
+        excerpt = " | ".join(render_entry(entry) for entry in entries[-5:] if isinstance(entry, dict)) or "(no entries)"
+        return f"Imported room snapshot from `{room}`. Topic: {topic}. Recent: {excerpt}"
+    if kind == "bridge_note":
+        source_room = payload.get("source_room", "unknown")
+        target_room = payload.get("target_room", "unknown")
+        content = payload.get("content", "(no content)")
+        return f"Imported bridge note from `{source_room}` to `{target_room}`. {content}"
+    return json.dumps(payload, ensure_ascii=False)
 
 
 
@@ -1572,6 +1644,7 @@ def export_transcript(
             f"- Bridge AI events: `{config['telemetry']['bridge_ai_events']}`",
             f"- Observer views: `{config['telemetry']['observer_views']}`",
             f"- External exports: `{config['telemetry']['external_exports']}`",
+            f"- External imports: `{config['telemetry']['external_imports']}`",
             f"- Estimated cost: `{format_usd(config['telemetry']['total_estimated_cost_usd'])}`",
             f"- Actual cost: `{format_usd(config['telemetry']['total_actual_cost_usd'])}`",
             "",

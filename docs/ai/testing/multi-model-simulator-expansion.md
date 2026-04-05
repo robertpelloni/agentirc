@@ -1,17 +1,17 @@
 # Testing: Multi-Model Simulator Expansion
 
 ## Scope
-Validate the helper layer that powers command parsing, room management, dashboard summaries, observer rendering, room analytics, bridge-note generation, bridge-agent prompt construction, external payload generation, outbox helpers, replay-window helpers, agent resolution, scenario switching, moderation controls, persona persistence, lineup persistence, job persistence, telemetry aggregation, hybrid cost tracking, judge prompt construction, replay support, replay comparison, autonomous scheduling helpers, transcript rendering, and transcript export.
+Validate the helper layer that powers command parsing, room management, dashboard summaries, observer rendering, room analytics, bridge-note generation, bridge-agent prompt construction, external payload generation, outbox/inbox helpers, replay-window helpers, agent resolution, scenario switching, moderation controls, persona persistence, lineup persistence, job persistence, telemetry aggregation, hybrid cost tracking, judge prompt construction, replay support, replay comparison, autonomous scheduling helpers, transcript rendering, and transcript export.
 
 ## Test Commands
 ```bash
 python -m unittest discover -s tests -v
-python -m py_compile app.py run.py simulator_core.py tests/test_simulator_core.py
+python -m py_compile app.py run.py bridge_runtime.py simulator_core.py tests/test_simulator_core.py
 ```
 
 ## Results
 - `python -m unittest discover -s tests -v` passed on 2026-04-05
-- `python -m py_compile app.py run.py simulator_core.py tests/test_simulator_core.py` passed on 2026-04-05
+- `python -m py_compile app.py run.py bridge_runtime.py simulator_core.py tests/test_simulator_core.py` passed on 2026-04-05
 
 ## Covered Behaviors
 - slash-command parsing
@@ -23,6 +23,8 @@ python -m py_compile app.py run.py simulator_core.py tests/test_simulator_core.p
 - external room payload generation
 - external bridge payload generation
 - outbox payload writing and outbox listing
+- inbox payload listing and imported-payload rendering
+- bridge runtime status rendering
 - replay window resolution and replay window rendering
 - agent alias and DM target resolution
 - enable/disable constraints
@@ -48,8 +50,9 @@ python -m py_compile app.py run.py simulator_core.py tests/test_simulator_core.p
 - no live integration test currently exercises Chainlit + AutoGen streaming
 - no API-backed end-to-end test currently validates OpenRouter model responses
 - background schedule execution is not yet integration-tested against a live Chainlit session
-- room switching, bridge delivery, bridge-AI generation, external export, and replay stepping are not yet integration-tested with live UI runtime state
+- room switching, bridge delivery, bridge-AI generation, external export, inbox import, and replay stepping are not yet integration-tested with live UI runtime state
 - actual cost tracking depends on provider usage metadata that is not simulated in a live end-to-end environment yet
+- bridge runtime processing is only compile-validated right now, not behavior-tested
 - browser/UI verification remains manual
 
 ## Recommended Next Tests
@@ -60,5 +63,6 @@ python -m py_compile app.py run.py simulator_core.py tests/test_simulator_core.p
 - add a replay-step integration test validating cursor behavior in live session state
 - add a bridge-delivery integration test validating inactive-room insertion behavior
 - add a bridge-AI integration test validating model output capture and target-room insertion
-- add an external-export integration test validating outbox file creation from command flow
+- add an external-export / inbox-import integration test validating end-to-end file handoff
+- add a bridge-runtime behavior test validating outbox processing into `processed/`
 - add a live opt-in end-to-end test suite gated behind environment variables

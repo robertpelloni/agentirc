@@ -7,6 +7,7 @@ from pathlib import Path
 from simulator_core import (
     DEFAULT_ROOM_NAME,
     EXPORT_DIR,
+    INBOX_DIR,
     MODERATOR_MODES,
     STATE_FILE,
     apply_scenario,
@@ -21,8 +22,11 @@ from simulator_core import (
     build_jobs_text,
     build_judge_prompt,
     build_lineups_text,
+    build_bridge_runtime_status_text,
     build_external_bridge_payload,
     build_external_room_payload,
+    build_imported_payload_text,
+    build_inbox_text,
     build_observer_text,
     build_moderator_modes_text,
     build_personas_text,
@@ -47,7 +51,9 @@ from simulator_core import (
     export_transcript,
     extract_usage_metrics,
     list_export_files,
+    list_inbox_files,
     list_outbox_files,
+    load_external_payload,
     load_job,
     load_lineup,
     load_persistent_state,
@@ -348,6 +354,24 @@ class SimulatorCoreTests(unittest.TestCase):
             listed = list_outbox_files(outbox_dir)
             self.assertEqual(len(listed), 1)
             self.assertEqual(listed[0].name, path.name)
+
+    def test_inbox_listing_runtime_status_and_imported_payload_text(self):
+        persistent_state = make_default_store()
+        rooms = make_initial_rooms(AGENT_SPECS, persistent_state)
+        rooms[DEFAULT_ROOM_NAME]["history"].append(make_entry("Claude", "hello lobby"))
+        payload = build_external_room_payload(DEFAULT_ROOM_NAME, rooms[DEFAULT_ROOM_NAME], 1)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            inbox_dir = Path(temp_dir) / INBOX_DIR
+            path = write_outbox_payload(payload, inbox_dir)
+            listed = list_inbox_files(inbox_dir)
+            self.assertEqual(len(listed), 1)
+            self.assertIn(path.name, build_inbox_text(listed))
+            loaded = load_external_payload(path)
+            imported_text = build_imported_payload_text(loaded)
+            self.assertIn("Imported room snapshot", imported_text)
+            status_text = build_bridge_runtime_status_text()
+            self.assertIn("Bridge Runtime Status", status_text)
 
     def test_usage_parsing_and_cost_calculation(self):
         normalized = normalize_usage_payload({"input_tokens": 11, "output_tokens": 7})
