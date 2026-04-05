@@ -12,29 +12,39 @@ from simulator_core import (
     append_history,
     build_analytics_text,
     build_autonomous_prompt,
+    build_costs_text,
+    build_jobs_text,
     build_judge_prompt,
     build_lineups_text,
     build_moderator_modes_text,
     build_personas_text,
+    build_replay_comparison_text,
     build_replay_text,
     build_replays_text,
     build_schedule_status_text,
     build_status_text,
     build_telemetry_text,
+    calculate_cost_usd,
     configure_automation,
+    delete_job,
     delete_lineup,
     display_agent_name,
+    estimate_tokens,
     export_transcript,
+    extract_usage_metrics,
     list_export_files,
+    load_job,
     load_lineup,
     load_persistent_state,
     load_replay_payload,
     make_default_config,
     make_default_store,
     make_entry,
+    normalize_usage_payload,
     parse_command,
     parse_direct_message,
     record_agent_response,
+    record_comparison_view,
     record_judge_run,
     record_prompt_telemetry,
     record_replay_view,
@@ -42,6 +52,7 @@ from simulator_core import (
     render_entry,
     resolve_agent_name,
     resolve_replay_file,
+    save_job,
     save_lineup,
     save_persistent_state,
     set_agent_enabled,
@@ -53,10 +64,33 @@ from simulator_core import (
 
 
 AGENT_SPECS = {
-    "Claude": {"model": "anthropic/claude-sonnet-4.6", "bio": "Nuanced and detailed."},
-    "GPT_5": {"model": "openai/gpt-5.3-chat", "bio": "Logical and concise."},
-    "Gemini": {"model": "google/gemini-3.1-flash-image-preview", "bio": "Creative and fact-driven."},
+    "Claude": {
+        "model": "anthropic/claude-sonnet-4.6",
+        "bio": "Nuanced and detailed.",
+        "pricing": {"input_per_million": 3.0, "output_per_million": 15.0},
+    },
+    "GPT_5": {
+        "model": "openai/gpt-5.3-chat",
+        "bio": "Logical and concise.",
+        "pricing": {"input_per_million": 1.25, "output_per_million": 10.0},
+    },
+    "Gemini": {
+        "model": "google/gemini-3.1-flash-image-preview",
+        "bio": "Creative and fact-driven.",
+        "pricing": {"input_per_million": 0.35, "output_per_million": 1.05},
+    },
 }
+
+
+class UsageStub:
+    def __init__(self, prompt_tokens, completion_tokens):
+        self.prompt_tokens = prompt_tokens
+        self.completion_tokens = completion_tokens
+
+
+class EventStub:
+    def __init__(self, usage=None):
+        self.usage = usage
 
 
 class SimulatorCoreTests(unittest.TestCase):
@@ -123,6 +157,7 @@ class SimulatorCoreTests(unittest.TestCase):
         status = build_status_text(config, history_size=5, persistent_state=persistent_state)
         self.assertIn("Claude", status)
         self.assertIn("judge model", status.lower())
+        self.assertIn("Saved jobs", status)
         self.assertIn("Scheduled automation", status)
         self.assertIn("`3`", status)
 
@@ -160,6 +195,24 @@ class SimulatorCoreTests(unittest.TestCase):
         self.assertTrue(changed)
         self.assertIn("Deleted lineup", message)
 
+    def test_job_save_load_delete_cycle(self):
+        config = make_default_config(AGENT_SPECS)
+        persistent_state = make_default_store()
+        config["enabled_agents"] = ["Claude", "Gemini"]
+        configure_automation(config, "45", "3")
+        changed, message = save_job(config, persistent_state, "nightly review")
+        self.assertTrue(changed)
+        self.assertIn("nightly-review", message)
+        self.assertIn("nightly-review", build_jobs_text(persistent_state))
+        config["enabled_agents"] = ["GPT_5"]
+        changed, message = load_job(config, persistent_state, "nightly-review", AGENT_SPECS)
+        self.assertTrue(changed)
+        self.assertEqual(config["enabled_agents"], ["Claude", "Gemini"])
+        self.assertEqual(config["automation"]["run_limit"], 3)
+        changed, message = delete_job(persistent_state, "nightly-review")
+        self.assertTrue(changed)
+        self.assertIn("Deleted job", message)
+
     def test_prompt_and_response_telemetry(self):
         config = make_default_config(AGENT_SPECS)
         record_prompt_telemetry(config, "hello models", is_direct_message=False)
@@ -167,15 +220,35 @@ class SimulatorCoreTests(unittest.TestCase):
         record_judge_run(config, "judge this transcript")
         record_scheduled_run(config, "scheduled autonomous prompt")
         record_replay_view(config)
-        record_agent_response(config, "Claude", "hello there", 120.5)
-        record_agent_response(config, "Judge", "winner: Claude", 220.0)
+        record_comparison_view(config)
+        record_agent_response(
+            config,
+            "Claude",
+            "hello models",
+            "hello there",
+            120.5,
+            pricing=AGENT_SPECS["Claude"]["pricing"],
+            usage={"prompt_tokens": 10, "completion_tokens": 20},
+        )
+        record_agent_response(
+            config,
+            "Judge",
+            "judge this transcript",
+            "winner: Claude",
+            220.0,
+            pricing={"input_per_million": 0.15, "output_per_million": 0.6},
+        )
         telemetry_text = build_telemetry_text(config, AGENT_SPECS)
         analytics_text = build_analytics_text(config, [], AGENT_SPECS)
+        costs_text = build_costs_text(config, AGENT_SPECS)
         self.assertIn("Prompts sent: `4`", telemetry_text)
         self.assertIn("Scheduled runs: `1`", telemetry_text)
         self.assertIn("Replay views: `1`", telemetry_text)
+        self.assertIn("Comparisons: `1`", telemetry_text)
         self.assertIn("Judge", telemetry_text)
         self.assertIn("Most talkative agent", analytics_text)
+        self.assertIn("Total estimated cost", costs_text)
+        self.assertIn("usage samples `1`", costs_text)
 
     def test_schedule_configuration_and_stop(self):
         config = make_default_config(AGENT_SPECS)
@@ -194,6 +267,16 @@ class SimulatorCoreTests(unittest.TestCase):
         self.assertIn("Autonomous simulation run #1", prompt)
         self.assertIn(config["scenario"], prompt)
 
+    def test_usage_parsing_and_cost_calculation(self):
+        normalized = normalize_usage_payload({"input_tokens": 11, "output_tokens": 7})
+        self.assertEqual(normalized["prompt_tokens"], 11)
+        self.assertEqual(normalized["completion_tokens"], 7)
+        extracted = extract_usage_metrics(EventStub(UsageStub(9, 4)))
+        self.assertEqual(extracted["prompt_tokens"], 9)
+        self.assertEqual(extracted["completion_tokens"], 4)
+        self.assertGreater(calculate_cost_usd(1000, 500, AGENT_SPECS["Claude"]["pricing"]), 0)
+        self.assertGreater(estimate_tokens("hello world"), 0)
+
     def test_judge_prompt_contains_focus_and_transcript(self):
         config = make_default_config(AGENT_SPECS)
         history = [make_entry("Claude", "A thoughtful reply")]
@@ -206,9 +289,11 @@ class SimulatorCoreTests(unittest.TestCase):
             path = Path(temp_dir) / STATE_FILE
             state = make_default_store()
             state["saved_personas"]["Claude"] = "Test persona"
+            state["saved_jobs"]["nightly-review"] = {"interval_seconds": 30, "run_limit": 2}
             save_persistent_state(state, path)
             loaded = load_persistent_state(path)
             self.assertEqual(loaded["saved_personas"]["Claude"], "Test persona")
+            self.assertIn("nightly-review", loaded["saved_jobs"])
 
     def test_export_transcript_writes_markdown_and_json(self):
         config = make_default_config(AGENT_SPECS)
@@ -238,15 +323,20 @@ class SimulatorCoreTests(unittest.TestCase):
             try:
                 os.chdir(temp_dir)
                 export_transcript(history, config, "json")
+                export_transcript(history, config, "json")
                 exports = list_export_files(EXPORT_DIR)
-                self.assertEqual(len(exports), 1)
+                self.assertEqual(len(exports), 2)
                 self.assertIn("agentirc-", build_replays_text(exports))
                 resolved = resolve_replay_file("latest", EXPORT_DIR)
+                previous = resolve_replay_file("previous", EXPORT_DIR)
                 self.assertIsNotNone(resolved)
+                self.assertIsNotNone(previous)
                 payload = load_replay_payload(resolved)
                 replay_text = build_replay_text(payload, resolved.name, 2)
                 self.assertIn("Replay:", replay_text)
                 self.assertIn("Claude", replay_text)
+                comparison_text = build_replay_comparison_text(payload, resolved.name, payload, previous.name, 2)
+                self.assertIn("Replay Comparison", comparison_text)
             finally:
                 os.chdir(current_dir)
 

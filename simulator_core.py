@@ -91,10 +91,23 @@ def sanitize_key(value: str) -> str:
 
 
 
+def format_usd(amount: float) -> str:
+    return f"${amount:.6f}"
+
+
+
+def estimate_tokens(text: str) -> int:
+    if not text:
+        return 0
+    return max(1, round(len(text) / 4))
+
+
+
 def make_default_store() -> dict[str, Any]:
     return {
         "saved_lineups": {},
         "saved_personas": {},
+        "saved_jobs": {},
     }
 
 
@@ -114,6 +127,8 @@ def load_persistent_state(path: Path = STATE_FILE) -> dict[str, Any]:
             state["saved_lineups"] = payload["saved_lineups"]
         if isinstance(payload.get("saved_personas"), dict):
             state["saved_personas"] = payload["saved_personas"]
+        if isinstance(payload.get("saved_jobs"), dict):
+            state["saved_jobs"] = payload["saved_jobs"]
     return state
 
 
@@ -133,6 +148,25 @@ def make_default_automation() -> dict[str, Any]:
         "run_limit": 0,
         "last_run_at": None,
         "next_run_at": None,
+        "active_job_name": None,
+    }
+
+
+
+def make_agent_telemetry_entry() -> dict[str, Any]:
+    return {
+        "messages": 0,
+        "chars": 0,
+        "estimated_tokens": 0,
+        "total_latency_ms": 0.0,
+        "avg_latency_ms": 0.0,
+        "last_response_at": None,
+        "prompt_tokens": 0,
+        "completion_tokens": 0,
+        "total_tokens": 0,
+        "estimated_cost_usd": 0.0,
+        "actual_cost_usd": 0.0,
+        "usage_samples": 0,
     }
 
 
@@ -147,19 +181,12 @@ def make_default_telemetry(agent_specs: dict[str, dict[str, Any]]) -> dict[str, 
         "judge_runs": 0,
         "scheduled_runs": 0,
         "replay_views": 0,
+        "comparisons": 0,
         "errors": 0,
         "last_prompt": "",
-        "per_agent": {
-            name: {
-                "messages": 0,
-                "chars": 0,
-                "estimated_tokens": 0,
-                "total_latency_ms": 0.0,
-                "avg_latency_ms": 0.0,
-                "last_response_at": None,
-            }
-            for name in agent_specs.keys()
-        },
+        "total_estimated_cost_usd": 0.0,
+        "total_actual_cost_usd": 0.0,
+        "per_agent": {name: make_agent_telemetry_entry() for name in agent_specs.keys()},
     }
 
 
@@ -318,6 +345,7 @@ def build_help_text() -> str:
 - `/moderator [mode]` - List or set moderation style.
 - `/telemetry` - Show per-agent response volume and latency telemetry.
 - `/analytics` - Show aggregate session analytics.
+- `/costs` - Show estimated/actual token and cost tracking.
 - `/judge [focus]` - Ask the judge model to evaluate the recent transcript.
 - `/personas` - Show active custom persona overrides.
 - `/persona <agent> <text>` - Set a custom persona override.
@@ -326,11 +354,16 @@ def build_help_text() -> str:
 - `/save-lineup <name>` - Save the current lineup and simulation settings.
 - `/load-lineup <name>` - Load a saved lineup preset.
 - `/delete-lineup <name>` - Delete a saved lineup preset.
+- `/jobs` - List saved autonomous job presets.
+- `/save-job <name>` - Save the current simulator config plus schedule settings as a reusable job.
+- `/run-job <name>` - Load a saved job and start its schedule.
+- `/delete-job <name>` - Delete a saved job preset.
 - `/schedule` - Show autonomous scheduling status.
 - `/schedule <seconds> [runs]` - Start scheduled autonomous simulations.
 - `/schedule stop` - Stop the active autonomous schedule.
 - `/replays` - List exported transcript files.
-- `/replay [latest|file.json] [count]` - Show a replay excerpt from an exported transcript.
+- `/replay [latest|previous|file.json] [count]` - Show a replay excerpt from an exported transcript.
+- `/compare <left> <right> [count]` - Compare two exported transcript replays side by side.
 - `/history [count]` - Show recent transcript lines.
 - `/export [md|json|both]` - Export the transcript to `exports/`.
 - `/clear` - Clear the in-memory transcript buffer for this session.
@@ -370,12 +403,19 @@ def build_agent_detail_text(agent_name: str, agent_specs: dict[str, dict[str, An
     state = "enabled" if agent_name in enabled_agents else "disabled"
     effective_persona = get_effective_persona(agent_name, agent_specs, config)
     custom_persona = config.get("persona_overrides", {}).get(agent_name)
+    pricing = spec.get("pricing", {})
+    pricing_text = "n/a"
+    if pricing:
+        pricing_text = (
+            f"input {pricing.get('input_per_million', 0)} / output {pricing.get('output_per_million', 0)} USD per 1M tokens"
+        )
     custom_suffix = f"\n- Custom persona override: {custom_persona}" if custom_persona else ""
     return (
         f"**{display_agent_name(agent_name)}**\n"
         f"- Status: {state}\n"
         f"- Model: `{spec['model']}`\n"
-        f"- Persona: {effective_persona}"
+        f"- Persona: {effective_persona}\n"
+        f"- Pricing hint: {pricing_text}"
         f"{custom_suffix}"
     )
 
@@ -385,6 +425,7 @@ def build_status_text(config: dict[str, Any], history_size: int, persistent_stat
     enabled = ", ".join(display_agent_name(name) for name in config["enabled_agents"])
     saved_lineups = len(persistent_state.get("saved_lineups", {}))
     saved_personas = len(config.get("persona_overrides", {}))
+    saved_jobs = len(persistent_state.get("saved_jobs", {}))
     telemetry = config["telemetry"]
     automation = config["automation"]
     return (
@@ -398,8 +439,10 @@ def build_status_text(config: dict[str, Any], history_size: int, persistent_stat
         f"- Max discuss rounds: `{config['max_rounds']}`\n"
         f"- Simulations run: `{config['simulation_count']}`\n"
         f"- Prompts sent: `{telemetry['prompts_sent']}`\n"
+        f"- Estimated cost: `{format_usd(telemetry['total_estimated_cost_usd'])}`\n"
         f"- Transcript entries: `{history_size}`\n"
         f"- Saved lineups: `{saved_lineups}`\n"
+        f"- Saved jobs: `{saved_jobs}`\n"
         f"- Custom personas: `{saved_personas}`\n"
         f"- Scheduled automation: `{'on' if automation['enabled'] else 'off'}`\n"
         f"- Enabled agents: {enabled}"
@@ -461,6 +504,22 @@ def build_lineups_text(persistent_state: dict[str, Any]) -> str:
             f"  Agents: {enabled or 'none'}"
         )
     return "**Saved Lineups**\n" + "\n".join(lines)
+
+
+
+def build_jobs_text(persistent_state: dict[str, Any]) -> str:
+    jobs = persistent_state.get("saved_jobs", {})
+    if not jobs:
+        return "*** No saved jobs yet."
+
+    lines = []
+    for name, job in jobs.items():
+        enabled = ", ".join(display_agent_name(agent) for agent in job.get("enabled_agents", []))
+        lines.append(
+            f"- **{name}** — every `{job.get('interval_seconds', DEFAULT_AUTOMATION_INTERVAL_SECONDS)}` sec, runs `{job.get('run_limit', DEFAULT_AUTOMATION_RUNS)}`  \n"
+            f"  Scenario `{job.get('scenario', 'omni')}`, mode `{job.get('mode', DEFAULT_MODE)}`, agents: {enabled or 'none'}"
+        )
+    return "**Saved Jobs**\n" + "\n".join(lines)
 
 
 
@@ -539,6 +598,7 @@ def configure_automation(config: dict[str, Any], raw_interval: str, raw_runs: st
     automation["run_limit"] = run_limit
     automation["last_run_at"] = None
     automation["next_run_at"] = None
+    automation["active_job_name"] = None
     return True, (
         f"Scheduled **{run_limit}** autonomous run(s) every **{interval_seconds}** second(s)."
     )
@@ -551,6 +611,7 @@ def stop_automation(config: dict[str, Any]) -> str:
     automation["remaining_runs"] = 0
     automation["run_limit"] = 0
     automation["next_run_at"] = None
+    automation["active_job_name"] = None
     return "Autonomous scheduling stopped."
 
 
@@ -596,14 +657,59 @@ def coerce_message_content(value: Any) -> str:
 def ensure_telemetry_agent(config: dict[str, Any], agent_name: str):
     per_agent = config["telemetry"].setdefault("per_agent", {})
     if agent_name not in per_agent:
-        per_agent[agent_name] = {
-            "messages": 0,
-            "chars": 0,
-            "estimated_tokens": 0,
-            "total_latency_ms": 0.0,
-            "avg_latency_ms": 0.0,
-            "last_response_at": None,
-        }
+        per_agent[agent_name] = make_agent_telemetry_entry()
+
+
+
+def normalize_usage_payload(usage: Any) -> dict[str, int] | None:
+    if usage is None:
+        return None
+
+    def _read(container: Any, *names: str) -> int | None:
+        for name in names:
+            if isinstance(container, dict) and name in container and container[name] is not None:
+                return int(container[name])
+            if hasattr(container, name):
+                value = getattr(container, name)
+                if value is not None:
+                    return int(value)
+        return None
+
+    prompt_tokens = _read(usage, "prompt_tokens", "input_tokens")
+    completion_tokens = _read(usage, "completion_tokens", "output_tokens")
+    total_tokens = _read(usage, "total_tokens")
+
+    if prompt_tokens is None and completion_tokens is None and total_tokens is None:
+        return None
+
+    if prompt_tokens is None and total_tokens is not None and completion_tokens is not None:
+        prompt_tokens = max(0, total_tokens - completion_tokens)
+    if completion_tokens is None and total_tokens is not None and prompt_tokens is not None:
+        completion_tokens = max(0, total_tokens - prompt_tokens)
+
+    return {
+        "prompt_tokens": prompt_tokens or 0,
+        "completion_tokens": completion_tokens or 0,
+    }
+
+
+
+def extract_usage_metrics(event: Any) -> dict[str, int] | None:
+    for field_name in ("models_usage", "model_usage", "usage"):
+        usage = getattr(event, field_name, None)
+        normalized = normalize_usage_payload(usage)
+        if normalized:
+            return normalized
+    return None
+
+
+
+def calculate_cost_usd(prompt_tokens: int, completion_tokens: int, pricing: dict[str, Any] | None) -> float:
+    if not pricing:
+        return 0.0
+    input_rate = float(pricing.get("input_per_million", 0.0) or 0.0)
+    output_rate = float(pricing.get("output_per_million", 0.0) or 0.0)
+    return round((prompt_tokens / 1_000_000 * input_rate) + (completion_tokens / 1_000_000 * output_rate), 8)
 
 
 
@@ -647,20 +753,62 @@ def record_replay_view(config: dict[str, Any]):
 
 
 
+def record_comparison_view(config: dict[str, Any]):
+    config["telemetry"]["comparisons"] += 1
+
+
+
 def record_error(config: dict[str, Any]):
     config["telemetry"]["errors"] += 1
 
 
 
-def record_agent_response(config: dict[str, Any], agent_name: str, content: str, latency_ms: float):
+def record_agent_response(
+    config: dict[str, Any],
+    agent_name: str,
+    prompt: str,
+    content: str,
+    latency_ms: float,
+    pricing: dict[str, Any] | None = None,
+    usage: dict[str, int] | None = None,
+):
     ensure_telemetry_agent(config, agent_name)
     stats = config["telemetry"]["per_agent"][agent_name]
+
+    estimated_prompt_tokens = estimate_tokens(prompt)
+    estimated_completion_tokens = estimate_tokens(content)
+    estimated_total_tokens = estimated_prompt_tokens + estimated_completion_tokens
+    estimated_cost_usd = calculate_cost_usd(
+        estimated_prompt_tokens,
+        estimated_completion_tokens,
+        pricing,
+    )
+
+    actual_prompt_tokens = estimated_prompt_tokens
+    actual_completion_tokens = estimated_completion_tokens
+    actual_cost_usd = 0.0
+
+    if usage:
+        actual_prompt_tokens = int(usage.get("prompt_tokens", estimated_prompt_tokens))
+        actual_completion_tokens = int(usage.get("completion_tokens", estimated_completion_tokens))
+        actual_cost_usd = calculate_cost_usd(actual_prompt_tokens, actual_completion_tokens, pricing)
+        stats["usage_samples"] += 1
+
     stats["messages"] += 1
     stats["chars"] += len(content)
-    stats["estimated_tokens"] += max(1, round(len(content) / 4))
+    stats["estimated_tokens"] += estimated_completion_tokens
     stats["total_latency_ms"] += latency_ms
     stats["avg_latency_ms"] = round(stats["total_latency_ms"] / stats["messages"], 2)
     stats["last_response_at"] = datetime.now().isoformat()
+    stats["prompt_tokens"] += actual_prompt_tokens
+    stats["completion_tokens"] += actual_completion_tokens
+    stats["total_tokens"] += actual_prompt_tokens + actual_completion_tokens
+    stats["estimated_cost_usd"] = round(stats["estimated_cost_usd"] + estimated_cost_usd, 8)
+    stats["actual_cost_usd"] = round(stats["actual_cost_usd"] + actual_cost_usd, 8)
+
+    telemetry = config["telemetry"]
+    telemetry["total_estimated_cost_usd"] = round(telemetry["total_estimated_cost_usd"] + estimated_cost_usd, 8)
+    telemetry["total_actual_cost_usd"] = round(telemetry["total_actual_cost_usd"] + actual_cost_usd, 8)
 
 
 
@@ -676,6 +824,7 @@ def build_telemetry_text(config: dict[str, Any], agent_specs: dict[str, dict[str
         f"- Judge runs: `{telemetry['judge_runs']}`",
         f"- Scheduled runs: `{telemetry['scheduled_runs']}`",
         f"- Replay views: `{telemetry['replay_views']}`",
+        f"- Comparisons: `{telemetry['comparisons']}`",
         f"- Errors: `{telemetry['errors']}`",
         "",
         "**Per-Agent Telemetry**",
@@ -690,8 +839,34 @@ def build_telemetry_text(config: dict[str, Any], agent_specs: dict[str, dict[str
         stats = telemetry["per_agent"][agent_name]
         lines.append(
             f"- **{display_agent_name(agent_name)}** — messages `{stats['messages']}`, "
-            f"chars `{stats['chars']}`, est tokens `{stats['estimated_tokens']}`, "
+            f"chars `{stats['chars']}`, total tokens `{stats['total_tokens']}`, "
             f"avg latency `{stats['avg_latency_ms']}` ms"
+        )
+    return "\n".join(lines)
+
+
+
+def build_costs_text(config: dict[str, Any], agent_specs: dict[str, dict[str, Any]]) -> str:
+    telemetry = config["telemetry"]
+    lines = [
+        "**Cost Tracking**",
+        "- Pricing is hybrid: provider usage is used when available, otherwise prompt/response token estimates are used.",
+        f"- Total estimated cost: `{format_usd(telemetry['total_estimated_cost_usd'])}`",
+        f"- Total actual cost: `{format_usd(telemetry['total_actual_cost_usd'])}`",
+        "",
+        "**Per-Agent Cost View**",
+    ]
+
+    ordered_agent_names = list(agent_specs.keys()) + [
+        name for name in telemetry["per_agent"].keys() if name not in agent_specs
+    ]
+    for agent_name in ordered_agent_names:
+        if agent_name not in telemetry["per_agent"]:
+            continue
+        stats = telemetry["per_agent"][agent_name]
+        lines.append(
+            f"- **{display_agent_name(agent_name)}** — prompt `{stats['prompt_tokens']}`, completion `{stats['completion_tokens']}`, "
+            f"estimated `{format_usd(stats['estimated_cost_usd'])}`, actual `{format_usd(stats['actual_cost_usd'])}`, usage samples `{stats['usage_samples']}`"
         )
     return "\n".join(lines)
 
@@ -703,7 +878,7 @@ def build_analytics_text(config: dict[str, Any], history: list[dict[str, Any]], 
     ranked = sorted(per_agent.items(), key=lambda item: item[1]["messages"], reverse=True)
     top_agent = display_agent_name(ranked[0][0]) if ranked and ranked[0][1]["messages"] else "n/a"
     total_agent_messages = sum(stats["messages"] for stats in per_agent.values())
-    total_estimated_tokens = sum(stats["estimated_tokens"] for stats in per_agent.values())
+    total_tokens = sum(stats["total_tokens"] for stats in per_agent.values())
     total_latency = sum(stats["total_latency_ms"] for stats in per_agent.values())
     average_latency = round(total_latency / total_agent_messages, 2) if total_agent_messages else 0.0
     active_agent_count = sum(1 for name in config["enabled_agents"] if name in agent_specs)
@@ -713,11 +888,12 @@ def build_analytics_text(config: dict[str, Any], history: list[dict[str, Any]], 
         f"- Active agents: `{active_agent_count}`\n"
         f"- Transcript entries retained: `{len(history)}`\n"
         f"- Total agent messages: `{total_agent_messages}`\n"
-        f"- Estimated output tokens: `{total_estimated_tokens}`\n"
+        f"- Tracked total tokens: `{total_tokens}`\n"
         f"- Average response latency: `{average_latency}` ms\n"
         f"- Most talkative agent: `{top_agent}`\n"
         f"- Scheduled runs completed: `{telemetry['scheduled_runs']}`\n"
         f"- Replay views: `{telemetry['replay_views']}`\n"
+        f"- Estimated total cost: `{format_usd(telemetry['total_estimated_cost_usd'])}`\n"
         f"- Last prompt: {telemetry['last_prompt'] or 'n/a'}"
     )
 
@@ -728,12 +904,14 @@ def build_schedule_status_text(config: dict[str, Any]) -> str:
     status = "enabled" if automation["enabled"] else "disabled"
     next_run = automation["next_run_at"] or "n/a"
     last_run = automation["last_run_at"] or "n/a"
+    active_job_name = automation.get("active_job_name") or "n/a"
     return (
         "**Autonomous Schedule**\n"
         f"- Status: `{status}`\n"
         f"- Interval seconds: `{automation['interval_seconds']}`\n"
         f"- Remaining runs: `{automation['remaining_runs']}`\n"
         f"- Run limit: `{automation['run_limit']}`\n"
+        f"- Active job: `{active_job_name}`\n"
         f"- Last run at: `{last_run}`\n"
         f"- Next run at: `{next_run}`"
     )
@@ -804,6 +982,73 @@ def delete_lineup(persistent_state: dict[str, Any], raw_name: str) -> tuple[bool
 
 
 
+def save_job(config: dict[str, Any], persistent_state: dict[str, Any], raw_name: str) -> tuple[bool, str]:
+    job_name = sanitize_key(raw_name)
+    if not job_name:
+        return False, "Job name cannot be empty."
+
+    automation = config["automation"]
+    interval_seconds = automation.get("interval_seconds") or DEFAULT_AUTOMATION_INTERVAL_SECONDS
+    run_limit = automation.get("run_limit") or DEFAULT_AUTOMATION_RUNS
+    persistent_state.setdefault("saved_jobs", {})[job_name] = {
+        "enabled_agents": list(config["enabled_agents"]),
+        "mode": config["mode"],
+        "topic": config["topic"],
+        "scenario": config["scenario"],
+        "max_rounds": config["max_rounds"],
+        "moderator_mode": config["moderator_mode"],
+        "interval_seconds": interval_seconds,
+        "run_limit": run_limit,
+    }
+    return True, f"Saved job **{job_name}**."
+
+
+
+def load_job(
+    config: dict[str, Any],
+    persistent_state: dict[str, Any],
+    raw_name: str,
+    agent_specs: dict[str, dict[str, Any]],
+) -> tuple[bool, str]:
+    job_name = sanitize_key(raw_name)
+    job = persistent_state.get("saved_jobs", {}).get(job_name)
+    if not job:
+        return False, f"Unknown job: `{raw_name}`"
+
+    enabled_agents = [agent for agent in job.get("enabled_agents", []) if agent in agent_specs]
+    if not enabled_agents:
+        enabled_agents = list(agent_specs.keys())
+
+    config["enabled_agents"] = enabled_agents
+    config["mode"] = job.get("mode", DEFAULT_MODE)
+    config["topic"] = job.get("topic", DEFAULT_TOPIC)
+    config["scenario"] = job.get("scenario", "omni")
+    config["max_rounds"] = job.get("max_rounds", DEFAULT_MAX_ROUNDS)
+    config["moderator_mode"] = job.get("moderator_mode", DEFAULT_MODERATOR_MODE)
+    config["automation"] = {
+        "enabled": True,
+        "interval_seconds": int(job.get("interval_seconds", DEFAULT_AUTOMATION_INTERVAL_SECONDS)),
+        "remaining_runs": int(job.get("run_limit", DEFAULT_AUTOMATION_RUNS)),
+        "run_limit": int(job.get("run_limit", DEFAULT_AUTOMATION_RUNS)),
+        "last_run_at": None,
+        "next_run_at": None,
+        "active_job_name": job_name,
+    }
+    return True, f"Loaded job **{job_name}** and prepared its schedule."
+
+
+
+def delete_job(persistent_state: dict[str, Any], raw_name: str) -> tuple[bool, str]:
+    job_name = sanitize_key(raw_name)
+    saved_jobs = persistent_state.get("saved_jobs", {})
+    if job_name not in saved_jobs:
+        return False, f"Unknown job: `{raw_name}`"
+
+    del saved_jobs[job_name]
+    return True, f"Deleted job **{job_name}**."
+
+
+
 def build_judge_prompt(history: list[dict[str, Any]], config: dict[str, Any], focus: str) -> str:
     transcript_lines = [render_entry(entry) for entry in history[-30:]]
     transcript = "\n".join(transcript_lines) if transcript_lines else "(no transcript available)"
@@ -847,16 +1092,18 @@ def resolve_replay_file(raw_name: str, export_dir: Path = EXPORT_DIR) -> Path | 
     if not available:
         return None
 
-    cleaned = raw_name.strip()
-    if not cleaned or cleaned.lower() == "latest":
+    cleaned = raw_name.strip().lower()
+    if not cleaned or cleaned == "latest":
         return available[0]
+    if cleaned == "previous":
+        return available[1] if len(available) > 1 else None
 
-    direct_path = export_dir / cleaned
+    direct_path = export_dir / raw_name.strip()
     if direct_path.exists() and direct_path.is_file():
         return direct_path
 
     for path in available:
-        if path.name == cleaned:
+        if path.name == raw_name.strip():
             return path
     return None
 
@@ -887,13 +1134,39 @@ def build_replay_text(payload: dict[str, Any], replay_name: str, count: int) -> 
 
 
 
+def build_replay_comparison_text(
+    left_payload: dict[str, Any],
+    left_name: str,
+    right_payload: dict[str, Any],
+    right_name: str,
+    count: int,
+) -> str:
+    left_history = [render_entry(entry) for entry in left_payload.get("history", [])[-count:] if isinstance(entry, dict)]
+    right_history = [render_entry(entry) for entry in right_payload.get("history", [])[-count:] if isinstance(entry, dict)]
+    left_config = left_payload.get("config", {})
+    right_config = right_payload.get("config", {})
+
+    left_rendered = "\n".join(f"- `{line}`" for line in left_history) if left_history else "- `(no lines)`"
+    right_rendered = "\n".join(f"- `{line}`" for line in right_history) if right_history else "- `(no lines)`"
+
+    return (
+        "**Replay Comparison**\n"
+        f"- Left: `{left_name}` — scenario `{left_config.get('scenario', 'n/a')}`, mode `{left_config.get('mode', 'n/a')}`, topic {left_config.get('topic', 'n/a')}\n"
+        f"- Right: `{right_name}` — scenario `{right_config.get('scenario', 'n/a')}`, mode `{right_config.get('mode', 'n/a')}`, topic {right_config.get('topic', 'n/a')}\n"
+        f"- Showing last `{count}` line(s) from each replay\n\n"
+        f"**Left Transcript**\n{left_rendered}\n\n"
+        f"**Right Transcript**\n{right_rendered}"
+    )
+
+
+
 def export_transcript(
     history: list[dict[str, Any]],
     config: dict[str, Any],
     export_format: str,
 ) -> list[str]:
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     file_root = EXPORT_DIR / f"agentirc-{timestamp}"
     written_paths: list[str] = []
 
@@ -920,6 +1193,9 @@ def export_transcript(
             f"- Judge runs: `{config['telemetry']['judge_runs']}`",
             f"- Scheduled runs: `{config['telemetry']['scheduled_runs']}`",
             f"- Replay views: `{config['telemetry']['replay_views']}`",
+            f"- Comparisons: `{config['telemetry']['comparisons']}`",
+            f"- Estimated cost: `{format_usd(config['telemetry']['total_estimated_cost_usd'])}`",
+            f"- Actual cost: `{format_usd(config['telemetry']['total_actual_cost_usd'])}`",
             "",
             "## Transcript",
         ]

@@ -1,57 +1,57 @@
 # Multi-Model Simulator Expansion
 
 ## Summary
-This implementation pass extends AgentIRC beyond telemetry and judging into a more complete simulation operations console with autonomous scheduling and replay support.
+This implementation pass extends AgentIRC beyond replay and scheduling into a more complete simulation operations console with hybrid cost tracking, replay comparison, and reusable autonomous jobs.
 
 ## Newly Added Capabilities
-### Autonomous Scheduling
-- `/schedule` status command
-- `/schedule <seconds> [runs]` for bounded autonomous simulation loops
-- `/schedule stop` to stop the active schedule
-- autonomous prompt generation based on current topic, scenario, and mode
-- schedule status tracked in live session config
+### Hybrid Cost Tracking
+- `/costs` command for session-level and per-agent cost visibility
+- pricing hints attached to agent specs
+- usage extraction from streamed events when available
+- fallback token estimation when provider usage metadata is absent
+- actual-cost and estimated-cost tracking side by side
 
-### Replay Support
-- `/replays` to list exported JSON replay sources
-- `/replay [latest|file.json] [count]` to inspect prior transcript excerpts
-- JSON export discovery and replay payload loading helpers
-- replay-view telemetry
+### Replay Comparison
+- `/compare <left> <right> [count]`
+- support for `latest` and `previous` replay resolution
+- side-by-side transcript excerpt comparison from exported JSON artifacts
+- replay comparison telemetry counter
 
-### Telemetry Enhancements
-- scheduled-run telemetry
-- replay-view telemetry
-- judge prompts no longer distort broadcast/discuss counters
-- richer status surface including schedule state
+### Reusable Autonomous Jobs
+- `/jobs`
+- `/save-job <name>`
+- `/run-job <name>`
+- `/delete-job <name>`
+- local persistence of automation presets tied to simulator config
 
 ## Implementation Notes
 ### `simulator_core.py`
 This module now additionally owns:
-- automation configuration defaults and status rendering
-- autonomous prompt construction
-- scheduled-run telemetry updates
-- replay file discovery and loading
-- replay rendering helpers
+- hybrid usage parsing and cost calculation helpers
+- replay comparison helpers
+- saved job persistence helpers
+- comparison telemetry helpers
+- richer per-agent telemetry shape
 
 ### `app.py`
 This module now additionally handles:
-- a session-scoped asyncio automation task
-- autonomous schedule lifecycle commands
-- replay commands wired to export artifacts
-- automation-task cleanup on chat end and reset
+- pricing hints for active model lineup
+- `/costs`, `/jobs`, `/save-job`, `/run-job`, `/delete-job`, and `/compare`
+- judge pricing hinting
+- usage extraction from streamed events before telemetry updates
 
 ## Findings and Analysis
-### 1. Export artifacts became more valuable once replay existed
-JSON transcript exports are no longer just archival outputs. They now act as lightweight replay artifacts, which increases the value of consistent transcript formatting and export metadata.
+### 1. Hybrid cost tracking is more honest than fake precision
+Provider usage metadata is not guaranteed across all model backends, so the simulator now explicitly distinguishes between actual cost and estimated cost instead of pretending heuristics are authoritative.
 
-### 2. Bounded scheduling is the safest first automation model
-A schedule that requires both an interval and a bounded run count is significantly safer than unconstrained autonomous looping. It reduces the risk of runaway costs and keeps operator intent explicit.
+### 2. Replay comparison is the natural next step after replay
+Once replay existed, comparison became the highest-value follow-up because operators need to inspect differences across runs, not just reopen individual transcripts.
 
-### 3. Replay and scheduling reinforce each other
-Scheduling produces structured repeated runs; replay makes those runs reviewable. Together they move AgentIRC closer to a real simulation lab rather than a one-shot chat interface.
+### 3. Saved jobs are the right level of automation persistence
+Persisting reusable job presets gives strong operator leverage without prematurely building a full scheduler service.
 
 ## Recommended Follow-Up
-- provider-native token/cost accounting
-- interactive replay stepping
-- scheduled runs based on saved lineups and saved scenarios
-- side-by-side comparison between two exported runs
+- interactive replay stepping UI
 - multi-room orchestration
+- external IRC/websocket bridge support
+- opt-in integration tests for live scheduling and streaming

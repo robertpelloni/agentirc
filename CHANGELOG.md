@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 - 2026-04-05
+- Added hybrid cost tracking with `/costs`, configurable pricing hints, usage extraction helpers, and side-by-side estimated vs actual cost accounting.
+- Added saved job presets with `/jobs`, `/save-job`, `/run-job`, and `/delete-job`.
+- Added replay comparison with `/compare <left> <right> [count]` and support for `previous` replay resolution.
+- Expanded telemetry with comparison counters, token totals, per-agent cost tracking, and usage sample counts.
+- Expanded persistent state to include saved jobs.
+- Expanded unit coverage from 20 to 22 tests.
+- Expanded README, findings, design, implementation, testing, changelog, and handoff documentation for cost tracking, replay comparison, and saved jobs.
+
 ## 0.4.0 - 2026-04-05
 - Added autonomous scheduling with `/schedule`, bounded run counts, schedule status, and schedule-stop support.
 - Added replay support with `/replays`, `/replay`, export discovery helpers, and replay rendering from JSON transcript artifacts.

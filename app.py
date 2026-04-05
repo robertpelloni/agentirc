@@ -25,13 +25,16 @@ from simulator_core import (
     build_agents_text,
     build_analytics_text,
     build_autonomous_prompt,
+    build_costs_text,
     build_help_text,
     build_history_text,
+    build_jobs_text,
     build_judge_prompt,
     build_lineup_text,
     build_lineups_text,
     build_moderator_modes_text,
     build_personas_text,
+    build_replay_comparison_text,
     build_replay_text,
     build_replays_text,
     build_schedule_status_text,
@@ -40,10 +43,13 @@ from simulator_core import (
     build_telemetry_text,
     coerce_message_content,
     configure_automation,
+    delete_job,
     delete_lineup,
     display_agent_name,
     export_transcript,
+    extract_usage_metrics,
     list_export_files,
+    load_job,
     load_lineup,
     load_persistent_state,
     load_replay_payload,
@@ -52,6 +58,7 @@ from simulator_core import (
     parse_command,
     parse_direct_message,
     record_agent_response,
+    record_comparison_view,
     record_error,
     record_judge_run,
     record_prompt_telemetry,
@@ -60,6 +67,7 @@ from simulator_core import (
     render_entry,
     resolve_agent_name,
     resolve_replay_file,
+    save_job,
     save_lineup,
     save_persistent_state,
     set_agent_enabled,
@@ -88,37 +96,44 @@ SESSION_TEAM_KEY = "team"
 SESSION_HISTORY_KEY = "history"
 SESSION_STATE_KEY = "persistent_state"
 SESSION_AUTOMATION_TASK_KEY = "automation_task"
+JUDGE_PRICING = {"input_per_million": 0.15, "output_per_million": 0.6}
 
 AGENT_SPECS = {
     "Claude": {
         "model": "anthropic/claude-sonnet-4.6",
         "color": "#ffaa00",
         "bio": "Nuanced and detailed.",
+        "pricing": {"input_per_million": 3.0, "output_per_million": 15.0},
     },
     "GPT_5": {
         "model": "openai/gpt-5.3-chat",
         "color": "#00ff00",
         "bio": "Logical and concise.",
+        "pricing": {"input_per_million": 1.25, "output_per_million": 10.0},
     },
     "Gemini": {
         "model": "google/gemini-3.1-flash-image-preview",
         "color": "#44aaff",
         "bio": "Creative and fact-driven.",
+        "pricing": {"input_per_million": 0.35, "output_per_million": 1.05},
     },
     "Grok": {
         "model": "x-ai/grok-4.1-fast",
         "color": "#ffffff",
         "bio": "Rebellious and witty.",
+        "pricing": {"input_per_million": 5.0, "output_per_million": 15.0},
     },
     "Qwen": {
         "model": "qwen/qwen3.6-plus-preview:free",
         "color": "#ff55ff",
         "bio": "Versatile power.",
+        "pricing": {"input_per_million": 0.0, "output_per_million": 0.0},
     },
     "Kimi": {
         "model": "moonshotai/kimi-k2.5",
         "color": "#ffff00",
         "bio": "Deep reasoning.",
+        "pricing": {"input_per_million": 0.6, "output_per_million": 2.5},
     },
 }
 
@@ -314,6 +329,7 @@ async def run_automation_loop():
         automation["remaining_runs"] = 0
         automation["run_limit"] = 0
         automation["next_run_at"] = None
+        automation["active_job_name"] = None
         await send_system_notice("Autonomous schedule completed.")
     except asyncio.CancelledError:
         raise
@@ -435,6 +451,10 @@ async def handle_command(command: str, args: str) -> bool:
         await cl.Message(content=build_analytics_text(config, get_history(), AGENT_SPECS)).send()
         return True
 
+    if command == "/costs":
+        await cl.Message(content=build_costs_text(config, AGENT_SPECS)).send()
+        return True
+
     if command == "/judge":
         if not get_history():
             await send_system_notice("Judge evaluation requires transcript history.")
@@ -443,7 +463,13 @@ async def handle_command(command: str, args: str) -> bool:
         judge_prompt = build_judge_prompt(get_history(), config, args)
         record_judge_run(config, judge_prompt)
         await send_system_notice(f"Judge model `{config['judge_model']}` evaluating the recent transcript...")
-        await stream_agent(judge_agent, judge_prompt, telemetry_name="Judge", count_prompt_telemetry=False)
+        await stream_agent(
+            judge_agent,
+            judge_prompt,
+            telemetry_name="Judge",
+            pricing=JUDGE_PRICING,
+            count_prompt_telemetry=False,
+        )
         return True
 
     if command == "/personas":
@@ -505,6 +531,43 @@ async def handle_command(command: str, args: str) -> bool:
         await send_system_notice(response)
         return True
 
+    if command == "/jobs":
+        await cl.Message(content=build_jobs_text(persistent_state)).send()
+        return True
+
+    if command == "/save-job":
+        if not args:
+            await send_system_notice("Usage: `/save-job <name>`")
+            return True
+        changed, response = save_job(config, persistent_state, args)
+        if changed:
+            persist_state()
+        await send_system_notice(response)
+        return True
+
+    if command == "/run-job":
+        if not args:
+            await send_system_notice("Usage: `/run-job <name>`")
+            return True
+        changed, response = load_job(config, persistent_state, args, AGENT_SPECS)
+        if changed:
+            rebuild_team()
+            await stop_automation_task()
+            task = asyncio.create_task(run_automation_loop())
+            set_automation_task(task)
+        await send_system_notice(response)
+        return True
+
+    if command == "/delete-job":
+        if not args:
+            await send_system_notice("Usage: `/delete-job <name>`")
+            return True
+        changed, response = delete_job(persistent_state, args)
+        if changed:
+            persist_state()
+        await send_system_notice(response)
+        return True
+
     if command == "/schedule":
         if not args:
             await cl.Message(content=build_schedule_status_text(config)).send()
@@ -552,6 +615,39 @@ async def handle_command(command: str, args: str) -> bool:
         await cl.Message(content=build_replay_text(payload, replay_path.name, count)).send()
         return True
 
+    if command == "/compare":
+        parts = args.split()
+        if len(parts) < 2:
+            await send_system_notice("Usage: `/compare <left> <right> [count]`")
+            return True
+        left_name = parts[0]
+        right_name = parts[1]
+        count = 10
+        if len(parts) > 2:
+            try:
+                count = max(1, min(100, int(parts[2])))
+            except ValueError:
+                await send_system_notice("Comparison line count must be an integer between 1 and 100.")
+                return True
+        left_path = resolve_replay_file(left_name, EXPORT_DIR)
+        right_path = resolve_replay_file(right_name, EXPORT_DIR)
+        if left_path is None or right_path is None:
+            await send_system_notice("One or both replay exports could not be resolved.")
+            return True
+        left_payload = load_replay_payload(left_path)
+        right_payload = load_replay_payload(right_path)
+        record_comparison_view(config)
+        await cl.Message(
+            content=build_replay_comparison_text(
+                left_payload,
+                left_path.name,
+                right_payload,
+                right_path.name,
+                count,
+            )
+        ).send()
+        return True
+
     if command == "/history":
         count = 10
         if args:
@@ -594,6 +690,7 @@ async def stream_agent(
     prompt: str,
     target_name: str | None = None,
     telemetry_name: str | None = None,
+    pricing: dict | None = None,
     count_prompt_telemetry: bool = True,
 ):
     config = get_config()
@@ -611,9 +708,21 @@ async def stream_agent(
             continue
 
         author = telemetry_name or (display_agent_name(source) if source in AGENT_SPECS else source)
-        latency_ms = round((perf_counter() - start_time) * 1000, 2)
         telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
-        record_agent_response(config, telemetry_agent_name, content, latency_ms)
+        usage = extract_usage_metrics(event)
+        resolved_pricing = pricing
+        if resolved_pricing is None and source in AGENT_SPECS:
+            resolved_pricing = AGENT_SPECS[source].get("pricing")
+        latency_ms = round((perf_counter() - start_time) * 1000, 2)
+        record_agent_response(
+            config,
+            telemetry_agent_name,
+            prompt,
+            content,
+            latency_ms,
+            pricing=resolved_pricing,
+            usage=usage,
+        )
         entry = add_history_entry(author=author, content=content, kind="message", target=reply_target)
         await cl.Message(author=author, content=render_entry(entry)).send()
 

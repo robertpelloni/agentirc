@@ -18,28 +18,29 @@ The simulator became significantly easier to extend after splitting general-purp
 
 ### Findings
 - **Live UI code and reusable domain logic should not live in the same file** once command surface area grows.
-- **Streaming model events are runtime-specific**, but transcript formatting, persistence, telemetry, replay, and preset logic are not.
+- **Streaming model events are runtime-specific**, but transcript formatting, persistence, telemetry, replay, comparison, and preset logic are not.
 - **Helper extraction increases testability immediately** because most simulator rules can be validated without a live Chainlit or OpenRouter session.
 
 ### Result
-- `app.py` now focuses on Chainlit hooks, AutoGen team construction, command dispatch, scheduling, and event streaming.
+- `app.py` focuses on Chainlit hooks, AutoGen team construction, command dispatch, scheduling, and event streaming.
 - `simulator_core.py` owns the simulator’s domain behavior.
 
-## 3. Stateful Operator Features Deliver Outsized Value
+## 3. Stateful Operator Features Continue to Deliver Outsized Value
 The highest-leverage additions were not new models but operator workflow improvements.
 
 ### Findings
-- Re-entering personas and preferred lineups every session creates friction and slows experimentation.
+- Re-entering personas, lineups, and recurring automation settings every session creates friction and slows experimentation.
 - Durable presets make the simulator feel like a real operations console rather than a toy chat room.
 - A small local state file is enough to unlock repeatable workflows without overengineering the persistence layer.
 
 ### Implemented Capabilities
 - persistent persona overrides
 - saved lineups
-- lineup load/delete operations
+- saved jobs
+- lineup/job load/delete operations
 - richer status inspection
 
-## 4. Prompt-Shaped Moderation Is a Strong Interim Control Plane
+## 4. Prompt-Shaped Moderation Is Still a Strong Interim Control Plane
 Instead of adding a separate moderator agent immediately, we injected moderation rules into each agent’s system prompt.
 
 ### Findings
@@ -54,19 +55,21 @@ Instead of adding a separate moderator agent immediately, we injected moderation
 - `critic`
 - `chaos`
 
-## 5. Lightweight Telemetry Is Operationally Valuable Even When Approximate
-True provider billing or token-accounting data is not yet wired in, but approximate telemetry already improves observability.
+## 5. Hybrid Cost Tracking Is Better Than Pretending Estimates Are Truth
+True provider billing data is not guaranteed across all backends, but the simulator can still provide useful cost observability.
 
 ### Findings
-- Message count reveals who is dominating a conversation.
-- Character and estimated-token totals help identify verbose agents.
-- Average response latency helps compare responsiveness across models and runs.
-- Error, schedule, and replay counters provide a lightweight session health view.
+- Some streamed events may expose usage metadata; others may not.
+- Treating all token counts as "real" would create false precision.
+- A hybrid model is more honest and more useful:
+  - use provider usage when available
+  - fall back to estimates when it is not
+- Pricing hints attached to agent definitions create an operator-tunable cost model rather than hard-coding invisible assumptions.
 
 ### Important Caveat
-The current token metric is heuristic (`~chars/4`) and should be treated as directional, not authoritative.
+Even the "actual" cost view is only as reliable as the provider usage data surfaced through the event stream.
 
-## 6. On-Demand Judging Is Better Than Always-On Judging
+## 6. On-Demand Judging Is Still Better Than Always-On Judging
 A judge is useful, but constantly inserting a judge into every simulation would add cost, latency, and noise.
 
 ### Findings
@@ -78,8 +81,8 @@ A judge is useful, but constantly inserting a judge into every simulation would 
 Once replay mode was added, JSON exports stopped being passive archives and became active simulator assets.
 
 ### Findings
-- Consistent export schema is now strategically important because replay depends on it.
-- Export metadata matters more because replay users need quick context about scenario, mode, and topic.
+- Consistent export schema is strategically important because replay depends on it.
+- Export metadata matters more because replay users need quick context about scenario, mode, topic, and telemetry.
 - A lightweight replay surface gives immediate value without building a fully separate playback UI.
 
 ### Current Replay Model
@@ -87,8 +90,21 @@ Once replay mode was added, JSON exports stopped being passive archives and beca
 - `/replays` lists available exports
 - `/replay latest [count]` or `/replay file.json [count]` renders a transcript excerpt
 
-## 8. Bounded Scheduling Is the Right First Automation Primitive
-The simulator now supports autonomous scheduled runs, but deliberately in a constrained way.
+## 8. Comparison Was the Natural Next Step After Replay
+Once replay existed, comparison became the next highest-value analytical operation.
+
+### Findings
+- Operators rarely want to inspect a run in isolation; they want to inspect differences between runs.
+- Even a transcript-excerpt comparison is useful for spotting prompt drift, scenario changes, and conversation-shape differences.
+- Comparison can be built on top of the same export artifacts and replay schema, which keeps implementation complexity low.
+
+### Current Comparison Model
+- `/compare <left> <right> [count]`
+- supports `latest` and `previous` replay resolution
+- renders side-by-side transcript excerpts from two export artifacts
+
+## 9. Bounded Scheduling Remains the Right First Automation Primitive
+The simulator supports autonomous scheduled runs, but deliberately in a constrained way.
 
 ### Findings
 - A bounded schedule is safer than an open-ended loop because it limits accidental runaway behavior.
@@ -101,15 +117,24 @@ The simulator now supports autonomous scheduled runs, but deliberately in a cons
 - `/schedule stop` stops the current plan
 - scheduled prompts are synthesized from the current topic, scenario, and mode
 
-## 9. Replay and Scheduling Reinforce Each Other
-These two additions work together in a useful way.
+## 10. Saved Jobs Are the Right Level of Automation Persistence
+Saved jobs bundle simulator configuration with automation settings.
+
+### Findings
+- This captures recurring operator workflows without requiring a full scheduler or workflow engine.
+- Jobs are more useful than raw interval persistence because they preserve simulation context as well as timing.
+- Keeping jobs local and explicit is safer than trying to auto-restore background automation across sessions.
+
+## 11. Replay, Comparison, and Scheduling Reinforce Each Other
+These additions work best together rather than independently.
 
 ### Findings
 - Scheduling creates repeated simulation outputs without manual prompting.
 - Replay makes it possible to inspect those runs after export.
-- Together they move AgentIRC toward a simulation lab workflow: run, export, inspect, compare.
+- Comparison makes it possible to reason about differences across runs.
+- Together they move AgentIRC toward a simulation lab workflow: run, export, inspect, compare, iterate.
 
-## 10. Testing Strategy: Prioritize Helper-Layer Confidence First
+## 12. Testing Strategy: Prioritize Helper-Layer Confidence First
 The project now has stronger unit coverage around the deterministic parts of the simulator.
 
 ### Covered Areas
@@ -119,10 +144,14 @@ The project now has stronger unit coverage around the deterministic parts of the
 - moderator mode validation
 - persona persistence logic
 - lineup persistence logic
+- job persistence logic
 - telemetry aggregation
+- usage normalization and extraction
+- cost calculation helpers
 - judge prompt construction
 - automation configuration and stopping
 - replay discovery and replay rendering
+- replay comparison rendering
 - transcript export
 - persistent state round trips
 
@@ -131,12 +160,13 @@ The project now has stronger unit coverage around the deterministic parts of the
 - no provider-backed end-to-end tests yet
 - no browser automation verification yet
 - schedule-loop execution has not been integration-tested against a live session
+- actual-cost behavior has not been verified end-to-end against provider usage metadata
 
-## 11. Recommended Next Architecture Moves
+## 13. Recommended Next Architecture Moves
 Based on the current shape of the project, the next strongest additions would be:
-1. **provider-native token/cost telemetry** from response metadata where available
+1. **multi-room support** for parallel simulations
 2. **interactive replay stepping** rather than excerpt-only replay
-3. **saved scheduled jobs** tied to saved lineups and scenarios
-4. **multi-room support** for parallel simulations
-5. **external IRC/websocket bridges** for non-Chainlit clients
-6. **comparison dashboards** for side-by-side run analysis
+3. **external IRC/websocket bridges** for non-Chainlit clients
+4. **observer/dashboard surfaces** for side-by-side run analysis
+5. **tool-use plugins** for structured tasks inside simulations
+6. **live opt-in integration tests** for streaming, judging, and scheduling

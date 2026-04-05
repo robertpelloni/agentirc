@@ -10,48 +10,47 @@
 ## What I Changed
 ### Core Code
 - Expanded `simulator_core.py` with:
-  - autonomous scheduling defaults and status helpers
-  - bounded schedule configuration and stop helpers
-  - autonomous prompt construction
-  - replay file discovery and replay payload loading
-  - replay rendering helpers
-  - replay-view telemetry
-  - scheduled-run telemetry
+  - hybrid usage parsing and cost calculation helpers
+  - replay comparison helpers
+  - saved job persistence helpers
+  - richer per-agent token/cost telemetry
+  - comparison telemetry
+  - support for `previous` replay resolution
 - Reworked `app.py` to support:
-  - `/schedule`, `/schedule stop`
-  - `/replays`, `/replay`
-  - session-scoped asyncio automation task management
-  - automation cleanup on reset and chat end
-  - corrected judge telemetry handling so judge runs do not pollute broadcast/discuss counters
-- Expanded `tests/test_simulator_core.py` from 17 to 20 tests.
+  - `/costs`
+  - `/jobs`, `/save-job`, `/run-job`, `/delete-job`
+  - `/compare <left> <right> [count]`
+  - pricing hints for active model lineup
+  - usage extraction from streamed events before telemetry updates
+- Expanded `tests/test_simulator_core.py` from 20 to 22 tests.
 
 ### Documentation
-- Updated `README.md` with replay and scheduling features.
-- Updated `docs/ai/design/simulator-operations.md` with schedule/replay architecture notes and flow updates.
+- Updated `README.md` with cost tracking, replay comparison, and saved-job features.
+- Updated `docs/ai/design/simulator-operations.md` with cost/job/comparison architecture notes and flow updates.
 - Updated `docs/ai/implementation/multi-model-simulator-expansion.md`.
 - Updated `docs/ai/testing/multi-model-simulator-expansion.md`.
-- Updated `FINDINGS.md` with detailed analysis of replay and bounded automation.
-- Bumped `VERSION` to `0.4.0` and updated `CHANGELOG.md`.
+- Updated `FINDINGS.md` with detailed analysis of hybrid cost tracking, comparison, and saved jobs.
+- Bumped `VERSION` to `0.5.0` and updated `CHANGELOG.md`.
 
 ## Validation Performed
-- Ran `python -m unittest discover -s tests -v` ✅ (20 tests passed)
+- Ran `python -m unittest discover -s tests -v` ✅ (22 tests passed)
 - Ran `python -m py_compile app.py run.py simulator_core.py tests/test_simulator_core.py` ✅
 
 ## Findings and Analysis
-1. Replay transformed JSON exports from passive archives into active simulator assets.
-2. Bounded scheduling is the safest first automation primitive for repeated autonomous simulations.
-3. Replay and scheduling together create a stronger simulation-lab workflow: run, export, inspect, compare.
-4. Keeping scheduling session-scoped is simpler and safer than introducing a persistent job system too early.
+1. Hybrid cost tracking is more honest and useful than pretending heuristics are authoritative.
+2. Replay comparison was the natural next step once replay existed.
+3. Saved jobs provide strong operator leverage without requiring a full workflow engine.
+4. Replay, comparison, and scheduling together create a meaningful simulation-lab workflow.
 
 ## Potential Risks / Follow-Up
+- actual-cost behavior still depends on provider usage metadata appearing in streamed events
 - background schedule execution is not yet integration-tested against a live Chainlit session
-- replay currently renders excerpts rather than full interactive step-through playback
-- telemetry token counts are still heuristic rather than provider-authoritative
+- replay currently renders excerpts rather than interactive step-through playback
 - persistent state remains local-file based and not multi-user synchronized
 
 ## Recommended Next Steps
-1. Add provider-native token/cost accounting where response metadata supports it.
-2. Add interactive replay stepping and comparison between two exported runs.
-3. Add saved scheduled jobs tied to saved lineups/scenarios.
-4. Add multi-room/channel support.
-5. Add mocked integration tests for the automation loop and command dispatch.
+1. Add multi-room/channel support.
+2. Add interactive replay stepping and richer comparison UX.
+3. Add external IRC/websocket bridge support.
+4. Add observer/dashboard views for side-by-side analysis.
+5. Add live opt-in integration tests for streaming, judging, and scheduling.
