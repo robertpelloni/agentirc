@@ -13,6 +13,7 @@ from simulator_core import (
     append_history,
     build_analytics_text,
     build_autonomous_prompt,
+    OUTBOX_DIR,
     build_bridge_note,
     build_bridge_prompt,
     build_costs_text,
@@ -20,6 +21,8 @@ from simulator_core import (
     build_jobs_text,
     build_judge_prompt,
     build_lineups_text,
+    build_external_bridge_payload,
+    build_external_room_payload,
     build_observer_text,
     build_moderator_modes_text,
     build_personas_text,
@@ -44,6 +47,7 @@ from simulator_core import (
     export_transcript,
     extract_usage_metrics,
     list_export_files,
+    list_outbox_files,
     load_job,
     load_lineup,
     load_persistent_state,
@@ -71,6 +75,7 @@ from simulator_core import (
     save_job,
     save_lineup,
     save_persistent_state,
+    write_outbox_payload,
     set_agent_enabled,
     set_moderator_mode,
     switch_room,
@@ -320,11 +325,29 @@ class SimulatorCoreTests(unittest.TestCase):
         observer_text = build_observer_text(rooms, DEFAULT_ROOM_NAME)
         bridge_note = build_bridge_note(DEFAULT_ROOM_NAME, "war-room", rooms[DEFAULT_ROOM_NAME], 1)
         bridge_prompt = build_bridge_prompt(DEFAULT_ROOM_NAME, "war-room", rooms[DEFAULT_ROOM_NAME], "risks", 1)
+        room_payload = build_external_room_payload(DEFAULT_ROOM_NAME, rooms[DEFAULT_ROOM_NAME], 1)
+        bridge_payload = build_external_bridge_payload(DEFAULT_ROOM_NAME, "war-room", bridge_note, rooms[DEFAULT_ROOM_NAME])
         self.assertIn("Room Analytics", analytics_text)
         self.assertIn("Observer View", observer_text)
         self.assertIn("Bridge from room", bridge_note)
         self.assertIn("hello lobby", bridge_note)
         self.assertIn("Source room", bridge_prompt)
+        self.assertEqual(room_payload["kind"], "room_snapshot")
+        self.assertEqual(bridge_payload["kind"], "bridge_note")
+
+    def test_outbox_payload_writing_and_listing(self):
+        persistent_state = make_default_store()
+        rooms = make_initial_rooms(AGENT_SPECS, persistent_state)
+        rooms[DEFAULT_ROOM_NAME]["history"].append(make_entry("Claude", "hello lobby"))
+        payload = build_external_room_payload(DEFAULT_ROOM_NAME, rooms[DEFAULT_ROOM_NAME], 1)
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            outbox_dir = Path(temp_dir) / OUTBOX_DIR
+            path = write_outbox_payload(payload, outbox_dir)
+            self.assertTrue(path.exists())
+            listed = list_outbox_files(outbox_dir)
+            self.assertEqual(len(listed), 1)
+            self.assertEqual(listed[0].name, path.name)
 
     def test_usage_parsing_and_cost_calculation(self):
         normalized = normalize_usage_payload({"input_tokens": 11, "output_tokens": 7})

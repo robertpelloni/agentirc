@@ -18,7 +18,7 @@ The simulator became significantly easier to extend after splitting general-purp
 
 ### Findings
 - **Live UI code and reusable domain logic should not live in the same file** once command surface area grows.
-- **Streaming model events are runtime-specific**, but transcript formatting, persistence, telemetry, replay, comparison, room management, dashboard rendering, bridge-note generation, observer views, and preset logic are not.
+- **Streaming model events are runtime-specific**, but transcript formatting, persistence, telemetry, replay, comparison, room management, dashboard rendering, bridge-note generation, observer views, external payload generation, and preset logic are not.
 - **Helper extraction increases testability immediately** because most simulator rules can be validated without a live Chainlit or OpenRouter session.
 
 ### Result
@@ -67,7 +67,7 @@ As soon as the simulator gained multiple live contexts, operators needed fast gl
 - Text-first operational views remain surprisingly effective for a command-driven simulator and avoid needing immediate UI redesign.
 
 ### Current Visibility Model
-- `/dashboard` gives a top-level summary across rooms, jobs, active context, aggregate prompts, bridge activity, and aggregate estimated cost
+- `/dashboard` gives a top-level summary across rooms, jobs, active context, aggregate prompts, bridge activity, external exports, and aggregate estimated cost
 - `/observer` provides a ranked multi-room operational view
 - `/room-summary [count]` previews recent activity across rooms
 - `/room-analytics [name]` drills into one room’s local metrics and analytics
@@ -167,7 +167,22 @@ After deterministic bridges, the next useful feature is a smarter summarization 
 - delivers the model-generated note into the target room
 - tracks bridge-AI events, costs, and usage when available
 
-## 14. Bounded Scheduling Remains the Right First Automation Primitive
+## 14. External Connectors Should Start With Payload Contracts, Not Live Daemons
+The next natural step after bridge agents is preparing stable external integration boundaries.
+
+### Findings
+- A file-based outbox is safer and easier to validate than immediately embedding live websocket or IRC infrastructure.
+- Connector payload schemas matter more early than transport details.
+- Once payloads are stable, multiple future runtimes can consume them with less risk.
+
+### Current External Foundation Model
+- `/bridge-export <room> [count]`
+- `/outbox`
+- standardized `room_snapshot` payloads
+- standardized `bridge_note` payload payload helpers
+- JSON payloads written into `outbox/`
+
+## 15. Bounded Scheduling Remains the Right First Automation Primitive
 The simulator supports autonomous scheduled runs, but deliberately in a constrained way.
 
 ### Findings
@@ -175,7 +190,7 @@ The simulator supports autonomous scheduled runs, but deliberately in a constrai
 - Requiring both interval and run-count intent creates a cleaner operator contract.
 - Scheduling can live entirely in session state for now; it does not need persistent global orchestration yet.
 
-## 15. Saved Jobs Are the Right Level of Automation Persistence
+## 16. Saved Jobs Are the Right Level of Automation Persistence
 Saved jobs bundle simulator configuration with automation settings.
 
 ### Findings
@@ -183,7 +198,7 @@ Saved jobs bundle simulator configuration with automation settings.
 - Jobs are more useful than raw interval persistence because they preserve simulation context as well as timing.
 - Keeping jobs local and explicit is safer than trying to auto-restore background automation across sessions.
 
-## 16. Room Switching Should Rebuild Runtime State, Not Preserve Live Teams
+## 17. Room Switching Should Rebuild Runtime State, Not Preserve Live Teams
 A key design choice in this pass was to rebuild the AutoGen team whenever the active room changes.
 
 ### Findings
@@ -191,7 +206,7 @@ A key design choice in this pass was to rebuild the AutoGen team whenever the ac
 - Rebuilding the team on room activation is simpler, deterministic, and easier to reason about.
 - This also keeps room switching compatible with room-local persona, scenario, and lineup changes.
 
-## 17. Replay, Comparison, Rooms, Dashboards, Bridge Notes, Bridge Agents, and Scheduling Reinforce Each Other
+## 18. Replay, Comparison, Rooms, Dashboards, Bridge Notes, Bridge Agents, External Payloads, and Scheduling Reinforce Each Other
 These additions work best together rather than independently.
 
 ### Findings
@@ -203,9 +218,10 @@ These additions work best together rather than independently.
 - Dashboard and observer views make it possible to monitor the whole session at a glance.
 - Deterministic bridge notes make it possible to transfer literal context between experiments.
 - Bridge agents make it possible to transfer distilled context between experiments.
-- Together they move AgentIRC toward a genuine simulation-lab workflow: branch context, run experiments, export, inspect, compare, monitor, bridge, summarize, iterate.
+- External payloads create a clean handoff surface for future connectors.
+- Together they move AgentIRC toward a genuine simulation-lab workflow: branch context, run experiments, export, inspect, compare, monitor, bridge, summarize, hand off, iterate.
 
-## 18. Testing Strategy: Prioritize Helper-Layer Confidence First
+## 19. Testing Strategy: Prioritize Helper-Layer Confidence First
 The project now has stronger unit coverage around the deterministic parts of the simulator.
 
 ### Covered Areas
@@ -225,6 +241,8 @@ The project now has stronger unit coverage around the deterministic parts of the
 - judge prompt construction
 - bridge-note generation
 - bridge-agent prompt generation
+- external payload generation
+- outbox writing and listing
 - automation configuration and stopping
 - replay discovery and replay rendering
 - replay window resolution and replay-window rendering
@@ -240,14 +258,15 @@ The project now has stronger unit coverage around the deterministic parts of the
 - room switching has not yet been validated in a live Chainlit integration test
 - bridge delivery has not yet been validated in a live Chainlit integration test
 - bridge-AI delivery has not yet been validated in a live Chainlit integration test
+- external export command flow has not yet been validated in a live Chainlit integration test
 - actual-cost behavior has not been verified end-to-end against provider usage metadata
 - replay cursor behavior is not yet integration-tested in a live session loop
 
-## 19. Recommended Next Architecture Moves
+## 20. Recommended Next Architecture Moves
 Based on the current shape of the project, the next strongest additions would be:
-1. **external IRC/websocket bridges** for non-Chainlit clients
+1. **external IRC/websocket bridge runtime** for non-Chainlit clients
 2. **richer observer/dashboard views with live metrics panels**
 3. **role-specific bridge agents** or bridge-routing policies
 4. **tool-use plugins** for structured tasks inside simulations
-5. **live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, and replay stepping
+5. **live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, external export, and replay stepping
 6. **persistent archived room snapshots** across restarts

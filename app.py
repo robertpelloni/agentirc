@@ -29,6 +29,8 @@ from simulator_core import (
     build_bridge_note,
     build_bridge_prompt,
     build_costs_text,
+    build_external_bridge_payload,
+    build_external_room_payload,
     build_dashboard_text,
     build_help_text,
     build_history_text,
@@ -42,6 +44,7 @@ from simulator_core import (
     build_replay_comparison_text,
     build_replay_text,
     build_replay_window_text,
+    build_outbox_text,
     build_replays_text,
     build_room_analytics_text,
     build_room_summary_text,
@@ -60,6 +63,7 @@ from simulator_core import (
     export_transcript,
     extract_usage_metrics,
     list_export_files,
+    list_outbox_files,
     load_job,
     load_lineup,
     load_persistent_state,
@@ -74,6 +78,7 @@ from simulator_core import (
     record_bridge_event,
     record_comparison_view,
     record_error,
+    record_external_export,
     record_judge_run,
     record_observer_view,
     record_prompt_telemetry,
@@ -92,6 +97,7 @@ from simulator_core import (
     set_persona_override,
     set_rounds,
     stop_automation,
+    write_outbox_payload,
 )
 
 
@@ -606,6 +612,31 @@ async def handle_command(command: str, args: str) -> bool:
             await send_system_notice(
                 f"Delivered AI bridge note from **{resolved_source}** to **{resolved_target}**."
             )
+        return True
+
+    if command == "/bridge-export":
+        parts = args.split()
+        room_name = parts[0] if parts else get_current_room_name()
+        count = 10
+        if len(parts) > 1:
+            try:
+                count = max(1, min(100, int(parts[1])))
+            except ValueError:
+                await send_system_notice("Bridge export count must be an integer between 1 and 100.")
+                return True
+        changed, response, resolved_room_name = switch_room(get_rooms(), room_name)
+        if not changed or resolved_room_name is None:
+            await send_system_notice(response)
+            return True
+        room_state = get_rooms()[resolved_room_name]
+        payload = build_external_room_payload(resolved_room_name, room_state, count)
+        outbox_path = write_outbox_payload(payload)
+        record_external_export(room_state["config"])
+        await send_system_notice(f"Exported room payload to `{outbox_path}`.")
+        return True
+
+    if command == "/outbox":
+        await cl.Message(content=build_outbox_text(list_outbox_files())).send()
         return True
 
     if command == "/rooms":

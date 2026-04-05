@@ -19,6 +19,7 @@ DEFAULT_ROOM_NAME = "lobby"
 HISTORY_LIMIT = 200
 STATE_FILE = Path("data/simulator_state.json")
 EXPORT_DIR = Path("exports")
+OUTBOX_DIR = Path("outbox")
 
 SCENARIO_PRESETS: dict[str, dict[str, Any]] = {
     "omni": {
@@ -186,6 +187,7 @@ def make_default_telemetry(agent_specs: dict[str, dict[str, Any]]) -> dict[str, 
         "bridge_events": 0,
         "bridge_ai_events": 0,
         "observer_views": 0,
+        "external_exports": 0,
         "errors": 0,
         "last_prompt": "",
         "total_estimated_cost_usd": 0.0,
@@ -370,6 +372,8 @@ def build_help_text() -> str:
 - `/room-analytics [name]` - Show analytics for one room.
 - `/bridge <source> <target> [count]` - Send a summarized bridge note from one room into another.
 - `/bridge-ai <source> <target> [focus]` - Use a model-generated bridge note between rooms.
+- `/bridge-export <room> [count]` - Export a room snapshot as an external bridge payload.
+- `/outbox` - List recent external bridge payload files.
 - `/rooms` - List session rooms and show the active room.
 - `/room [name]` - Show the current room or switch to another room.
 - `/new-room <name>` - Create a new room and switch into it.
@@ -478,6 +482,7 @@ def build_dashboard_text(
         f"- Total retained transcript entries: `{total_entries}`\n"
         f"- Aggregate prompts sent: `{total_prompts}`\n"
         f"- Aggregate bridge events: `{total_bridges}`\n"
+        f"- External exports: `{sum(room_state.get('config', {}).get('telemetry', {}).get('external_exports', 0) for room_state in rooms.values())}`\n"
         f"- Saved lineups: `{len(persistent_state.get('saved_lineups', {}))}`\n"
         f"- Saved jobs: `{len(persistent_state.get('saved_jobs', {}))}`\n"
         f"- Aggregate estimated room cost: `{format_usd(total_estimated_cost)}`\n"
@@ -507,7 +512,7 @@ def build_observer_text(
         lines.append(
             f"- **{room_name}** ({marker}) — entries `{len(room_state.get('history', []))}`, "
             f"prompts `{telemetry.get('prompts_sent', 0)}`, bridges `{telemetry.get('bridge_events', 0)}`, "
-            f"est cost `{format_usd(telemetry.get('total_estimated_cost_usd', 0.0))}`"
+            f"exports `{telemetry.get('external_exports', 0)}`, est cost `{format_usd(telemetry.get('total_estimated_cost_usd', 0.0))}`"
         )
     return "\n".join(lines)
 
@@ -980,6 +985,11 @@ def record_observer_view(config: dict[str, Any]):
 
 
 
+def record_external_export(config: dict[str, Any]):
+    config["telemetry"]["external_exports"] += 1
+
+
+
 def record_error(config: dict[str, Any]):
     config["telemetry"]["errors"] += 1
 
@@ -1050,6 +1060,7 @@ def build_telemetry_text(config: dict[str, Any], agent_specs: dict[str, dict[str
         f"- Bridge events: `{telemetry['bridge_events']}`",
         f"- Bridge AI events: `{telemetry['bridge_ai_events']}`",
         f"- Observer views: `{telemetry['observer_views']}`",
+        f"- External exports: `{telemetry['external_exports']}`",
         f"- Errors: `{telemetry['errors']}`",
         "",
         "**Per-Agent Telemetry**",
@@ -1121,6 +1132,7 @@ def build_analytics_text(config: dict[str, Any], history: list[dict[str, Any]], 
         f"- Bridge events: `{telemetry['bridge_events']}`\n"
         f"- Bridge AI events: `{telemetry['bridge_ai_events']}`\n"
         f"- Observer views: `{telemetry['observer_views']}`\n"
+        f"- External exports: `{telemetry['external_exports']}`\n"
         f"- Estimated total cost: `{format_usd(telemetry['total_estimated_cost_usd'])}`\n"
         f"- Last prompt: {telemetry['last_prompt'] or 'n/a'}"
     )
@@ -1345,6 +1357,70 @@ def build_judge_prompt(history: list[dict[str, Any]], config: dict[str, Any], fo
 
 
 
+def build_external_room_payload(room_name: str, room_state: dict[str, Any], count: int) -> dict[str, Any]:
+    config = room_state.get("config", {})
+    history = room_state.get("history", [])
+    recent_entries = [entry for entry in history[-count:] if isinstance(entry, dict)]
+    return {
+        "kind": "room_snapshot",
+        "exported_at": datetime.now().isoformat(),
+        "room": room_name,
+        "topic": config.get("topic", DEFAULT_TOPIC),
+        "scenario": config.get("scenario", "omni"),
+        "mode": config.get("mode", DEFAULT_MODE),
+        "enabled_agents": config.get("enabled_agents", []),
+        "entries": recent_entries,
+        "telemetry": config.get("telemetry", {}),
+    }
+
+
+
+def build_external_bridge_payload(
+    source_room_name: str,
+    target_room_name: str,
+    bridge_note: str,
+    source_room_state: dict[str, Any],
+) -> dict[str, Any]:
+    config = source_room_state.get("config", {})
+    return {
+        "kind": "bridge_note",
+        "exported_at": datetime.now().isoformat(),
+        "source_room": source_room_name,
+        "target_room": target_room_name,
+        "topic": config.get("topic", DEFAULT_TOPIC),
+        "scenario": config.get("scenario", "omni"),
+        "mode": config.get("mode", DEFAULT_MODE),
+        "content": bridge_note,
+    }
+
+
+
+def write_outbox_payload(payload: dict[str, Any], outbox_dir: Path = OUTBOX_DIR) -> Path:
+    outbox_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    payload_kind = sanitize_key(str(payload.get("kind", "payload"))) or "payload"
+    file_path = outbox_dir / f"agentirc-{payload_kind}-{timestamp}.json"
+    file_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    return file_path
+
+
+
+def list_outbox_files(outbox_dir: Path = OUTBOX_DIR, limit: int = 25) -> list[Path]:
+    if not outbox_dir.exists():
+        return []
+    files = [path for path in outbox_dir.glob("agentirc-*.json") if path.is_file()]
+    files.sort(key=lambda path: path.stat().st_mtime, reverse=True)
+    return files[:limit]
+
+
+
+def build_outbox_text(paths: list[Path]) -> str:
+    if not paths:
+        return "*** No external bridge payloads found in `outbox/`."
+    return "**Outbox Payloads**\n" + "\n".join(f"- `{path.name}`" for path in paths)
+
+
+
 def list_export_files(export_dir: Path = EXPORT_DIR, limit: int = 25) -> list[Path]:
     if not export_dir.exists():
         return []
@@ -1495,6 +1571,7 @@ def export_transcript(
             f"- Bridge events: `{config['telemetry']['bridge_events']}`",
             f"- Bridge AI events: `{config['telemetry']['bridge_ai_events']}`",
             f"- Observer views: `{config['telemetry']['observer_views']}`",
+            f"- External exports: `{config['telemetry']['external_exports']}`",
             f"- Estimated cost: `{format_usd(config['telemetry']['total_estimated_cost_usd'])}`",
             f"- Actual cost: `{format_usd(config['telemetry']['total_actual_cost_usd'])}`",
             "",

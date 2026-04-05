@@ -1,18 +1,19 @@
 # Simulator Operations Design
 
 ## Objective
-Evolve AgentIRC from a simple multi-model chat room into a reusable simulation platform with configurable orchestration, durable operator presets, autonomous scheduling, replayable analytical artifacts, hybrid cost tracking, reusable autonomous jobs, room-scoped simulation workflows, operator dashboard tools, and cross-room context sharing.
+Evolve AgentIRC from a simple multi-model chat room into a reusable simulation platform with configurable orchestration, durable operator presets, autonomous scheduling, replayable analytical artifacts, hybrid cost tracking, reusable autonomous jobs, room-scoped simulation workflows, operator dashboard tools, cross-room context sharing, and external bridge foundations.
 
 ## Architecture Summary
-The simulator now separates into eight distinct concerns:
+The simulator now separates into nine distinct concerns:
 1. **UI and runtime orchestration** in `app.py`
 2. **Pure helper/domain logic** in `simulator_core.py`
 3. **Session room registry** in Chainlit session state
 4. **Replay cursor state** in Chainlit session state
 5. **Persistent operator state** in `data/simulator_state.json`
 6. **Exported analytical artifacts** in `exports/`
-7. **In-session autonomous scheduling** managed by a background asyncio task handle in Chainlit session state
-8. **Hybrid telemetry and cost accounting** derived from provider usage data where available and heuristics otherwise
+7. **External bridge payload outbox** in `outbox/`
+8. **In-session autonomous scheduling** managed by a background asyncio task handle in Chainlit session state
+9. **Hybrid telemetry and cost accounting** derived from provider usage data where available and heuristics otherwise
 
 ## Design Decisions
 ### 1. Rooms are session-scoped, not globally persisted
@@ -47,7 +48,16 @@ The simulator now supports two bridge styles:
 
 This dual approach gives operators a practical cost/quality tradeoff.
 
-### 5. Keep persistence small and explicit
+### 5. External connectors should start as payload artifacts, not servers
+Instead of immediately embedding websocket or IRC runtime infrastructure, this pass adds standardized external payload generation plus an `outbox/` directory.
+
+This approach:
+- keeps the foundation testable
+- avoids introducing long-lived network services prematurely
+- creates a stable boundary for future connector implementations
+- makes external integration observable through files first
+
+### 6. Keep persistence small and explicit
 Persistent state currently stores:
 - saved lineups
 - saved persona overrides
@@ -55,17 +65,17 @@ Persistent state currently stores:
 
 This preserves high-value reusable operator assets without persisting volatile room histories or live automation state.
 
-### 6. Use hybrid cost tracking instead of pretending heuristics are truth
+### 7. Use hybrid cost tracking instead of pretending heuristics are truth
 The simulator attempts to read model usage metadata from events when available. If provider-native usage is missing, it falls back to estimated token counts based on text length.
 
 This creates a layered model:
 - **actual cost** when usage metadata exists and pricing hints are configured
 - **estimated cost** otherwise
 
-### 7. Make autonomous scheduling opt-in and bounded
+### 8. Make autonomous scheduling opt-in and bounded
 The schedule system is configured explicitly through `/schedule` or `/run-job`. Each scheduled run is bounded by a configured run count and interval. This reduces the risk of runaway autonomous activity while still enabling repeated unattended simulations.
 
-### 8. Room switching rebuilds active runtime state
+### 9. Room switching rebuilds active runtime state
 When the operator switches rooms, the app swaps in the selected room’s config and history, then rebuilds the active AutoGen team. This preserves room-local behavior without duplicating long-lived model runtime objects per room.
 
 ## Flow Diagram
@@ -84,6 +94,7 @@ flowchart TD
     Cmd -- Room Summary --> Rooms
     Cmd -- Bridge --> Rooms
     Cmd -- Bridge AI --> BridgeAgent[Bridge Agent]
+    Cmd -- Bridge Export --> Outbox[outbox/*.json]
     Cmd -- Replay --> Exports[exports/*.json replay artifacts]
     Cmd -- Replay Step --> ReplayState
     Cmd -- Compare --> Exports
@@ -114,6 +125,10 @@ flowchart TD
 - replay payload
 - current window start index
 - current window size
+
+### External Payload Types
+- `room_snapshot`
+- `bridge_note`
 
 ### Session Config
 - room name
@@ -151,7 +166,7 @@ flowchart TD
 - last run timestamp
 - next run timestamp
 
-### Per-Agent Telemetry
+### Per-Agent / Per-Room Telemetry
 - messages
 - chars
 - prompt tokens
@@ -164,6 +179,7 @@ flowchart TD
 - bridge events
 - bridge ai events
 - observer views
+- external exports
 
 ## Tradeoffs
 ### Pros
@@ -171,20 +187,23 @@ flowchart TD
 - replay stepping adds operator control without a heavy playback subsystem
 - dashboard and observer commands provide immediate control-tower value
 - deterministic and model-generated bridge modes give a useful quality/cost tradeoff
+- external payload outbox creates a stable connector boundary without introducing network daemons
 - persistence footprint stays small
 - autonomous runs are bounded and explicit
 
 ### Cons
 - rooms are not yet persisted across application restarts
 - bridge AI depends on live model availability and cost
+- connector runtime is not implemented yet; only the outbox foundation exists
 - autonomous scheduling still depends on live Chainlit runtime behavior
 - actual cost depends on provider usage metadata being present
 - replay mode is still textual rather than visual/graphical
 - saved jobs are local-file based, not multi-user shared
 
 ## Recommended Future Extensions
-- add external IRC/websocket bridges and richer observer dashboards
-- add role-specific bridge agents or bridge-routing policies
+- add external IRC/websocket bridge runtime on top of `outbox/`
+- add richer observer dashboards with live metrics panels
+- add role-specific bridge agents and routing policies
 - add provider-backed live integration tests behind environment flags
 - add persistent archived room snapshots when session-level room history becomes strategically valuable
 - add visual dashboard panels if the command-first interface stops being sufficient

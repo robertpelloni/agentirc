@@ -1,49 +1,53 @@
 # Multi-Model Simulator Expansion
 
 ## Summary
-This implementation pass extends AgentIRC beyond deterministic bridge notes into richer observer tooling and model-generated cross-room bridge workflows.
+This implementation pass extends AgentIRC beyond bridge agents into external bridge foundations by adding standardized outbox payload generation for future websocket and IRC connectors.
 
 ## Newly Added Capabilities
-### Observer Tooling
-- `/observer`
-- ranked multi-room operational view
-- observer-view telemetry tracking
-- richer visibility into room activity, prompts, bridges, and estimated cost
+### External Bridge Foundations
+- `/bridge-export <room> [count]`
+- `/outbox`
+- standardized `room_snapshot` payload generation
+- standardized `bridge_note` payload generation helper
+- JSON outbox file writing under `outbox/`
+- outbox listing helper for operator inspection
 
-### Model-Generated Bridge Workflows
-- `/bridge-ai <source> <target> [focus]`
-- bridge-agent prompt construction from source room history
-- AI-generated bridge note delivery into target room
-- bridge-AI telemetry tracking
-- bridge-agent cost tracking through the existing hybrid telemetry model
+### Telemetry Enhancements
+- external-export telemetry counter
+- dashboard and observer surfaces now reflect external export activity
+- export metadata now includes external export counters
 
 ## Implementation Notes
 ### `simulator_core.py`
 This module now additionally owns:
-- observer rendering helpers
-- bridge-agent prompt construction helpers
-- bridge-AI and observer telemetry helpers
-- expanded telemetry and analytics rendering for bridge-AI and observer usage
+- external room payload builders
+- external bridge payload builders
+- outbox payload writing helpers
+- outbox listing/rendering helpers
+- external export telemetry updates
 
 ### `app.py`
 This module now additionally handles:
-- `/observer`
-- `/bridge-ai <source> <target> [focus]`
-- creation of a dedicated bridge agent using the configured judge model
-- model-generated bridge-note insertion into target room history
+- `/bridge-export <room> [count]`
+- `/outbox`
+- outbox payload generation from room state
+- external-export telemetry updates on the exported room
 
 ## Findings and Analysis
-### 1. Observer views are the right next step after dashboards
-They provide a richer operational ranking surface without forcing a graphical dashboard redesign.
+### 1. File-based outbox payloads are the right first connector foundation
+They create a stable integration boundary without prematurely introducing network daemons or runtime bridge complexity.
 
-### 2. Bridge workflows benefit from dual modes
-Deterministic bridges are cheap and predictable; model-generated bridges are richer and more abstract. Supporting both is a strong operator experience.
+### 2. External integration should start with schemas, not sockets
+A well-defined payload contract is more valuable early than a half-finished live transport layer.
 
-### 3. Bridge-agent costs fit naturally into the existing telemetry model
-The bridge agent can reuse the same usage extraction, token accounting, and pricing logic already built for other model-driven operations.
+### 3. Bridge workflows are now layered
+The simulator now supports:
+- deterministic bridge notes
+- model-generated bridge notes
+- external payload export for future bridge runtimes
 
 ## Recommended Follow-Up
-- external IRC/websocket bridge support
+- external IRC/websocket bridge runtime on top of `outbox/`
 - richer observer/dashboard views with live metrics panels
-- role-specific bridge agents or bridge-routing policies
-- opt-in integration tests for live scheduling, room switching, bridge delivery, bridge-AI generation, and streaming
+- role-specific bridge agents and routing policies
+- opt-in integration tests for live scheduling, room switching, bridge delivery, bridge-AI generation, external export, and streaming

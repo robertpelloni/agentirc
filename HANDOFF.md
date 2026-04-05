@@ -10,44 +10,45 @@
 ## What I Changed
 ### Core Code
 - Expanded `simulator_core.py` with:
-  - observer rendering helpers
-  - bridge-agent prompt construction helpers
-  - bridge-AI and observer telemetry helpers
-  - expanded telemetry/analytics/export rendering for observer and bridge-AI usage
+  - external room snapshot payload helpers
+  - external bridge payload helpers
+  - outbox writing/listing helpers
+  - external-export telemetry accounting
+  - expanded dashboard/observer/analytics/export rendering for outbox activity
 - Reworked `app.py` to support:
-  - `/observer`
-  - `/bridge-ai <source> <target> [focus]`
-  - creation of a dedicated bridge agent using the configured judge model
-  - model-generated bridge-note insertion into target room history
-- Strengthened `tests/test_simulator_core.py` assertions for observer and bridge-AI related helper behavior while keeping the suite fully green.
+  - `/bridge-export <room> [count]`
+  - `/outbox`
+  - outbox payload generation from room state
+  - external-export telemetry updates on exported rooms
+- Expanded `tests/test_simulator_core.py` from 24 to 25 tests.
 
 ### Documentation
-- Updated `README.md` with observer and bridge-AI features.
-- Updated `docs/ai/design/simulator-operations.md` with observer and bridge-agent architecture notes.
+- Updated `README.md` with external bridge foundation commands and outbox behavior.
+- Updated `docs/ai/design/simulator-operations.md` with outbox/external-connector architecture notes.
 - Updated `docs/ai/implementation/multi-model-simulator-expansion.md`.
 - Updated `docs/ai/testing/multi-model-simulator-expansion.md`.
-- Updated `FINDINGS.md` with detailed analysis of observer views and model-generated bridge workflows.
-- Bumped `VERSION` to `0.9.0` and updated `CHANGELOG.md`.
+- Updated `FINDINGS.md` with detailed analysis of file-based external bridge foundations.
+- Bumped `VERSION` to `0.10.0` and updated `CHANGELOG.md`.
 
 ## Validation Performed
-- Ran `python -m unittest discover -s tests -v` ✅ (24 tests passed)
+- Ran `python -m unittest discover -s tests -v` ✅ (25 tests passed)
 - Ran `python -m py_compile app.py run.py simulator_core.py tests/test_simulator_core.py` ✅
 
 ## Findings and Analysis
-1. Observer views are the right next step after basic dashboards.
-2. Bridge workflows benefit from having both deterministic and model-generated modes.
-3. Bridge-agent costs fit naturally into the existing hybrid telemetry model.
-4. Rooms, dashboards, bridge notes, bridge agents, replay, comparison, and scheduling now form a stronger operator workflow.
+1. External connectors should start with payload contracts and an outbox, not with live daemons.
+2. Standardized payload artifacts create a stable bridge boundary for future websocket/IRC runtimes.
+3. External-export telemetry fits naturally into the existing operator observability model.
+4. Rooms, bridge notes, bridge agents, dashboards, replay, comparison, scheduling, and outbox payloads now form a stronger end-to-end simulation workflow.
 
 ## Potential Risks / Follow-Up
+- outbox payload generation is not yet integration-tested via live Chainlit command flow
 - bridge-AI delivery is not yet integration-tested against a live Chainlit session
-- bridge delivery is not yet integration-tested against a live Chainlit session
 - actual-cost behavior still depends on provider usage metadata appearing in streamed events
 - persistent state remains local-file based and not multi-user synchronized
 
 ## Recommended Next Steps
-1. Add external IRC/websocket bridge support.
+1. Add external IRC/websocket bridge runtime on top of `outbox/`.
 2. Add richer observer/dashboard views with live metrics panels.
 3. Add role-specific bridge agents or bridge-routing policies.
 4. Add tool-use plugins.
-5. Add live opt-in integration tests for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, and replay stepping.
+5. Add live opt-in integration tests for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, external export, and replay stepping.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0 - 2026-04-05
+- Added `/bridge-export <room> [count]` for external room snapshot payload generation.
+- Added `/outbox` for inspecting generated external bridge payload files.
+- Added standardized external payload helpers for `room_snapshot` and `bridge_note` artifacts.
+- Added `outbox/` as the external connector foundation directory.
+- Expanded telemetry with `external_exports` tracking.
+- Expanded dashboard, observer, telemetry, analytics, exports, README, findings, design, implementation, testing, changelog, and handoff documentation for external payload foundations.
+- Expanded unit coverage from 24 to 25 tests.
+
 ## 0.9.0 - 2026-04-05
 - Added `/observer` for ranked multi-room operational visibility.
 - Added `/bridge-ai <source> <target> [focus]` for model-generated cross-room bridge notes.
