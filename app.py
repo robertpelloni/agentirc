@@ -27,12 +27,14 @@ from simulator_core import (
     build_analytics_text,
     build_autonomous_prompt,
     build_bridge_note,
+    build_bridge_prompt,
     build_costs_text,
     build_dashboard_text,
     build_help_text,
     build_history_text,
     build_jobs_text,
     build_judge_prompt,
+    build_observer_text,
     build_lineup_text,
     build_lineups_text,
     build_moderator_modes_text,
@@ -68,10 +70,12 @@ from simulator_core import (
     parse_command,
     parse_direct_message,
     record_agent_response,
+    record_bridge_ai_event,
     record_bridge_event,
     record_comparison_view,
     record_error,
     record_judge_run,
+    record_observer_view,
     record_prompt_telemetry,
     record_replay_view,
     record_scheduled_run,
@@ -366,6 +370,18 @@ def create_judge_agent(config: dict):
 
 
 
+def create_bridge_agent(config: dict):
+    return AssistantAgent(
+        name="BridgeAgent",
+        model_client=get_client(config["judge_model"]),
+        system_message=(
+            "You are a cross-room Bridge Agent for an IRC-style multi-model simulator. "
+            "Create concise, high-signal bridge notes for other rooms."
+        ),
+    )
+
+
+
 def rebuild_team():
     config = get_config()
     team = create_team(config)
@@ -468,6 +484,11 @@ async def handle_command(command: str, args: str) -> bool:
         await cl.Message(content=build_dashboard_text(get_rooms(), get_current_room_name(), persistent_state)).send()
         return True
 
+    if command == "/observer":
+        record_observer_view(config)
+        await cl.Message(content=build_observer_text(get_rooms(), get_current_room_name())).send()
+        return True
+
     if command == "/room-summary":
         count = 3
         if args:
@@ -520,6 +541,70 @@ async def handle_command(command: str, args: str) -> bool:
         else:
             await send_system_notice(
                 f"Delivered bridge summary from **{resolved_source}** to **{resolved_target}**."
+            )
+        return True
+
+    if command == "/bridge-ai":
+        parts = args.split(" ", 2)
+        if len(parts) < 2:
+            await send_system_notice("Usage: `/bridge-ai <source> <target> [focus]`")
+            return True
+        source_room_name = parts[0]
+        target_room_name = parts[1]
+        focus = parts[2] if len(parts) > 2 else ""
+        changed, response, resolved_source = switch_room(get_rooms(), source_room_name)
+        if not changed or resolved_source is None:
+            await send_system_notice(response)
+            return True
+        changed, response, resolved_target = switch_room(get_rooms(), target_room_name)
+        if not changed or resolved_target is None:
+            await send_system_notice(response)
+            return True
+
+        bridge_prompt = build_bridge_prompt(
+            resolved_source,
+            resolved_target,
+            get_rooms()[resolved_source],
+            focus,
+        )
+        bridge_agent = create_bridge_agent(config)
+        await send_system_notice(
+            f"Bridge agent summarizing **{resolved_source}** for **{resolved_target}**..."
+        )
+
+        bridge_content = ""
+        bridge_usage = None
+        start_time = perf_counter()
+        async for event in bridge_agent.run_stream(task=bridge_prompt):
+            source = getattr(event, "source", None)
+            content = coerce_message_content(getattr(event, "content", None))
+            if not source or not content or source.lower() == "user":
+                continue
+            bridge_content = content
+            bridge_usage = extract_usage_metrics(event)
+
+        if not bridge_content:
+            await send_system_notice("Bridge agent did not return a usable summary.")
+            return True
+
+        target_config = get_rooms()[resolved_target]["config"]
+        record_bridge_ai_event(target_config, bridge_prompt)
+        record_bridge_event(target_config)
+        record_agent_response(
+            target_config,
+            "BridgeAgent",
+            bridge_prompt,
+            bridge_content,
+            round((perf_counter() - start_time) * 1000, 2),
+            pricing=JUDGE_PRICING,
+            usage=bridge_usage,
+        )
+        entry = append_entry_to_room(resolved_target, author="BridgeAgent", content=bridge_content, kind="message")
+        if resolved_target == get_current_room_name():
+            await cl.Message(author="BridgeAgent", content=render_entry(entry)).send()
+        else:
+            await send_system_notice(
+                f"Delivered AI bridge note from **{resolved_source}** to **{resolved_target}**."
             )
         return True
 

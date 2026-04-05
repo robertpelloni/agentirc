@@ -1,48 +1,49 @@
 # Multi-Model Simulator Expansion
 
 ## Summary
-This implementation pass extends AgentIRC beyond replay stepping and dashboards into a more capable cross-room operator workflow with room analytics and bridge-note delivery.
+This implementation pass extends AgentIRC beyond deterministic bridge notes into richer observer tooling and model-generated cross-room bridge workflows.
 
 ## Newly Added Capabilities
-### Cross-Room Operator Tools
-- `/room-analytics [name]`
-- `/bridge <source> <target> [count]`
-- room-specific analytics rendering
-- deterministic bridge-note generation from recent room history
-- bridge delivery into another room as a room-local system note
+### Observer Tooling
+- `/observer`
+- ranked multi-room operational view
+- observer-view telemetry tracking
+- richer visibility into room activity, prompts, bridges, and estimated cost
 
-### Dashboard Enhancements
-- aggregate prompt counts across rooms
-- aggregate bridge-event counts across rooms
-- richer operator dashboard metrics
+### Model-Generated Bridge Workflows
+- `/bridge-ai <source> <target> [focus]`
+- bridge-agent prompt construction from source room history
+- AI-generated bridge note delivery into target room
+- bridge-AI telemetry tracking
+- bridge-agent cost tracking through the existing hybrid telemetry model
 
 ## Implementation Notes
 ### `simulator_core.py`
 This module now additionally owns:
-- room analytics rendering helpers
-- bridge-note generation helpers
-- expanded dashboard metrics including bridge activity
-- bridge-event telemetry accounting
+- observer rendering helpers
+- bridge-agent prompt construction helpers
+- bridge-AI and observer telemetry helpers
+- expanded telemetry and analytics rendering for bridge-AI and observer usage
 
 ### `app.py`
 This module now additionally handles:
-- `/room-analytics`
-- `/bridge <source> <target> [count]`
-- inactive-room message insertion via room-local history mutation
-- bridge-event telemetry updates on the target room
+- `/observer`
+- `/bridge-ai <source> <target> [focus]`
+- creation of a dedicated bridge agent using the configured judge model
+- model-generated bridge-note insertion into target room history
 
 ## Findings and Analysis
-### 1. Deterministic bridge notes are the right first cross-room feature
-They transfer context between rooms with low complexity and without requiring another expensive model call.
+### 1. Observer views are the right next step after dashboards
+They provide a richer operational ranking surface without forcing a graphical dashboard redesign.
 
-### 2. Room analytics become valuable once rooms accumulate distinct histories and telemetry
-Operators need a room-specific inspection surface in addition to global dashboards.
+### 2. Bridge workflows benefit from dual modes
+Deterministic bridges are cheap and predictable; model-generated bridges are richer and more abstract. Supporting both is a strong operator experience.
 
-### 3. Cross-room workflows are becoming a real differentiator
-Rooms, jobs, replay, comparison, dashboard views, and bridge notes together move the simulator beyond chat into an actual experimentation environment.
+### 3. Bridge-agent costs fit naturally into the existing telemetry model
+The bridge agent can reuse the same usage extraction, token accounting, and pricing logic already built for other model-driven operations.
 
 ## Recommended Follow-Up
 - external IRC/websocket bridge support
-- richer observer/dashboard views
-- model-generated bridge agents
-- opt-in integration tests for live scheduling, room switching, replay stepping, bridge delivery, and streaming
+- richer observer/dashboard views with live metrics panels
+- role-specific bridge agents or bridge-routing policies
+- opt-in integration tests for live scheduling, room switching, bridge delivery, bridge-AI generation, and streaming

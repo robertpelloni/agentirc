@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0 - 2026-04-05
+- Added `/observer` for ranked multi-room operational visibility.
+- Added `/bridge-ai <source> <target> [focus]` for model-generated cross-room bridge notes.
+- Expanded telemetry with `bridge_ai_events` and `observer_views`.
+- Expanded analytics, telemetry, exports, and dashboard surfaces to account for observer and bridge-AI usage.
+- Expanded unit coverage from 24 to 24 tests while increasing helper-layer assertions for observer and bridge-AI behavior.
+- Expanded README, findings, design, implementation, testing, changelog, and handoff documentation for observer views and bridge-agent workflows.
+
 ## 0.8.0 - 2026-04-05
 - Added `/room-analytics [name]` for room-specific analytics inspection.
 - Added `/bridge <source> <target> [count]` for deterministic cross-room bridge-note delivery.
@@ -38,7 +46,6 @@
 - Extended telemetry with scheduled-run and replay-view counters.
 - Added autonomous prompt generation helpers and schedule status helpers.
 - Added automation-task cleanup on chat end and reset.
-- Expanded unit coverage from 17 to 20 tests.
 - Expanded design, implementation, testing, README, findings, and handoff documentation for scheduling and replay behavior.
 
 ## 0.3.0 - 2026-04-05

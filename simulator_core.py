@@ -184,6 +184,8 @@ def make_default_telemetry(agent_specs: dict[str, dict[str, Any]]) -> dict[str, 
         "replay_views": 0,
         "comparisons": 0,
         "bridge_events": 0,
+        "bridge_ai_events": 0,
+        "observer_views": 0,
         "errors": 0,
         "last_prompt": "",
         "total_estimated_cost_usd": 0.0,
@@ -363,9 +365,11 @@ def build_help_text() -> str:
 - `/nick <name>` - Change your IRC nick.
 - `/status` - Show the live simulator configuration.
 - `/dashboard` - Show a high-level operator dashboard across rooms.
+- `/observer` - Show a richer ranked observer view across rooms.
 - `/room-summary [count]` - Summarize room activity across the session.
 - `/room-analytics [name]` - Show analytics for one room.
 - `/bridge <source> <target> [count]` - Send a summarized bridge note from one room into another.
+- `/bridge-ai <source> <target> [focus]` - Use a model-generated bridge note between rooms.
 - `/rooms` - List session rooms and show the active room.
 - `/room [name]` - Show the current room or switch to another room.
 - `/new-room <name>` - Create a new room and switch into it.
@@ -480,6 +484,32 @@ def build_dashboard_text(
         f"- Active topic: {active_room.get('topic', DEFAULT_TOPIC)}\n"
         f"- Active mode: `{active_room.get('mode', DEFAULT_MODE)}`"
     )
+
+
+
+def build_observer_text(
+    rooms: dict[str, dict[str, Any]],
+    current_room_name: str,
+) -> str:
+    ranked_rooms = sorted(
+        rooms.items(),
+        key=lambda item: (
+            len(item[1].get("history", [])),
+            item[1].get("config", {}).get("telemetry", {}).get("prompts_sent", 0),
+        ),
+        reverse=True,
+    )
+    lines = ["**Observer View**"]
+    for room_name, room_state in ranked_rooms:
+        config = room_state.get("config", {})
+        telemetry = config.get("telemetry", {})
+        marker = "active" if room_name == current_room_name else "idle"
+        lines.append(
+            f"- **{room_name}** ({marker}) — entries `{len(room_state.get('history', []))}`, "
+            f"prompts `{telemetry.get('prompts_sent', 0)}`, bridges `{telemetry.get('bridge_events', 0)}`, "
+            f"est cost `{format_usd(telemetry.get('total_estimated_cost_usd', 0.0))}`"
+        )
+    return "\n".join(lines)
 
 
 
@@ -937,6 +967,19 @@ def record_bridge_event(config: dict[str, Any]):
 
 
 
+def record_bridge_ai_event(config: dict[str, Any], prompt: str):
+    telemetry = config["telemetry"]
+    telemetry["prompts_sent"] += 1
+    telemetry["bridge_ai_events"] += 1
+    telemetry["last_prompt"] = prompt
+
+
+
+def record_observer_view(config: dict[str, Any]):
+    config["telemetry"]["observer_views"] += 1
+
+
+
 def record_error(config: dict[str, Any]):
     config["telemetry"]["errors"] += 1
 
@@ -1005,6 +1048,8 @@ def build_telemetry_text(config: dict[str, Any], agent_specs: dict[str, dict[str
         f"- Replay views: `{telemetry['replay_views']}`",
         f"- Comparisons: `{telemetry['comparisons']}`",
         f"- Bridge events: `{telemetry['bridge_events']}`",
+        f"- Bridge AI events: `{telemetry['bridge_ai_events']}`",
+        f"- Observer views: `{telemetry['observer_views']}`",
         f"- Errors: `{telemetry['errors']}`",
         "",
         "**Per-Agent Telemetry**",
@@ -1074,6 +1119,8 @@ def build_analytics_text(config: dict[str, Any], history: list[dict[str, Any]], 
         f"- Scheduled runs completed: `{telemetry['scheduled_runs']}`\n"
         f"- Replay views: `{telemetry['replay_views']}`\n"
         f"- Bridge events: `{telemetry['bridge_events']}`\n"
+        f"- Bridge AI events: `{telemetry['bridge_ai_events']}`\n"
+        f"- Observer views: `{telemetry['observer_views']}`\n"
         f"- Estimated total cost: `{format_usd(telemetry['total_estimated_cost_usd'])}`\n"
         f"- Last prompt: {telemetry['last_prompt'] or 'n/a'}"
     )
@@ -1250,6 +1297,36 @@ def build_bridge_note(
 
 
 
+def build_bridge_prompt(
+    source_room_name: str,
+    target_room_name: str,
+    source_room_state: dict[str, Any],
+    focus: str,
+    count: int = 8,
+) -> str:
+    config = source_room_state.get("config", {})
+    history = source_room_state.get("history", [])
+    recent_entries = history[-count:]
+    excerpt = "\n".join(
+        render_entry(entry) for entry in recent_entries if isinstance(entry, dict)
+    ) or "(no recent entries available)"
+    requested_focus = focus or "key decisions, open risks, and what the target room should know next"
+    return (
+        "You are a Bridge Agent for a multi-room IRC simulation. "
+        "Summarize the source room for the target room in a compact operational note with sections: "
+        "Situation, Key Insight, Risk, Recommended Follow-Up.\n\n"
+        f"Source room: {source_room_name}\n"
+        f"Target room: {target_room_name}\n"
+        f"Source topic: {config.get('topic', DEFAULT_TOPIC)}\n"
+        f"Source scenario: {config.get('scenario', 'omni')}\n"
+        f"Source mode: {config.get('mode', DEFAULT_MODE)}\n"
+        f"Focus: {requested_focus}\n\n"
+        "Recent transcript:\n"
+        f"{excerpt}"
+    )
+
+
+
 def build_judge_prompt(history: list[dict[str, Any]], config: dict[str, Any], focus: str) -> str:
     transcript_lines = [render_entry(entry) for entry in history[-30:]]
     transcript = "\n".join(transcript_lines) if transcript_lines else "(no transcript available)"
@@ -1416,6 +1493,8 @@ def export_transcript(
             f"- Replay views: `{config['telemetry']['replay_views']}`",
             f"- Comparisons: `{config['telemetry']['comparisons']}`",
             f"- Bridge events: `{config['telemetry']['bridge_events']}`",
+            f"- Bridge AI events: `{config['telemetry']['bridge_ai_events']}`",
+            f"- Observer views: `{config['telemetry']['observer_views']}`",
             f"- Estimated cost: `{format_usd(config['telemetry']['total_estimated_cost_usd'])}`",
             f"- Actual cost: `{format_usd(config['telemetry']['total_actual_cost_usd'])}`",
             "",

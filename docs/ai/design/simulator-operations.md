@@ -32,7 +32,7 @@ This approach:
 - lets operators jump, step, rewind, and inspect replay windows incrementally
 
 ### 3. Dashboards should be summary-first, not UI-heavy
-The operator dashboard and room-summary surfaces are intentionally text-first.
+The operator dashboard, observer view, and room-summary surfaces are intentionally text-first.
 
 This approach:
 - keeps implementation cost low
@@ -40,8 +40,12 @@ This approach:
 - provides value before a custom visual dashboard exists
 - remains easy to test at the helper layer
 
-### 4. Cross-room bridge notes are deterministic first, model-generated later
-The current bridge mechanism summarizes recent room activity deterministically and injects it into another room as a system note. This avoids introducing another dependency-heavy summarization loop before operators prove they need it.
+### 4. Cross-room bridges have two modes: deterministic and model-generated
+The simulator now supports two bridge styles:
+- **deterministic bridge note**: low-cost, predictable context transfer from recent transcript lines
+- **model-generated bridge note**: higher-level abstraction using a bridge agent prompt
+
+This dual approach gives operators a practical cost/quality tradeoff.
 
 ### 5. Keep persistence small and explicit
 Persistent state currently stores:
@@ -76,8 +80,10 @@ flowchart TD
     Persist -- Yes --> State[data/simulator_state.json]
     Persist -- No --> Session[Active room config + history + telemetry]
     Cmd -- Dashboard --> Rooms
+    Cmd -- Observer --> Rooms
     Cmd -- Room Summary --> Rooms
     Cmd -- Bridge --> Rooms
+    Cmd -- Bridge AI --> BridgeAgent[Bridge Agent]
     Cmd -- Replay --> Exports[exports/*.json replay artifacts]
     Cmd -- Replay Step --> ReplayState
     Cmd -- Compare --> Exports
@@ -90,6 +96,7 @@ flowchart TD
     Task --> Team
     Team --> Stream[Stream responses back to Chainlit]
     Judge --> Stream
+    BridgeAgent --> Stream
     Stream --> Usage[Usage metadata when available]
     Usage --> Telemetry[Update telemetry + cost tracking]
     Telemetry --> History[Append active room transcript history]
@@ -155,19 +162,21 @@ flowchart TD
 - usage sample count
 - average latency
 - bridge events
+- bridge ai events
+- observer views
 
 ## Tradeoffs
 ### Pros
 - room separation enables parallel what-if contexts inside one session
 - replay stepping adds operator control without a heavy playback subsystem
-- dashboard and room-summary commands provide immediate control-tower value
-- bridge notes enable context transfer without full cross-room orchestration
+- dashboard and observer commands provide immediate control-tower value
+- deterministic and model-generated bridge modes give a useful quality/cost tradeoff
 - persistence footprint stays small
 - autonomous runs are bounded and explicit
 
 ### Cons
 - rooms are not yet persisted across application restarts
-- bridge notes are deterministic summaries, not model-generated abstractions
+- bridge AI depends on live model availability and cost
 - autonomous scheduling still depends on live Chainlit runtime behavior
 - actual cost depends on provider usage metadata being present
 - replay mode is still textual rather than visual/graphical
@@ -175,7 +184,7 @@ flowchart TD
 
 ## Recommended Future Extensions
 - add external IRC/websocket bridges and richer observer dashboards
-- add cross-room bridge agents using model-generated summaries
+- add role-specific bridge agents or bridge-routing policies
 - add provider-backed live integration tests behind environment flags
 - add persistent archived room snapshots when session-level room history becomes strategically valuable
 - add visual dashboard panels if the command-first interface stops being sufficient

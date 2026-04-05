@@ -14,11 +14,13 @@ from simulator_core import (
     build_analytics_text,
     build_autonomous_prompt,
     build_bridge_note,
+    build_bridge_prompt,
     build_costs_text,
     build_dashboard_text,
     build_jobs_text,
     build_judge_prompt,
     build_lineups_text,
+    build_observer_text,
     build_moderator_modes_text,
     build_personas_text,
     build_replay_comparison_text,
@@ -54,9 +56,11 @@ from simulator_core import (
     parse_command,
     parse_direct_message,
     record_agent_response,
+    record_bridge_ai_event,
     record_bridge_event,
     record_comparison_view,
     record_judge_run,
+    record_observer_view,
     record_prompt_telemetry,
     record_replay_view,
     record_scheduled_run,
@@ -253,6 +257,8 @@ class SimulatorCoreTests(unittest.TestCase):
         record_replay_view(config)
         record_comparison_view(config)
         record_bridge_event(config)
+        record_bridge_ai_event(config, "bridge prompt")
+        record_observer_view(config)
         record_agent_response(
             config,
             "Claude",
@@ -273,14 +279,18 @@ class SimulatorCoreTests(unittest.TestCase):
         telemetry_text = build_telemetry_text(config, AGENT_SPECS)
         analytics_text = build_analytics_text(config, [], AGENT_SPECS)
         costs_text = build_costs_text(config, AGENT_SPECS)
-        self.assertIn("Prompts sent: `4`", telemetry_text)
+        self.assertIn("Prompts sent: `5`", telemetry_text)
         self.assertIn("Scheduled runs: `1`", telemetry_text)
         self.assertIn("Replay views: `1`", telemetry_text)
         self.assertIn("Comparisons: `1`", telemetry_text)
         self.assertIn("Bridge events: `1`", telemetry_text)
+        self.assertIn("Bridge AI events: `1`", telemetry_text)
+        self.assertIn("Observer views: `1`", telemetry_text)
         self.assertIn("Judge", telemetry_text)
         self.assertIn("Most talkative agent", analytics_text)
         self.assertIn("Bridge events: `1`", analytics_text)
+        self.assertIn("Bridge AI events: `1`", analytics_text)
+        self.assertIn("Observer views: `1`", analytics_text)
         self.assertIn("Total estimated cost", costs_text)
         self.assertIn("usage samples `1`", costs_text)
 
@@ -307,10 +317,14 @@ class SimulatorCoreTests(unittest.TestCase):
         rooms[DEFAULT_ROOM_NAME]["history"].append(make_entry("Claude", "hello lobby"))
         create_room(rooms, "war room", AGENT_SPECS, persistent_state)
         analytics_text = build_room_analytics_text(DEFAULT_ROOM_NAME, rooms[DEFAULT_ROOM_NAME], AGENT_SPECS)
+        observer_text = build_observer_text(rooms, DEFAULT_ROOM_NAME)
         bridge_note = build_bridge_note(DEFAULT_ROOM_NAME, "war-room", rooms[DEFAULT_ROOM_NAME], 1)
+        bridge_prompt = build_bridge_prompt(DEFAULT_ROOM_NAME, "war-room", rooms[DEFAULT_ROOM_NAME], "risks", 1)
         self.assertIn("Room Analytics", analytics_text)
+        self.assertIn("Observer View", observer_text)
         self.assertIn("Bridge from room", bridge_note)
         self.assertIn("hello lobby", bridge_note)
+        self.assertIn("Source room", bridge_prompt)
 
     def test_usage_parsing_and_cost_calculation(self):
         normalized = normalize_usage_payload({"input_tokens": 11, "output_tokens": 7})

@@ -18,7 +18,7 @@ The simulator became significantly easier to extend after splitting general-purp
 
 ### Findings
 - **Live UI code and reusable domain logic should not live in the same file** once command surface area grows.
-- **Streaming model events are runtime-specific**, but transcript formatting, persistence, telemetry, replay, comparison, room management, dashboard rendering, bridge-note generation, and preset logic are not.
+- **Streaming model events are runtime-specific**, but transcript formatting, persistence, telemetry, replay, comparison, room management, dashboard rendering, bridge-note generation, observer views, and preset logic are not.
 - **Helper extraction increases testability immediately** because most simulator rules can be validated without a live Chainlit or OpenRouter session.
 
 ### Result
@@ -39,6 +39,7 @@ The highest-leverage additions were not new models but operator workflow improve
 - saved jobs
 - room-local live state
 - dashboard-style session summaries
+- observer ranking views
 - richer status inspection
 
 ## 4. Session Rooms Are the Right First Form of Multi-Channel Support
@@ -56,16 +57,18 @@ Multi-room support was the next logical step after replay, jobs, and comparison.
 - `/delete-room <name>` removes a room and falls back safely when required
 - each room has its own config and transcript history
 
-## 5. Dashboard Views Became Necessary Once Rooms Existed
-As soon as the simulator gained multiple live contexts, operators needed a quick way to understand the whole session at a glance.
+## 5. Dashboard and Observer Views Became Necessary Once Rooms Existed
+As soon as the simulator gained multiple live contexts, operators needed fast global visibility.
 
 ### Findings
 - A room list alone is not enough once rooms accumulate their own histories and costs.
-- A dashboard gives the operator a control-tower view of the current simulation session.
-- Text-first dashboards remain surprisingly effective for a command-driven simulator and avoid needing immediate UI redesign.
+- A dashboard gives the operator a control-tower summary.
+- An observer view adds ranking and prioritization, which becomes useful when several rooms are active at once.
+- Text-first operational views remain surprisingly effective for a command-driven simulator and avoid needing immediate UI redesign.
 
-### Current Dashboard Model
+### Current Visibility Model
 - `/dashboard` gives a top-level summary across rooms, jobs, active context, aggregate prompts, bridge activity, and aggregate estimated cost
+- `/observer` provides a ranked multi-room operational view
 - `/room-summary [count]` previews recent activity across rooms
 - `/room-analytics [name]` drills into one room’s local metrics and analytics
 
@@ -149,7 +152,22 @@ Bridge notes were the next practical feature after multi-room state and dashboar
 - inserts a room-local system note into the target room
 - increments bridge telemetry on the target room
 
-## 13. Bounded Scheduling Remains the Right First Automation Primitive
+## 13. Model-Generated Bridge Notes Are the Right Next Step After Deterministic Bridges
+After deterministic bridges, the next useful feature is a smarter summarization mode.
+
+### Findings
+- Some operators want high-fidelity literal context transfer; others want a distilled operational summary.
+- A dedicated bridge agent provides that higher abstraction without changing the underlying room model.
+- Reusing the judge model for the bridge agent keeps the architecture small while still adding real capability.
+- Bridge-agent generation fits naturally into the existing telemetry and cost-accounting model.
+
+### Current Bridge-AI Model
+- `/bridge-ai <source> <target> [focus]`
+- uses a bridge-agent prompt built from recent source-room history
+- delivers the model-generated note into the target room
+- tracks bridge-AI events, costs, and usage when available
+
+## 14. Bounded Scheduling Remains the Right First Automation Primitive
 The simulator supports autonomous scheduled runs, but deliberately in a constrained way.
 
 ### Findings
@@ -157,7 +175,7 @@ The simulator supports autonomous scheduled runs, but deliberately in a constrai
 - Requiring both interval and run-count intent creates a cleaner operator contract.
 - Scheduling can live entirely in session state for now; it does not need persistent global orchestration yet.
 
-## 14. Saved Jobs Are the Right Level of Automation Persistence
+## 15. Saved Jobs Are the Right Level of Automation Persistence
 Saved jobs bundle simulator configuration with automation settings.
 
 ### Findings
@@ -165,7 +183,7 @@ Saved jobs bundle simulator configuration with automation settings.
 - Jobs are more useful than raw interval persistence because they preserve simulation context as well as timing.
 - Keeping jobs local and explicit is safer than trying to auto-restore background automation across sessions.
 
-## 15. Room Switching Should Rebuild Runtime State, Not Preserve Live Teams
+## 16. Room Switching Should Rebuild Runtime State, Not Preserve Live Teams
 A key design choice in this pass was to rebuild the AutoGen team whenever the active room changes.
 
 ### Findings
@@ -173,7 +191,7 @@ A key design choice in this pass was to rebuild the AutoGen team whenever the ac
 - Rebuilding the team on room activation is simpler, deterministic, and easier to reason about.
 - This also keeps room switching compatible with room-local persona, scenario, and lineup changes.
 
-## 16. Replay, Comparison, Rooms, Dashboards, Bridge Notes, and Scheduling Reinforce Each Other
+## 17. Replay, Comparison, Rooms, Dashboards, Bridge Notes, Bridge Agents, and Scheduling Reinforce Each Other
 These additions work best together rather than independently.
 
 ### Findings
@@ -182,17 +200,18 @@ These additions work best together rather than independently.
 - Replay makes it possible to inspect those runs after export.
 - Replay stepping improves the precision of that inspection.
 - Comparison makes it possible to reason about differences across runs.
-- Dashboard views make it possible to monitor the whole session at a glance.
-- Bridge notes make it possible to transfer context between experiments.
-- Together they move AgentIRC toward a genuine simulation-lab workflow: branch context, run experiments, export, inspect, compare, monitor, bridge, iterate.
+- Dashboard and observer views make it possible to monitor the whole session at a glance.
+- Deterministic bridge notes make it possible to transfer literal context between experiments.
+- Bridge agents make it possible to transfer distilled context between experiments.
+- Together they move AgentIRC toward a genuine simulation-lab workflow: branch context, run experiments, export, inspect, compare, monitor, bridge, summarize, iterate.
 
-## 17. Testing Strategy: Prioritize Helper-Layer Confidence First
+## 18. Testing Strategy: Prioritize Helper-Layer Confidence First
 The project now has stronger unit coverage around the deterministic parts of the simulator.
 
 ### Covered Areas
 - command parsing
 - room creation/switching/deletion
-- room summary and dashboard rendering
+- dashboard, observer, and room-summary rendering
 - room analytics rendering
 - alias resolution
 - scenario switching
@@ -204,11 +223,12 @@ The project now has stronger unit coverage around the deterministic parts of the
 - usage normalization and extraction
 - cost calculation helpers
 - judge prompt construction
+- bridge-note generation
+- bridge-agent prompt generation
 - automation configuration and stopping
 - replay discovery and replay rendering
 - replay window resolution and replay-window rendering
 - replay comparison rendering
-- bridge-note generation
 - transcript export
 - persistent state round trips
 
@@ -219,14 +239,15 @@ The project now has stronger unit coverage around the deterministic parts of the
 - schedule-loop execution has not been integration-tested against a live session
 - room switching has not yet been validated in a live Chainlit integration test
 - bridge delivery has not yet been validated in a live Chainlit integration test
+- bridge-AI delivery has not yet been validated in a live Chainlit integration test
 - actual-cost behavior has not been verified end-to-end against provider usage metadata
 - replay cursor behavior is not yet integration-tested in a live session loop
 
-## 18. Recommended Next Architecture Moves
+## 19. Recommended Next Architecture Moves
 Based on the current shape of the project, the next strongest additions would be:
 1. **external IRC/websocket bridges** for non-Chainlit clients
 2. **richer observer/dashboard views with live metrics panels**
-3. **cross-room bridge agents** using model-generated summaries
+3. **role-specific bridge agents** or bridge-routing policies
 4. **tool-use plugins** for structured tasks inside simulations
-5. **live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, and replay stepping
+5. **live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, and replay stepping
 6. **persistent archived room snapshots** across restarts
