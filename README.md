@@ -1,6 +1,6 @@
 # AgentIRC: The Multi-Model Broadcast Network
 
-AgentIRC is an IRC-style multi-model simulation environment built with **Microsoft AutoGen 0.4+**, **Chainlit**, and **OpenRouter**. It lets a human operator run coordinated conversations across multiple model personas, switch between broadcast and discussion modes, inspect telemetry, persist lineups/personas/jobs, export transcripts, replay and compare old runs, estimate costs, and trigger autonomous scheduled simulations.
+AgentIRC is an IRC-style multi-model simulation environment built with **Microsoft AutoGen 0.4+**, **Chainlit**, and **OpenRouter**. It lets a human operator run coordinated conversations across multiple model personas, switch between broadcast and discussion modes, inspect telemetry, persist lineups/personas/jobs, export transcripts, replay and compare old runs, estimate costs, manage multiple rooms, and trigger autonomous scheduled simulations.
 
 ## 🚀 Feature Overview
 
@@ -11,6 +11,12 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Scenario Presets**: Switch quickly between `omni`, `debate`, `incident`, `redteam`, `worldbuild`, `product`, and `council`.
 - **Moderator Modes**: Apply conversation-wide behavioral shaping with `off`, `facilitator`, `strict`, `critic`, and `chaos`.
 
+### Multi-Room Simulation
+- **Multiple Rooms Per Session**: Maintain separate room-local config and transcript state inside one simulator session.
+- **Room Switching**: Move between rooms without losing each room’s topic, mode, history, or automation config.
+- **Room Lifecycle Commands**: Create, list, switch, and delete rooms on demand.
+- **Room-Scoped Reset/Clear**: `/clear` and `/reset` now operate on the active room rather than the whole session.
+
 ### Agent Control
 - **Dynamic Lineup Management**: Enable or disable agents at runtime.
 - **Custom Persona Overrides**: Give individual agents new styles or roles on the fly and persist them across sessions.
@@ -19,7 +25,7 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Roster Inspection**: `/agents`, `/lineup`, and `/whois` expose bios, model IDs, enabled state, custom persona data, and pricing hints.
 
 ### Analysis & Operations
-- **Session Status**: Inspect mode, scenario, moderator, lineup, job count, persistent-state counts, and cost summary.
+- **Session Status**: Inspect room, mode, scenario, moderator, lineup, job count, persistent-state counts, and cost summary.
 - **Telemetry**: Per-agent response counts, character volume, token totals, average response latency, scheduled-run count, replay-view count, and comparison-view count.
 - **Hybrid Cost Tracking**: Uses provider usage data when available and falls back to estimated tokens plus configurable pricing hints.
 - **Analytics**: Aggregate session summaries, talkativeness ranking, output volume, autonomous-run volume, and last-prompt context.
@@ -31,9 +37,9 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Persistent Logging**: Append IRC-formatted output to `irc_session.log`.
 
 ## 🧠 Architecture Notes
-- **Chainlit session state** holds the live simulator config, transcript history, active team, persistent settings, and the current automation task handle.
-- **`simulator_core.py`** isolates session defaults, command parsing, persona/lineup/job persistence, telemetry logic, cost tracking, replay helpers, comparison helpers, scheduling helpers, export helpers, and transcript formatting.
-- **`app.py`** focuses on Chainlit wiring, AutoGen team construction, command dispatch, autonomous scheduling, replay/compare commands, and model streaming.
+- **Chainlit session state** holds the live simulator config, transcript history, active team, current room name, room registry, persistent settings, and the current automation task handle.
+- **`simulator_core.py`** isolates session defaults, room helpers, command parsing, persona/lineup/job persistence, telemetry logic, cost tracking, replay helpers, comparison helpers, scheduling helpers, export helpers, and transcript formatting.
+- **`app.py`** focuses on Chainlit wiring, room activation, AutoGen team construction, command dispatch, autonomous scheduling, replay/compare commands, and model streaming.
 - **Persistent state** is stored in `data/simulator_state.json` and currently tracks saved lineups, persona overrides, and saved jobs.
 - **Exports** include transcript content plus session telemetry snapshot so old runs can be replayed, compared, and analyzed.
 
@@ -57,10 +63,14 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 
 ## 💬 Command Reference
 - `/help`
+- `/status`
+- `/rooms`
+- `/room [name]`
+- `/new-room <name>`
+- `/delete-room <name>`
 - `/mode <broadcast|discuss>`
 - `/topic <text>`
 - `/nick <name>`
-- `/status`
 - `/lineup`
 - `/agents`
 - `/whois <agent>`
@@ -96,9 +106,9 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/reset`
 
 ## 📁 Important Files
-- `app.py` - Chainlit app, command handling, AutoGen orchestration, autonomous scheduling, replay/compare commands, and judge execution.
+- `app.py` - Chainlit app, command handling, room activation, AutoGen orchestration, autonomous scheduling, replay/compare commands, and judge execution.
 - `run.py` - Python 3.14 compatibility launcher for Chainlit.
-- `simulator_core.py` - Shared simulator logic, persistence, telemetry, hybrid cost tracking, analytics, replay helpers, job helpers, scheduling helpers, exports, and transcript utilities.
+- `simulator_core.py` - Shared simulator logic, room helpers, persistence, telemetry, hybrid cost tracking, analytics, replay helpers, job helpers, scheduling helpers, exports, and transcript utilities.
 - `tests/test_simulator_core.py` - Regression coverage for helper-layer behavior.
 - `docs/ai/design/simulator-operations.md` - feature-pass architecture notes and flow diagram.
 - `docs/ai/implementation/` - implementation pass documentation.
@@ -122,9 +132,9 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
    ```
 
 ## 🧭 Recommended Next Feature Passes
-- multi-room/channel support
 - interactive replay stepping UI
 - external IRC / websocket bridging
+- observer/dashboard views
 - tool-use plugins and structured tasks
-- side-by-side dashboard views
 - opt-in live integration tests for Chainlit + provider calls
+- cross-room orchestration and room-to-room summaries

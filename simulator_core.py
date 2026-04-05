@@ -15,6 +15,7 @@ DEFAULT_MODERATOR_MODE = "off"
 DEFAULT_JUDGE_MODEL = "openai/gpt-4o-mini"
 DEFAULT_AUTOMATION_INTERVAL_SECONDS = 60
 DEFAULT_AUTOMATION_RUNS = 1
+DEFAULT_ROOM_NAME = "lobby"
 HISTORY_LIMIT = 200
 STATE_FILE = Path("data/simulator_state.json")
 EXPORT_DIR = Path("exports")
@@ -194,12 +195,14 @@ def make_default_telemetry(agent_specs: dict[str, dict[str, Any]]) -> dict[str, 
 def make_default_config(
     agent_specs: dict[str, dict[str, Any]],
     persistent_state: dict[str, Any] | None = None,
+    room_name: str = DEFAULT_ROOM_NAME,
 ) -> dict[str, Any]:
     persona_overrides = {}
     if persistent_state and isinstance(persistent_state.get("saved_personas"), dict):
         persona_overrides = deepcopy(persistent_state["saved_personas"])
 
     return {
+        "room_name": room_name,
         "mode": DEFAULT_MODE,
         "topic": DEFAULT_TOPIC,
         "nick": DEFAULT_NICK,
@@ -212,6 +215,29 @@ def make_default_config(
         "persona_overrides": persona_overrides,
         "telemetry": make_default_telemetry(agent_specs),
         "automation": make_default_automation(),
+    }
+
+
+
+def make_room_state(
+    room_name: str,
+    agent_specs: dict[str, dict[str, Any]],
+    persistent_state: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    normalized_room_name = sanitize_key(room_name) or DEFAULT_ROOM_NAME
+    return {
+        "config": make_default_config(agent_specs, persistent_state, room_name=normalized_room_name),
+        "history": [],
+    }
+
+
+
+def make_initial_rooms(
+    agent_specs: dict[str, dict[str, Any]],
+    persistent_state: dict[str, Any] | None = None,
+) -> dict[str, dict[str, Any]]:
+    return {
+        DEFAULT_ROOM_NAME: make_room_state(DEFAULT_ROOM_NAME, agent_specs, persistent_state),
     }
 
 
@@ -335,6 +361,10 @@ def build_help_text() -> str:
 - `/topic <text>` - Set or inspect the current topic.
 - `/nick <name>` - Change your IRC nick.
 - `/status` - Show the live simulator configuration.
+- `/rooms` - List session rooms and show the active room.
+- `/room [name]` - Show the current room or switch to another room.
+- `/new-room <name>` - Create a new room and switch into it.
+- `/delete-room <name>` - Delete a room.
 - `/lineup` - Show enabled models and backing API model IDs.
 - `/agents` - Show agent bios, models, and enabled status.
 - `/whois <agent>` - Inspect one agent in detail.
@@ -373,6 +403,21 @@ def build_help_text() -> str:
 - `@Claude give me the architectural view`
 - `@GPT-5 summarize the debate so far`
 """.strip()
+
+
+
+def build_rooms_text(rooms: dict[str, dict[str, Any]], current_room_name: str) -> str:
+    lines = []
+    for room_name in sorted(rooms.keys()):
+        marker = "active" if room_name == current_room_name else "idle"
+        room_state = rooms[room_name]
+        history = room_state.get("history", [])
+        topic = room_state.get("config", {}).get("topic", DEFAULT_TOPIC)
+        lines.append(
+            f"- **{room_name}** ({marker}) — `{len(history)}` transcript entries  \n"
+            f"  Topic: {topic}"
+        )
+    return "**Rooms**\n" + "\n".join(lines)
 
 
 
@@ -430,6 +475,7 @@ def build_status_text(config: dict[str, Any], history_size: int, persistent_stat
     automation = config["automation"]
     return (
         "**Simulator Status**\n"
+        f"- Room: `{config['room_name']}`\n"
         f"- Mode: `{config['mode']}`\n"
         f"- Topic: {config['topic']}\n"
         f"- Nick: `{config['nick']}`\n"
@@ -520,6 +566,53 @@ def build_jobs_text(persistent_state: dict[str, Any]) -> str:
             f"  Scenario `{job.get('scenario', 'omni')}`, mode `{job.get('mode', DEFAULT_MODE)}`, agents: {enabled or 'none'}"
         )
     return "**Saved Jobs**\n" + "\n".join(lines)
+
+
+
+def create_room(
+    rooms: dict[str, dict[str, Any]],
+    raw_name: str,
+    agent_specs: dict[str, dict[str, Any]],
+    persistent_state: dict[str, Any] | None = None,
+) -> tuple[bool, str, str | None]:
+    room_name = sanitize_key(raw_name)
+    if not room_name:
+        return False, "Room name cannot be empty.", None
+    if room_name in rooms:
+        return False, f"Room **{room_name}** already exists.", room_name
+
+    rooms[room_name] = make_room_state(room_name, agent_specs, persistent_state)
+    return True, f"Created room **{room_name}**.", room_name
+
+
+
+def switch_room(rooms: dict[str, dict[str, Any]], raw_name: str) -> tuple[bool, str, str | None]:
+    room_name = sanitize_key(raw_name)
+    if not room_name:
+        return False, "Room name cannot be empty.", None
+    if room_name not in rooms:
+        return False, f"Unknown room: `{raw_name}`", None
+    return True, f"Switched to room **{room_name}**.", room_name
+
+
+
+def delete_room(
+    rooms: dict[str, dict[str, Any]],
+    current_room_name: str,
+    raw_name: str,
+) -> tuple[bool, str, str | None]:
+    room_name = sanitize_key(raw_name)
+    if not room_name or room_name not in rooms:
+        return False, f"Unknown room: `{raw_name}`", None
+    if len(rooms) == 1:
+        return False, "At least one room must remain available.", current_room_name
+
+    del rooms[room_name]
+    next_room_name = current_room_name
+    if room_name == current_room_name:
+        next_room_name = sorted(rooms.keys())[0]
+        return True, f"Deleted room **{room_name}** and switched to **{next_room_name}**.", next_room_name
+    return True, f"Deleted room **{room_name}**.", next_room_name
 
 
 
@@ -922,7 +1015,7 @@ def build_autonomous_prompt(config: dict[str, Any]) -> str:
     run_number = config["telemetry"]["scheduled_runs"] + 1
     return (
         f"Autonomous simulation run #{run_number}. "
-        f"Scenario: {config['scenario']}. Mode: {config['mode']}. Topic: {config['topic']}. "
+        f"Room: {config['room_name']}. Scenario: {config['scenario']}. Mode: {config['mode']}. Topic: {config['topic']}. "
         "Advance the conversation from a fresh angle, compare tradeoffs, surface disagreements, "
         "and end with concrete next steps."
     )
@@ -1176,6 +1269,7 @@ def export_transcript(
             "# AgentIRC Transcript Export",
             "",
             "## Session Configuration",
+            f"- Room: `{config['room_name']}`",
             f"- Mode: `{config['mode']}`",
             f"- Topic: {config['topic']}",
             f"- Nick: `{config['nick']}`",

@@ -1,57 +1,52 @@
 # Multi-Model Simulator Expansion
 
 ## Summary
-This implementation pass extends AgentIRC beyond replay and scheduling into a more complete simulation operations console with hybrid cost tracking, replay comparison, and reusable autonomous jobs.
+This implementation pass extends AgentIRC beyond cost tracking and replay comparison into a more complete multi-room simulation console.
 
 ## Newly Added Capabilities
-### Hybrid Cost Tracking
-- `/costs` command for session-level and per-agent cost visibility
-- pricing hints attached to agent specs
-- usage extraction from streamed events when available
-- fallback token estimation when provider usage metadata is absent
-- actual-cost and estimated-cost tracking side by side
+### Multi-Room Session Support
+- `/rooms`
+- `/room [name]`
+- `/new-room <name>`
+- `/delete-room <name>`
+- room-local config and transcript history held in session state
+- room-aware status, prompts, and welcome banner
+- room-scoped `/clear` and `/reset`
 
-### Replay Comparison
-- `/compare <left> <right> [count]`
-- support for `latest` and `previous` replay resolution
-- side-by-side transcript excerpt comparison from exported JSON artifacts
-- replay comparison telemetry counter
-
-### Reusable Autonomous Jobs
-- `/jobs`
-- `/save-job <name>`
-- `/run-job <name>`
-- `/delete-job <name>`
-- local persistence of automation presets tied to simulator config
+### Room Runtime Behavior
+- active room switching rebuilds the current AutoGen team
+- room switching stops any active automation task before activation changes
+- room deletion automatically falls back to another available room when needed
 
 ## Implementation Notes
 ### `simulator_core.py`
 This module now additionally owns:
-- hybrid usage parsing and cost calculation helpers
-- replay comparison helpers
-- saved job persistence helpers
-- comparison telemetry helpers
-- richer per-agent telemetry shape
+- room-state construction helpers
+- room create/switch/delete helpers
+- room list rendering
+- room name support in status and autonomous prompts
 
 ### `app.py`
 This module now additionally handles:
-- pricing hints for active model lineup
-- `/costs`, `/jobs`, `/save-job`, `/run-job`, `/delete-job`, and `/compare`
-- judge pricing hinting
-- usage extraction from streamed events before telemetry updates
+- session room registry state
+- active room activation logic
+- command handlers for room lifecycle
+- room-aware start/reset/clear behavior
+- room switching integrated with automation shutdown and team rebuilds
 
 ## Findings and Analysis
-### 1. Hybrid cost tracking is more honest than fake precision
-Provider usage metadata is not guaranteed across all model backends, so the simulator now explicitly distinguishes between actual cost and estimated cost instead of pretending heuristics are authoritative.
+### 1. Room-scoped state is the right first step before multi-user channel persistence
+Adding rooms inside one session creates real parallel simulation contexts without prematurely building a networked channel layer.
 
-### 2. Replay comparison is the natural next step after replay
-Once replay existed, comparison became the highest-value follow-up because operators need to inspect differences across runs, not just reopen individual transcripts.
+### 2. Rebuilding the team on room activation is simpler than storing live team instances per room
+This keeps room switching deterministic and avoids maintaining long-lived runtime objects for inactive rooms.
 
-### 3. Saved jobs are the right level of automation persistence
-Persisting reusable job presets gives strong operator leverage without prematurely building a full scheduler service.
+### 3. Rooms complement replay and jobs nicely
+Rooms handle live parallel experimentation, jobs handle repeated automation, and replay/compare handle retrospective analysis.
 
 ## Recommended Follow-Up
 - interactive replay stepping UI
-- multi-room orchestration
 - external IRC/websocket bridge support
-- opt-in integration tests for live scheduling and streaming
+- observer/dashboard views
+- cross-room summaries or bridge agents
+- opt-in integration tests for live scheduling, room switching, and streaming

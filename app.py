@@ -16,6 +16,7 @@ from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from simulator_core import (
+    DEFAULT_ROOM_NAME,
     EXPORT_DIR,
     MODERATOR_MODES,
     STATE_FILE,
@@ -37,14 +38,17 @@ from simulator_core import (
     build_replay_comparison_text,
     build_replay_text,
     build_replays_text,
+    build_rooms_text,
     build_schedule_status_text,
     build_scenarios_text,
     build_status_text,
     build_telemetry_text,
     coerce_message_content,
     configure_automation,
+    create_room,
     delete_job,
     delete_lineup,
+    delete_room,
     display_agent_name,
     export_transcript,
     extract_usage_metrics,
@@ -55,6 +59,7 @@ from simulator_core import (
     load_replay_payload,
     make_default_config,
     make_entry,
+    make_initial_rooms,
     parse_command,
     parse_direct_message,
     record_agent_response,
@@ -71,6 +76,7 @@ from simulator_core import (
     save_lineup,
     save_persistent_state,
     set_agent_enabled,
+    switch_room,
     set_moderator_mode,
     set_persona_override,
     set_rounds,
@@ -96,6 +102,8 @@ SESSION_TEAM_KEY = "team"
 SESSION_HISTORY_KEY = "history"
 SESSION_STATE_KEY = "persistent_state"
 SESSION_AUTOMATION_TASK_KEY = "automation_task"
+SESSION_ROOMS_KEY = "rooms"
+SESSION_ROOM_KEY = "room_name"
 JUDGE_PRICING = {"input_per_million": 0.15, "output_per_million": 0.6}
 
 AGENT_SPECS = {
@@ -188,6 +196,45 @@ def get_persistent_state() -> dict:
 
 
 
+def get_rooms() -> dict[str, dict]:
+    rooms = cl.user_session.get(SESSION_ROOMS_KEY)
+    if rooms is None:
+        rooms = make_initial_rooms(AGENT_SPECS, get_persistent_state())
+        cl.user_session.set(SESSION_ROOMS_KEY, rooms)
+    return rooms
+
+
+
+def get_current_room_name() -> str:
+    room_name = cl.user_session.get(SESSION_ROOM_KEY)
+    if room_name is None:
+        room_name = DEFAULT_ROOM_NAME
+        cl.user_session.set(SESSION_ROOM_KEY, room_name)
+    return room_name
+
+
+
+def save_current_room_state():
+    rooms = get_rooms()
+    room_name = get_current_room_name()
+    rooms[room_name] = {
+        "config": get_config(),
+        "history": get_history(),
+    }
+    cl.user_session.set(SESSION_ROOMS_KEY, rooms)
+
+
+
+def activate_room(room_name: str):
+    rooms = get_rooms()
+    room_state = rooms[room_name]
+    cl.user_session.set(SESSION_ROOM_KEY, room_name)
+    cl.user_session.set(SESSION_CONFIG_KEY, room_state["config"])
+    cl.user_session.set(SESSION_HISTORY_KEY, room_state["history"])
+    rebuild_team()
+
+
+
 def persist_state():
     state = get_persistent_state()
     save_persistent_state(state, STATE_FILE)
@@ -239,7 +286,7 @@ def create_team(config: dict):
         persona = config.get("persona_overrides", {}).get(name, spec["bio"])
         system_message = (
             f"You are {display_agent_name(name)} in an IRC-style multi-model simulation. "
-            f"Mode: {config['mode'].upper()}. Scenario: {config['scenario']}. "
+            f"Room: {config['room_name']}. Mode: {config['mode'].upper()}. Scenario: {config['scenario']}. "
             f"Topic: {config['topic']}. Persona: {persona} "
             f"Peers: {', '.join(peers) if peers else 'none'}. "
             f"Moderator mode: {config['moderator_mode']} ({MODERATOR_MODES[config['moderator_mode']]}) "
@@ -377,6 +424,53 @@ async def handle_command(command: str, args: str) -> bool:
 
     if command == "/status":
         await cl.Message(content=build_status_text(config, len(get_history()), persistent_state)).send()
+        return True
+
+    if command == "/rooms":
+        await cl.Message(content=build_rooms_text(get_rooms(), get_current_room_name())).send()
+        return True
+
+    if command == "/room":
+        if not args:
+            await send_system_notice(f"Current room: **{get_current_room_name()}**")
+            return True
+        save_current_room_state()
+        changed, response, room_name = switch_room(get_rooms(), args)
+        if not changed or room_name is None:
+            await send_system_notice(response)
+            return True
+        await stop_automation_task()
+        activate_room(room_name)
+        await send_system_notice(response)
+        return True
+
+    if command == "/new-room":
+        if not args:
+            await send_system_notice("Usage: `/new-room <name>`")
+            return True
+        save_current_room_state()
+        changed, response, room_name = create_room(get_rooms(), args, AGENT_SPECS, persistent_state)
+        if not changed or room_name is None:
+            await send_system_notice(response)
+            return True
+        await stop_automation_task()
+        activate_room(room_name)
+        await send_system_notice(f"{response} Switched to **{room_name}**.")
+        return True
+
+    if command == "/delete-room":
+        if not args:
+            await send_system_notice("Usage: `/delete-room <name>`")
+            return True
+        save_current_room_state()
+        changed, response, next_room_name = delete_room(get_rooms(), get_current_room_name(), args)
+        if not changed:
+            await send_system_notice(response)
+            return True
+        await stop_automation_task()
+        if next_room_name:
+            activate_room(next_room_name)
+        await send_system_notice(response)
         return True
 
     if command == "/lineup":
@@ -670,15 +764,18 @@ async def handle_command(command: str, args: str) -> bool:
 
     if command == "/clear":
         save_history([])
-        await send_system_notice("Transcript buffer cleared for this session.")
+        save_current_room_state()
+        await send_system_notice("Transcript buffer cleared for this room.")
         return True
 
     if command == "/reset":
         await stop_automation_task()
-        cl.user_session.set(SESSION_CONFIG_KEY, make_default_config(AGENT_SPECS, persistent_state))
+        room_name = get_current_room_name()
+        cl.user_session.set(SESSION_CONFIG_KEY, make_default_config(AGENT_SPECS, persistent_state, room_name=room_name))
         save_history([])
+        save_current_room_state()
         rebuild_team()
-        await send_system_notice("Simulator state reset to defaults.")
+        await send_system_notice("Current room state reset to defaults.")
         return True
 
     await send_system_notice(f"Unknown command: `{command}`. Use `/help`.")
@@ -731,15 +828,19 @@ async def stream_agent(
 async def start():
     persistent_state = load_persistent_state(STATE_FILE)
     cl.user_session.set(SESSION_STATE_KEY, persistent_state)
-    config = make_default_config(AGENT_SPECS, persistent_state)
-    cl.user_session.set(SESSION_CONFIG_KEY, config)
-    cl.user_session.set(SESSION_HISTORY_KEY, [])
+    rooms = make_initial_rooms(AGENT_SPECS, persistent_state)
+    cl.user_session.set(SESSION_ROOMS_KEY, rooms)
+    cl.user_session.set(SESSION_ROOM_KEY, DEFAULT_ROOM_NAME)
+    cl.user_session.set(SESSION_CONFIG_KEY, rooms[DEFAULT_ROOM_NAME]["config"])
+    cl.user_session.set(SESSION_HISTORY_KEY, rooms[DEFAULT_ROOM_NAME]["history"])
     cl.user_session.set(SESSION_AUTOMATION_TASK_KEY, None)
+    config = get_config()
     rebuild_team()
 
     welcome_banner = f"""
 ```
 *** Connected to #agentirc (AutoGen Network)
+*** Current Room: {config['room_name']}
 *** Your nick is {config['nick']}
 *** Current Topic: {config['topic']}
 *** Current Mode: {config['mode'].upper()}

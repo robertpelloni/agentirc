@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0 - 2026-04-05
+- Added multi-room session support with `/rooms`, `/room`, `/new-room`, and `/delete-room`.
+- Added room-local config/history management with room-aware reset and clear behavior.
+- Made prompts, status, and welcome banner room-aware.
+- Added room helpers for creation, switching, deletion, and listing.
+- Expanded unit coverage from 22 to 23 tests.
+- Expanded README, findings, design, implementation, testing, changelog, and handoff documentation for multi-room behavior.
+
 ## 0.5.0 - 2026-04-05
 - Added hybrid cost tracking with `/costs`, configurable pricing hints, usage extraction helpers, and side-by-side estimated vs actual cost accounting.
 - Added saved job presets with `/jobs`, `/save-job`, `/run-job`, and `/delete-job`.

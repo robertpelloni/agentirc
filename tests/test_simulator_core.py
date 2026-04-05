@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from simulator_core import (
+    DEFAULT_ROOM_NAME,
     EXPORT_DIR,
     MODERATOR_MODES,
     STATE_FILE,
@@ -21,13 +22,16 @@ from simulator_core import (
     build_replay_comparison_text,
     build_replay_text,
     build_replays_text,
+    build_rooms_text,
     build_schedule_status_text,
     build_status_text,
     build_telemetry_text,
     calculate_cost_usd,
     configure_automation,
+    create_room,
     delete_job,
     delete_lineup,
+    delete_room,
     display_agent_name,
     estimate_tokens,
     export_transcript,
@@ -36,6 +40,7 @@ from simulator_core import (
     load_job,
     load_lineup,
     load_persistent_state,
+    make_initial_rooms,
     load_replay_payload,
     make_default_config,
     make_default_store,
@@ -57,6 +62,7 @@ from simulator_core import (
     save_persistent_state,
     set_agent_enabled,
     set_moderator_mode,
+    switch_room,
     set_persona_override,
     set_rounds,
     stop_automation,
@@ -212,6 +218,22 @@ class SimulatorCoreTests(unittest.TestCase):
         changed, message = delete_job(persistent_state, "nightly-review")
         self.assertTrue(changed)
         self.assertIn("Deleted job", message)
+
+    def test_room_create_switch_delete_cycle(self):
+        persistent_state = make_default_store()
+        rooms = make_initial_rooms(AGENT_SPECS, persistent_state)
+        self.assertIn(DEFAULT_ROOM_NAME, rooms)
+        changed, message, room_name = create_room(rooms, "War Room", AGENT_SPECS, persistent_state)
+        self.assertTrue(changed)
+        self.assertEqual(room_name, "war-room")
+        self.assertIn("war-room", build_rooms_text(rooms, DEFAULT_ROOM_NAME))
+        changed, message, room_name = switch_room(rooms, "war-room")
+        self.assertTrue(changed)
+        self.assertEqual(room_name, "war-room")
+        changed, message, next_room = delete_room(rooms, "war-room", "war-room")
+        self.assertTrue(changed)
+        self.assertEqual(next_room, DEFAULT_ROOM_NAME)
+        self.assertNotIn("war-room", rooms)
 
     def test_prompt_and_response_telemetry(self):
         config = make_default_config(AGENT_SPECS)
