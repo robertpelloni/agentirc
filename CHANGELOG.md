@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.0 - 2026-04-05
+- Added `/connectors` for connector adapter inspection.
+- Added `bridge_connectors.py` with `console`, `inbox`, and `jsonl` connector adapters.
+- Added connector-aware bridge runtime processing via `bridge_runtime.py --connector <name>`.
+- Expanded inbox/runtime support with `/bridge-runtime`, `/inbox`, and `/import-bridge <file> [room]` command flow.
+- Expanded build tooling to compile `bridge_connectors.py` and `tests/test_bridge_connectors.py`.
+- Expanded unit coverage from 26 to 31 tests across the helper layer and connector adapter layer.
+- Expanded README, findings, design, implementation, testing, changelog, and handoff documentation for connector adapters and staged external runtime evolution.
+
 ## 0.11.0 - 2026-04-05
 - Added `/bridge-runtime` for external bridge directory status visibility.
 - Added `/inbox` and `/import-bridge <file> [room]` for inbound external payload inspection and import.

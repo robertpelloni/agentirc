@@ -15,6 +15,7 @@ from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermi
 from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
+from bridge_connectors import build_connector_catalog_text
 from simulator_core import (
     DEFAULT_ROOM_NAME,
     EXPORT_DIR,
@@ -643,6 +644,10 @@ async def handle_command(command: str, args: str) -> bool:
 
     if command == "/bridge-runtime":
         await cl.Message(content=build_bridge_runtime_status_text()).send()
+        return True
+
+    if command == "/connectors":
+        await cl.Message(content=build_connector_catalog_text()).send()
         return True
 
     if command == "/outbox":

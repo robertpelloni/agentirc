@@ -7,6 +7,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from bridge_connectors import CONNECTOR_CATALOG, route_payload
 from simulator_core import INBOX_DIR, OUTBOX_DIR, PROCESSED_DIR, list_payload_files, load_external_payload
 
 RUNTIME_LOG = PROCESSED_DIR / "bridge_runtime_events.jsonl"
@@ -19,8 +20,9 @@ def log_runtime_event(event: dict) -> None:
 
 
 
-def process_outbox_payload(path: Path) -> dict:
+def process_outbox_payload(path: Path, connector: str) -> dict:
     payload = load_external_payload(path)
+    delivery = route_payload(payload, connector)
     processed_path = PROCESSED_DIR / path.name
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     shutil.move(str(path), str(processed_path))
@@ -29,17 +31,19 @@ def process_outbox_payload(path: Path) -> dict:
         "source_file": str(processed_path),
         "kind": payload.get("kind", "unknown"),
         "room": payload.get("room") or payload.get("target_room"),
+        "connector": connector,
+        "delivery": delivery,
     }
     log_runtime_event(event)
     return event
 
 
 
-def poll_outbox_once() -> list[dict]:
+def poll_outbox_once(connector: str) -> list[dict]:
     events: list[dict] = []
     for path in list_payload_files(OUTBOX_DIR, limit=1000):
         try:
-            events.append(process_outbox_payload(path))
+            events.append(process_outbox_payload(path, connector))
         except Exception as exc:  # pragma: no cover - defensive runtime logging
             error_event = {
                 "processed_at": datetime.now().isoformat(),
@@ -53,8 +57,9 @@ def poll_outbox_once() -> list[dict]:
 
 
 
-def runtime_status() -> dict:
+def runtime_status(connector: str) -> dict:
     return {
+        "connector": connector,
         "outbox_files": len(list_payload_files(OUTBOX_DIR, limit=1000)),
         "inbox_files": len(list_payload_files(INBOX_DIR, limit=1000)),
         "processed_files": len(list_payload_files(PROCESSED_DIR, limit=1000)),
@@ -67,18 +72,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="AgentIRC external bridge runtime scaffold")
     parser.add_argument("--once", action="store_true", help="Process the outbox once and exit")
     parser.add_argument("--interval", type=float, default=2.0, help="Polling interval in seconds")
+    parser.add_argument("--connector", choices=sorted(CONNECTOR_CATALOG.keys()), default="console", help="Connector used to route processed payloads")
     args = parser.parse_args()
 
     if args.once:
-        events = poll_outbox_once()
-        print(json.dumps({"status": runtime_status(), "events": events}, indent=2))
+        events = poll_outbox_once(args.connector)
+        print(json.dumps({"status": runtime_status(args.connector), "events": events}, indent=2))
         return 0
 
-    print("AgentIRC bridge runtime polling started.")
+    print(f"AgentIRC bridge runtime polling started with connector '{args.connector}'.")
     while True:
-        events = poll_outbox_once()
+        events = poll_outbox_once(args.connector)
         if events:
-            print(json.dumps({"processed": len(events), "status": runtime_status()}, indent=2))
+            print(json.dumps({"processed": len(events), "status": runtime_status(args.connector)}, indent=2))
         time.sleep(max(0.25, args.interval))
 
 

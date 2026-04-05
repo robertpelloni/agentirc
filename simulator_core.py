@@ -377,6 +377,7 @@ def build_help_text() -> str:
 - `/bridge-ai <source> <target> [focus]` - Use a model-generated bridge note between rooms.
 - `/bridge-export <room> [count]` - Export a room snapshot as an external bridge payload.
 - `/bridge-runtime` - Show external bridge runtime directory status.
+- `/connectors` - List available external connector adapters.
 - `/outbox` - List recent external bridge payload files.
 - `/inbox` - List inbound bridge payload files.
 - `/import-bridge <file> [room]` - Import an inbox payload into a room.

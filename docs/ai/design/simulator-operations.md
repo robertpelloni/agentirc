@@ -4,7 +4,7 @@
 Evolve AgentIRC from a simple multi-model chat room into a reusable simulation platform with configurable orchestration, durable operator presets, autonomous scheduling, replayable analytical artifacts, hybrid cost tracking, reusable autonomous jobs, room-scoped simulation workflows, operator dashboard tools, cross-room context sharing, and external bridge foundations.
 
 ## Architecture Summary
-The simulator now separates into nine distinct concerns:
+The simulator now separates into ten distinct concerns:
 1. **UI and runtime orchestration** in `app.py`
 2. **Pure helper/domain logic** in `simulator_core.py`
 3. **Session room registry** in Chainlit session state
@@ -13,7 +13,8 @@ The simulator now separates into nine distinct concerns:
 6. **Exported analytical artifacts** in `exports/`
 7. **External bridge payload outbox/inbox/processed directories**
 8. **Standalone bridge runtime scaffold** in `bridge_runtime.py`
-9. **Hybrid telemetry and cost accounting** derived from provider usage data where available and heuristics otherwise
+9. **Connector adapter layer** in `bridge_connectors.py`
+10. **Hybrid telemetry and cost accounting** derived from provider usage data where available and heuristics otherwise
 
 ## Design Decisions
 ### 1. Rooms are session-scoped, not globally persisted
@@ -48,17 +49,19 @@ The simulator supports two bridge styles:
 
 This dual approach gives operators a practical cost/quality tradeoff.
 
-### 5. External connectors should start with payload contracts, then a runtime scaffold, then live transports
+### 5. External connectors should evolve in layers: payloads, runtime scaffold, connector adapters, then live transports
 This pass extends the earlier outbox idea by adding:
 - `outbox/` for outbound payloads
 - `inbox/` for inbound payloads
 - `processed/` for consumed payloads
 - `bridge_runtime.py` as a standalone polling scaffold
+- `bridge_connectors.py` as a connector adapter layer
 
 This layered approach:
 - keeps transport concerns decoupled from simulation logic
 - makes connector state visible on disk
 - creates a stable contract before adding live websocket or IRC network code
+- enables multiple runtime delivery strategies without rewriting the runtime loop
 
 ### 6. Keep persistence small and explicit
 Persistent state currently stores:
@@ -80,6 +83,9 @@ The schedule system is configured explicitly through `/schedule` or `/run-job`. 
 
 ### 9. Room switching rebuilds active runtime state
 When the operator switches rooms, the app swaps in the selected room’s config and history, then rebuilds the active AutoGen team. This preserves room-local behavior without duplicating long-lived model runtime objects per room.
+
+### 10. External import remains explicit for now
+Inbound payloads can be listed and manually imported, but there is no automatic live transport ingestion yet. This keeps the operational model safe and inspectable.
 
 ## Flow Diagram
 ```mermaid
@@ -107,7 +113,11 @@ flowchart TD
     Cmd -- Judge --> Judge[Dedicated judge agent]
     Cmd -- No --> Team[AutoGen team or single agent]
     Outbox --> Runtime[bridge_runtime.py]
-    Runtime --> Processed[processed/*.json]
+    Runtime --> Connectors[bridge_connectors.py]
+    Connectors --> Processed[processed/*.json]
+    Connectors --> Inbox
+    Connectors --> Console[stdout]
+    Connectors --> Jsonl[connector_output.jsonl]
     Rooms --> Team
     Jobs --> Task
     Task --> Team
@@ -135,6 +145,11 @@ flowchart TD
 ### External Payload Types
 - `room_snapshot`
 - `bridge_note`
+
+### Connector Adapters
+- `console`
+- `inbox`
+- `jsonl`
 
 ### Session Config
 - room name
@@ -196,20 +211,21 @@ flowchart TD
 - deterministic and model-generated bridge modes give a useful quality/cost tradeoff
 - outbox/inbox/processed directories create a stable connector boundary before live transports are added
 - standalone runtime scaffold enables incremental external integration without daemon complexity inside the main app
+- connector adapters make future runtime expansion cleaner
 - persistence footprint stays small
 - autonomous runs are bounded and explicit
 
 ### Cons
 - rooms are not yet persisted across application restarts
 - bridge AI depends on live model availability and cost
-- live IRC/websocket transports are still not implemented; only the scaffold exists
+- live IRC/websocket transports are still not implemented; only the scaffold and adapter layer exist
 - autonomous scheduling still depends on live Chainlit runtime behavior
 - actual cost depends on provider usage metadata being present
 - replay mode is still textual rather than visual/graphical
 - saved jobs are local-file based, not multi-user shared
 
 ## Recommended Future Extensions
-- add external IRC/websocket bridge runtime on top of the current outbox/inbox contract
+- add external IRC/websocket bridge runtime on top of the current connector layer
 - add richer observer dashboards with live metrics panels
 - add role-specific bridge agents and routing policies
 - add provider-backed live integration tests behind environment flags

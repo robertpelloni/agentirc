@@ -22,10 +22,12 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 ### External Bridge Foundations
 - **External Room Snapshot Export**: `/bridge-export <room> [count]` writes a standardized payload for external consumers.
 - **Bridge Runtime Status**: `/bridge-runtime` shows current outbox, inbox, and processed payload counts.
+- **Connector Catalog**: `/connectors` lists supported external connector adapters.
 - **Outbox Tracking**: `/outbox` lists recently generated external bridge payload files.
 - **Inbox Tracking**: `/inbox` lists inbound external bridge payload files.
 - **Manual Payload Import**: `/import-bridge <file> [room]` imports an inbox payload into a room.
-- **Standalone Runtime Scaffold**: `python bridge_runtime.py --once` processes outbox payloads into `processed/` and logs runtime events.
+- **Standalone Runtime Scaffold**: `python bridge_runtime.py --once --connector <name>` processes outbox payloads into `processed/` and logs runtime events.
+- **Connector Adapters**: `bridge_connectors.py` currently supports `console`, `inbox`, and `jsonl` delivery modes.
 - **Bridge Payload Schema**: Standardized room snapshot and bridge-note payload shapes make future websocket / IRC bridge work easier.
 - **Directories**: external payloads are written to `outbox/`, received in `inbox/`, and processed into `processed/`.
 
@@ -57,7 +59,8 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Chainlit session state** holds the live simulator config, transcript history, active team, current room name, room registry, replay cursor state, persistent settings, and the current automation task handle.
 - **`simulator_core.py`** isolates session defaults, room helpers, command parsing, persona/lineup/job persistence, telemetry logic, cost tracking, replay helpers, replay-window helpers, comparison helpers, dashboard helpers, observer helpers, bridge-note helpers, external payload helpers, scheduling helpers, export helpers, and transcript formatting.
 - **`app.py`** focuses on Chainlit wiring, room activation, replay cursor state, AutoGen team construction, command dispatch, autonomous scheduling, replay/compare commands, dashboard commands, bridge commands, external export/import commands, and model streaming.
-- **`bridge_runtime.py`** is the first standalone external bridge runtime scaffold. It polls the outbox, moves processed payloads into `processed/`, and logs runtime events.
+- **`bridge_runtime.py`** is the first standalone external bridge runtime scaffold. It polls the outbox, routes payloads through connector adapters, moves processed payloads into `processed/`, and logs runtime events.
+- **`bridge_connectors.py`** defines the connector adapter layer for future bridge runtimes.
 - **Persistent state** is stored in `data/simulator_state.json` and currently tracks saved lineups, persona overrides, and saved jobs.
 - **Exports** include transcript content plus session telemetry snapshot so old runs can be replayed, compared, and analyzed.
 - **Outbox/inbox/processed payloads** create a stable external integration boundary for future websocket / IRC connectors.
@@ -91,6 +94,7 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/bridge-ai <source> <target> [focus]`
 - `/bridge-export <room> [count]`
 - `/bridge-runtime`
+- `/connectors`
 - `/outbox`
 - `/inbox`
 - `/import-bridge <file> [room]`
@@ -141,8 +145,10 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `app.py` - Chainlit app, command handling, room activation, replay state, bridge delivery, external export/import commands, AutoGen orchestration, autonomous scheduling, replay/compare commands, dashboard commands, observer commands, and judge execution.
 - `run.py` - Python 3.14 compatibility launcher for Chainlit.
 - `bridge_runtime.py` - standalone bridge runtime scaffold for processing `outbox/` payloads into `processed/`.
+- `bridge_connectors.py` - connector adapter layer for bridge runtime delivery.
 - `simulator_core.py` - Shared simulator logic, room helpers, persistence, telemetry, hybrid cost tracking, analytics, dashboard helpers, observer helpers, bridge helpers, external payload helpers, replay helpers, replay-window helpers, job helpers, scheduling helpers, exports, and transcript utilities.
 - `tests/test_simulator_core.py` - Regression coverage for helper-layer behavior.
+- `tests/test_bridge_connectors.py` - Connector adapter coverage.
 - `docs/ai/design/simulator-operations.md` - feature-pass architecture notes and flow diagram.
 - `docs/ai/implementation/` - implementation pass documentation.
 - `docs/ai/testing/` - testing strategy and feature-specific verification notes.
@@ -164,7 +170,7 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
    ```
 4. Optionally run the bridge runtime scaffold once:
    ```bash
-   python bridge_runtime.py --once
+   python bridge_runtime.py --once --connector console
    ```
 5. Run the tests:
    ```bash
@@ -172,7 +178,7 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
    ```
 
 ## 🧭 Recommended Next Feature Passes
-- external IRC / websocket bridge runtime on top of the outbox/inbox contract
+- external IRC / websocket bridge runtime on top of the current connector layer
 - richer observer/dashboard views with live metrics panels
 - role-specific bridge agents and routing policies
 - tool-use plugins and structured tasks

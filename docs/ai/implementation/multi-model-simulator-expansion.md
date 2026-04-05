@@ -1,65 +1,67 @@
 # Multi-Model Simulator Expansion
 
 ## Summary
-This implementation pass extends AgentIRC beyond external payload helpers into a fuller external bridge scaffold with runtime status, inbox support, import commands, and a standalone bridge runtime process.
+This implementation pass extends AgentIRC beyond runtime scaffolding into a cleaner external connector architecture with inbox support, runtime status, and a connector adapter layer.
 
 ## Newly Added Capabilities
-### External Bridge Runtime Scaffold
-- `bridge_runtime.py`
-- polling of `outbox/`
-- movement of processed payloads into `processed/`
-- JSONL runtime event log generation
-- `--once` mode for one-shot processing
+### External Connector Runtime Expansion
+- `bridge_connectors.py`
+- connector catalog text for operator inspection
+- connector routing support for `console`, `inbox`, and `jsonl`
+- `bridge_runtime.py --connector <name>` support
+- `/connectors`
 
-### External Bridge Command Surface
+### Bidirectional Bridge Workflow
 - `/bridge-runtime`
 - `/inbox`
 - `/import-bridge <file> [room]`
-- manual import of inbox payloads into rooms as system notes
-- bridge runtime directory inspection from inside the app
-
-### Telemetry Enhancements
-- `external_imports` telemetry
-- dashboards and observer view now surface import/export activity
-- export metadata now includes import counters
+- manual import of inbound payloads into room history
+- runtime status visibility from inside the app
 
 ## Implementation Notes
 ### `simulator_core.py`
 This module now additionally owns:
-- inbox/processed directory constants
+- inbox and processed directory concepts
 - inbox payload listing helpers
 - bridge runtime status rendering
 - external payload loading helpers
 - imported-payload rendering helpers
 - external import telemetry updates
 
+### `bridge_connectors.py`
+This new module owns:
+- connector catalog metadata
+- connector catalog rendering
+- payload routing functions
+- delivery helpers for console, inbox, and JSONL outputs
+
+### `bridge_runtime.py`
+This module now additionally handles:
+- pluggable connector routing
+- connector selection through CLI arguments
+- richer runtime status including connector mode
+
 ### `app.py`
 This module now additionally handles:
+- `/connectors`
 - `/bridge-runtime`
 - `/inbox`
 - `/import-bridge <file> [room]`
 - room-local insertion of imported external payloads
 - external import telemetry updates
 
-### `bridge_runtime.py`
-This new module handles:
-- one-shot or polling outbox processing
-- payload movement to `processed/`
-- runtime event logging
-- basic status output for future connector expansion
-
 ## Findings and Analysis
-### 1. A standalone runtime scaffold is the right bridge between payload contracts and live transports
-It keeps the main app simple while enabling future external connector work.
+### 1. Connector adapters are the right next abstraction after a raw runtime scaffold
+They create a clean seam for future transport implementations without overcoupling transport logic to runtime polling.
 
-### 2. Inbox support makes the bridge story bidirectional
-Outbox-only support is useful, but inbox import is what starts making external integration feel real.
+### 2. Bidirectional external flow matters more than export alone
+Once payload export exists, inbox import is the natural next step because it starts making external systems feel part of the simulator rather than mere outputs.
 
-### 3. Runtime observability matters even for scaffolding
-Directory counts, processed payloads, and runtime logs are already useful operator signals before live sockets exist.
+### 3. Runtime observability is still critical at scaffold level
+Directory counts, runtime mode, processed payloads, and JSONL logs are already valuable signals before true live transports exist.
 
 ## Recommended Follow-Up
-- external IRC/websocket bridge runtime on top of the outbox/inbox contract
+- external IRC/websocket bridge runtime on top of the connector layer
 - richer observer/dashboard views with live metrics panels
 - role-specific bridge agents and routing policies
 - opt-in integration tests for bridge runtime processing, bridge import, and live streaming
