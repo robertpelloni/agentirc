@@ -5,22 +5,30 @@ import unittest
 from pathlib import Path
 
 from simulator_core import (
+    EXPORT_DIR,
     MODERATOR_MODES,
     STATE_FILE,
     apply_scenario,
     append_history,
     build_analytics_text,
+    build_autonomous_prompt,
     build_judge_prompt,
     build_lineups_text,
     build_moderator_modes_text,
     build_personas_text,
+    build_replay_text,
+    build_replays_text,
+    build_schedule_status_text,
     build_status_text,
     build_telemetry_text,
+    configure_automation,
     delete_lineup,
     display_agent_name,
     export_transcript,
+    list_export_files,
     load_lineup,
     load_persistent_state,
+    load_replay_payload,
     make_default_config,
     make_default_store,
     make_entry,
@@ -29,14 +37,18 @@ from simulator_core import (
     record_agent_response,
     record_judge_run,
     record_prompt_telemetry,
+    record_replay_view,
+    record_scheduled_run,
     render_entry,
     resolve_agent_name,
+    resolve_replay_file,
     save_lineup,
     save_persistent_state,
     set_agent_enabled,
     set_moderator_mode,
     set_persona_override,
     set_rounds,
+    stop_automation,
 )
 
 
@@ -111,6 +123,7 @@ class SimulatorCoreTests(unittest.TestCase):
         status = build_status_text(config, history_size=5, persistent_state=persistent_state)
         self.assertIn("Claude", status)
         self.assertIn("judge model", status.lower())
+        self.assertIn("Scheduled automation", status)
         self.assertIn("`3`", status)
 
     def test_persona_override_updates_config_and_persistent_state(self):
@@ -151,14 +164,35 @@ class SimulatorCoreTests(unittest.TestCase):
         config = make_default_config(AGENT_SPECS)
         record_prompt_telemetry(config, "hello models", is_direct_message=False)
         record_prompt_telemetry(config, "hello claude", is_direct_message=True)
-        record_judge_run(config)
+        record_judge_run(config, "judge this transcript")
+        record_scheduled_run(config, "scheduled autonomous prompt")
+        record_replay_view(config)
         record_agent_response(config, "Claude", "hello there", 120.5)
         record_agent_response(config, "Judge", "winner: Claude", 220.0)
         telemetry_text = build_telemetry_text(config, AGENT_SPECS)
         analytics_text = build_analytics_text(config, [], AGENT_SPECS)
-        self.assertIn("Prompts sent: `2`", telemetry_text)
+        self.assertIn("Prompts sent: `4`", telemetry_text)
+        self.assertIn("Scheduled runs: `1`", telemetry_text)
+        self.assertIn("Replay views: `1`", telemetry_text)
         self.assertIn("Judge", telemetry_text)
         self.assertIn("Most talkative agent", analytics_text)
+
+    def test_schedule_configuration_and_stop(self):
+        config = make_default_config(AGENT_SPECS)
+        changed, message = configure_automation(config, "30", "4")
+        self.assertTrue(changed)
+        self.assertIn("Scheduled **4**", message)
+        self.assertTrue(config["automation"]["enabled"])
+        self.assertIn("Interval seconds", build_schedule_status_text(config))
+        stop_message = stop_automation(config)
+        self.assertIn("stopped", stop_message.lower())
+        self.assertFalse(config["automation"]["enabled"])
+
+    def test_autonomous_prompt_contains_scenario(self):
+        config = make_default_config(AGENT_SPECS)
+        prompt = build_autonomous_prompt(config)
+        self.assertIn("Autonomous simulation run #1", prompt)
+        self.assertIn(config["scenario"], prompt)
 
     def test_judge_prompt_contains_focus_and_transcript(self):
         config = make_default_config(AGENT_SPECS)
@@ -192,6 +226,27 @@ class SimulatorCoreTests(unittest.TestCase):
                 json_path = next(Path(path) for path in paths if path.endswith(".json"))
                 payload = json.loads(json_path.read_text(encoding="utf-8"))
                 self.assertEqual(payload["history"][0]["author"], "Claude")
+            finally:
+                os.chdir(current_dir)
+
+    def test_replay_listing_loading_and_rendering(self):
+        config = make_default_config(AGENT_SPECS)
+        history = [make_entry("Claude", "hello there"), make_entry("Gemini", "I agree")]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            current_dir = Path.cwd()
+            try:
+                os.chdir(temp_dir)
+                export_transcript(history, config, "json")
+                exports = list_export_files(EXPORT_DIR)
+                self.assertEqual(len(exports), 1)
+                self.assertIn("agentirc-", build_replays_text(exports))
+                resolved = resolve_replay_file("latest", EXPORT_DIR)
+                self.assertIsNotNone(resolved)
+                payload = load_replay_payload(resolved)
+                replay_text = build_replay_text(payload, resolved.name, 2)
+                self.assertIn("Replay:", replay_text)
+                self.assertIn("Claude", replay_text)
             finally:
                 os.chdir(current_dir)
 

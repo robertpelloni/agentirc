@@ -1,8 +1,8 @@
 import os
 import asyncio
 import typing
+from datetime import datetime, timedelta
 from time import perf_counter
-from datetime import datetime
 
 import chainlit as cl
 from dotenv import load_dotenv
@@ -16,6 +16,7 @@ from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from simulator_core import (
+    EXPORT_DIR,
     MODERATOR_MODES,
     STATE_FILE,
     apply_scenario,
@@ -23,6 +24,7 @@ from simulator_core import (
     build_agent_detail_text,
     build_agents_text,
     build_analytics_text,
+    build_autonomous_prompt,
     build_help_text,
     build_history_text,
     build_judge_prompt,
@@ -30,15 +32,21 @@ from simulator_core import (
     build_lineups_text,
     build_moderator_modes_text,
     build_personas_text,
+    build_replay_text,
+    build_replays_text,
+    build_schedule_status_text,
     build_scenarios_text,
     build_status_text,
     build_telemetry_text,
     coerce_message_content,
+    configure_automation,
     delete_lineup,
     display_agent_name,
     export_transcript,
+    list_export_files,
     load_lineup,
     load_persistent_state,
+    load_replay_payload,
     make_default_config,
     make_entry,
     parse_command,
@@ -47,14 +55,18 @@ from simulator_core import (
     record_error,
     record_judge_run,
     record_prompt_telemetry,
+    record_replay_view,
+    record_scheduled_run,
     render_entry,
     resolve_agent_name,
+    resolve_replay_file,
     save_lineup,
     save_persistent_state,
     set_agent_enabled,
     set_moderator_mode,
     set_persona_override,
     set_rounds,
+    stop_automation,
 )
 
 
@@ -75,6 +87,7 @@ SESSION_CONFIG_KEY = "config"
 SESSION_TEAM_KEY = "team"
 SESSION_HISTORY_KEY = "history"
 SESSION_STATE_KEY = "persistent_state"
+SESSION_AUTOMATION_TASK_KEY = "automation_task"
 
 AGENT_SPECS = {
     "Claude": {
@@ -166,6 +179,27 @@ def persist_state():
 
 
 
+def get_automation_task() -> asyncio.Task | None:
+    return cl.user_session.get(SESSION_AUTOMATION_TASK_KEY)
+
+
+
+def set_automation_task(task: asyncio.Task | None):
+    cl.user_session.set(SESSION_AUTOMATION_TASK_KEY, task)
+
+
+async def stop_automation_task():
+    task = get_automation_task()
+    set_automation_task(None)
+    if task and not task.done():
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
+
 def add_history_entry(author: str, content: str, kind: str = "message", target: str | None = None) -> dict:
     history = get_history()
     entry = append_history(history, make_entry(author=author, content=content, kind=kind, target=target))
@@ -245,6 +279,49 @@ def format_export_result(paths: list[str]) -> str:
         return "No export files were created."
     joined = "\n".join(f"- `{path}`" for path in paths)
     return f"Transcript export completed:\n{joined}"
+
+
+async def run_automation_loop():
+    try:
+        while True:
+            config = get_config()
+            automation = config["automation"]
+            if not automation["enabled"] or automation["remaining_runs"] <= 0:
+                break
+
+            next_run_at = datetime.now() + timedelta(seconds=automation["interval_seconds"])
+            automation["next_run_at"] = next_run_at.isoformat()
+            await asyncio.sleep(automation["interval_seconds"])
+
+            config = get_config()
+            automation = config["automation"]
+            if not automation["enabled"] or automation["remaining_runs"] <= 0:
+                break
+
+            automation["remaining_runs"] -= 1
+            automation["next_run_at"] = None
+            prompt = build_autonomous_prompt(config)
+            record_scheduled_run(config, prompt)
+            await send_system_notice(
+                f"Autonomous run starting ({automation['run_limit'] - automation['remaining_runs']}/{automation['run_limit']})."
+            )
+            team = cl.user_session.get(SESSION_TEAM_KEY)
+            await stream_agent(team, prompt, count_prompt_telemetry=False)
+
+        config = get_config()
+        automation = config["automation"]
+        automation["enabled"] = False
+        automation["remaining_runs"] = 0
+        automation["run_limit"] = 0
+        automation["next_run_at"] = None
+        await send_system_notice("Autonomous schedule completed.")
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        record_error(get_config())
+        await send_system_notice(f"Autonomous schedule failed: {exc}")
+    finally:
+        set_automation_task(None)
 
 
 async def handle_command(command: str, args: str) -> bool:
@@ -364,9 +441,9 @@ async def handle_command(command: str, args: str) -> bool:
             return True
         judge_agent = create_judge_agent(config)
         judge_prompt = build_judge_prompt(get_history(), config, args)
-        record_judge_run(config)
+        record_judge_run(config, judge_prompt)
         await send_system_notice(f"Judge model `{config['judge_model']}` evaluating the recent transcript...")
-        await stream_agent(judge_agent, judge_prompt, telemetry_name="Judge")
+        await stream_agent(judge_agent, judge_prompt, telemetry_name="Judge", count_prompt_telemetry=False)
         return True
 
     if command == "/personas":
@@ -428,6 +505,53 @@ async def handle_command(command: str, args: str) -> bool:
         await send_system_notice(response)
         return True
 
+    if command == "/schedule":
+        if not args:
+            await cl.Message(content=build_schedule_status_text(config)).send()
+            return True
+
+        if args.lower() == "stop":
+            await stop_automation_task()
+            await send_system_notice(stop_automation(config))
+            return True
+
+        parts = args.split()
+        interval_text = parts[0]
+        runs_text = parts[1] if len(parts) > 1 else None
+        changed, response = configure_automation(config, interval_text, runs_text)
+        if not changed:
+            await send_system_notice(response)
+            return True
+
+        await stop_automation_task()
+        task = asyncio.create_task(run_automation_loop())
+        set_automation_task(task)
+        await send_system_notice(response)
+        return True
+
+    if command == "/replays":
+        await cl.Message(content=build_replays_text(list_export_files(EXPORT_DIR))).send()
+        return True
+
+    if command == "/replay":
+        parts = args.split()
+        replay_name = parts[0] if parts else "latest"
+        count = 12
+        if len(parts) > 1:
+            try:
+                count = max(1, min(100, int(parts[1])))
+            except ValueError:
+                await send_system_notice("Replay line count must be an integer between 1 and 100.")
+                return True
+        replay_path = resolve_replay_file(replay_name, EXPORT_DIR)
+        if replay_path is None:
+            await send_system_notice("No matching replay export found.")
+            return True
+        payload = load_replay_payload(replay_path)
+        record_replay_view(config)
+        await cl.Message(content=build_replay_text(payload, replay_path.name, count)).send()
+        return True
+
     if command == "/history":
         count = 10
         if args:
@@ -454,6 +578,7 @@ async def handle_command(command: str, args: str) -> bool:
         return True
 
     if command == "/reset":
+        await stop_automation_task()
         cl.user_session.set(SESSION_CONFIG_KEY, make_default_config(AGENT_SPECS, persistent_state))
         save_history([])
         rebuild_team()
@@ -464,11 +589,18 @@ async def handle_command(command: str, args: str) -> bool:
     return True
 
 
-async def stream_agent(agent_or_team, prompt: str, target_name: str | None = None, telemetry_name: str | None = None):
+async def stream_agent(
+    agent_or_team,
+    prompt: str,
+    target_name: str | None = None,
+    telemetry_name: str | None = None,
+    count_prompt_telemetry: bool = True,
+):
     config = get_config()
     is_direct_message = target_name is not None
     config["simulation_count"] += 1
-    record_prompt_telemetry(config, prompt, is_direct_message=is_direct_message)
+    if count_prompt_telemetry:
+        record_prompt_telemetry(config, prompt, is_direct_message=is_direct_message)
     reply_target = config["nick"] if target_name else None
     start_time = perf_counter()
 
@@ -480,7 +612,8 @@ async def stream_agent(agent_or_team, prompt: str, target_name: str | None = Non
 
         author = telemetry_name or (display_agent_name(source) if source in AGENT_SPECS else source)
         latency_ms = round((perf_counter() - start_time) * 1000, 2)
-        record_agent_response(config, author.replace("-", "_") if author == "GPT-5" else author, content, latency_ms)
+        telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
+        record_agent_response(config, telemetry_agent_name, content, latency_ms)
         entry = add_history_entry(author=author, content=content, kind="message", target=reply_target)
         await cl.Message(author=author, content=render_entry(entry)).send()
 
@@ -492,6 +625,7 @@ async def start():
     config = make_default_config(AGENT_SPECS, persistent_state)
     cl.user_session.set(SESSION_CONFIG_KEY, config)
     cl.user_session.set(SESSION_HISTORY_KEY, [])
+    cl.user_session.set(SESSION_AUTOMATION_TASK_KEY, None)
     rebuild_team()
 
     welcome_banner = f"""
@@ -509,6 +643,11 @@ async def start():
     await cl.Message(content=welcome_banner).send()
     log_irc(f"--- Session Started: {datetime.now()} ---")
     add_history_entry(author="system", content="Session started.", kind="system")
+
+
+@cl.on_chat_end
+async def end():
+    await stop_automation_task()
 
 
 @cl.on_message

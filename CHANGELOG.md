@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 - 2026-04-05
+- Added autonomous scheduling with `/schedule`, bounded run counts, schedule status, and schedule-stop support.
+- Added replay support with `/replays`, `/replay`, export discovery helpers, and replay rendering from JSON transcript artifacts.
+- Extended telemetry with scheduled-run and replay-view counters.
+- Added autonomous prompt generation helpers and schedule status helpers.
+- Added automation-task cleanup on chat end and reset.
+- Expanded unit coverage from 17 to 20 tests.
+- Expanded design, implementation, testing, README, findings, and handoff documentation for scheduling and replay behavior.
+
 ## 0.3.0 - 2026-04-05
 - Added session telemetry for prompts, direct messages, judge runs, errors, per-agent message counts, estimated tokens, and average response latency.
 - Added moderator modes (`off`, `facilitator`, `strict`, `critic`, `chaos`) and threaded them into agent system prompts.

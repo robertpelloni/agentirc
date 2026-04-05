@@ -18,12 +18,12 @@ The simulator became significantly easier to extend after splitting general-purp
 
 ### Findings
 - **Live UI code and reusable domain logic should not live in the same file** once command surface area grows.
-- **Streaming model events are runtime-specific**, but transcript formatting, persistence, telemetry, and preset logic are not.
+- **Streaming model events are runtime-specific**, but transcript formatting, persistence, telemetry, replay, and preset logic are not.
 - **Helper extraction increases testability immediately** because most simulator rules can be validated without a live Chainlit or OpenRouter session.
 
 ### Result
-- `app.py` now focuses on Chainlit hooks, AutoGen team construction, command dispatch, and event streaming.
-- `simulator_core.py` now owns the simulator’s domain behavior.
+- `app.py` now focuses on Chainlit hooks, AutoGen team construction, command dispatch, scheduling, and event streaming.
+- `simulator_core.py` owns the simulator’s domain behavior.
 
 ## 3. Stateful Operator Features Deliver Outsized Value
 The highest-leverage additions were not new models but operator workflow improvements.
@@ -61,7 +61,7 @@ True provider billing or token-accounting data is not yet wired in, but approxim
 - Message count reveals who is dominating a conversation.
 - Character and estimated-token totals help identify verbose agents.
 - Average response latency helps compare responsiveness across models and runs.
-- Error and judge counters provide a lightweight session health view.
+- Error, schedule, and replay counters provide a lightweight session health view.
 
 ### Important Caveat
 The current token metric is heuristic (`~chars/4`) and should be treated as directional, not authoritative.
@@ -74,8 +74,43 @@ A judge is useful, but constantly inserting a judge into every simulation would 
 - A `/judge` command makes evaluation explicit and intentional.
 - Keeping judge evaluation separate from the core team preserves flexibility for future upgrades like multiple judges or scoring rubrics.
 
-## 7. Testing Strategy: Prioritize Helper-Layer Confidence First
-The project now has solid unit coverage around the parts of the simulator that are deterministic.
+## 7. Replay Changed the Meaning of Export Artifacts
+Once replay mode was added, JSON exports stopped being passive archives and became active simulator assets.
+
+### Findings
+- Consistent export schema is now strategically important because replay depends on it.
+- Export metadata matters more because replay users need quick context about scenario, mode, and topic.
+- A lightweight replay surface gives immediate value without building a fully separate playback UI.
+
+### Current Replay Model
+- JSON transcript exports are discovered from `exports/`
+- `/replays` lists available exports
+- `/replay latest [count]` or `/replay file.json [count]` renders a transcript excerpt
+
+## 8. Bounded Scheduling Is the Right First Automation Primitive
+The simulator now supports autonomous scheduled runs, but deliberately in a constrained way.
+
+### Findings
+- A bounded schedule is safer than an open-ended loop because it limits accidental runaway behavior.
+- Requiring both interval and run-count intent creates a cleaner operator contract.
+- Scheduling can live entirely in session state for now; it does not need persistent global orchestration yet.
+
+### Current Scheduling Model
+- `/schedule` shows schedule status
+- `/schedule <seconds> [runs]` starts a bounded autonomous run plan
+- `/schedule stop` stops the current plan
+- scheduled prompts are synthesized from the current topic, scenario, and mode
+
+## 9. Replay and Scheduling Reinforce Each Other
+These two additions work together in a useful way.
+
+### Findings
+- Scheduling creates repeated simulation outputs without manual prompting.
+- Replay makes it possible to inspect those runs after export.
+- Together they move AgentIRC toward a simulation lab workflow: run, export, inspect, compare.
+
+## 10. Testing Strategy: Prioritize Helper-Layer Confidence First
+The project now has stronger unit coverage around the deterministic parts of the simulator.
 
 ### Covered Areas
 - command parsing
@@ -86,6 +121,8 @@ The project now has solid unit coverage around the parts of the simulator that a
 - lineup persistence logic
 - telemetry aggregation
 - judge prompt construction
+- automation configuration and stopping
+- replay discovery and replay rendering
 - transcript export
 - persistent state round trips
 
@@ -93,12 +130,13 @@ The project now has solid unit coverage around the parts of the simulator that a
 - no live Chainlit + AutoGen integration tests yet
 - no provider-backed end-to-end tests yet
 - no browser automation verification yet
+- schedule-loop execution has not been integration-tested against a live session
 
-## 8. Recommended Next Architecture Moves
+## 11. Recommended Next Architecture Moves
 Based on the current shape of the project, the next strongest additions would be:
-1. **real token/cost telemetry** from provider metadata where available
-2. **scheduled autonomous runs** for nightly or scenario-driven simulations
-3. **replay mode** for exported transcripts
+1. **provider-native token/cost telemetry** from response metadata where available
+2. **interactive replay stepping** rather than excerpt-only replay
+3. **saved scheduled jobs** tied to saved lineups and scenarios
 4. **multi-room support** for parallel simulations
 5. **external IRC/websocket bridges** for non-Chainlit clients
-6. **observer dashboards** or comparison panels for side-by-side run analysis
+6. **comparison dashboards** for side-by-side run analysis

@@ -13,8 +13,11 @@ DEFAULT_NICK = "BobPelloni"
 DEFAULT_MAX_ROUNDS = 10
 DEFAULT_MODERATOR_MODE = "off"
 DEFAULT_JUDGE_MODEL = "openai/gpt-4o-mini"
+DEFAULT_AUTOMATION_INTERVAL_SECONDS = 60
+DEFAULT_AUTOMATION_RUNS = 1
 HISTORY_LIMIT = 200
 STATE_FILE = Path("data/simulator_state.json")
+EXPORT_DIR = Path("exports")
 
 SCENARIO_PRESETS: dict[str, dict[str, Any]] = {
     "omni": {
@@ -122,6 +125,18 @@ def save_persistent_state(state: dict[str, Any], path: Path = STATE_FILE) -> Pat
 
 
 
+def make_default_automation() -> dict[str, Any]:
+    return {
+        "enabled": False,
+        "interval_seconds": DEFAULT_AUTOMATION_INTERVAL_SECONDS,
+        "remaining_runs": 0,
+        "run_limit": 0,
+        "last_run_at": None,
+        "next_run_at": None,
+    }
+
+
+
 def make_default_telemetry(agent_specs: dict[str, dict[str, Any]]) -> dict[str, Any]:
     return {
         "session_started_at": datetime.now().isoformat(),
@@ -130,6 +145,8 @@ def make_default_telemetry(agent_specs: dict[str, dict[str, Any]]) -> dict[str, 
         "broadcast_runs": 0,
         "discuss_runs": 0,
         "judge_runs": 0,
+        "scheduled_runs": 0,
+        "replay_views": 0,
         "errors": 0,
         "last_prompt": "",
         "per_agent": {
@@ -167,6 +184,7 @@ def make_default_config(
         "judge_model": DEFAULT_JUDGE_MODEL,
         "persona_overrides": persona_overrides,
         "telemetry": make_default_telemetry(agent_specs),
+        "automation": make_default_automation(),
     }
 
 
@@ -308,6 +326,11 @@ def build_help_text() -> str:
 - `/save-lineup <name>` - Save the current lineup and simulation settings.
 - `/load-lineup <name>` - Load a saved lineup preset.
 - `/delete-lineup <name>` - Delete a saved lineup preset.
+- `/schedule` - Show autonomous scheduling status.
+- `/schedule <seconds> [runs]` - Start scheduled autonomous simulations.
+- `/schedule stop` - Stop the active autonomous schedule.
+- `/replays` - List exported transcript files.
+- `/replay [latest|file.json] [count]` - Show a replay excerpt from an exported transcript.
 - `/history [count]` - Show recent transcript lines.
 - `/export [md|json|both]` - Export the transcript to `exports/`.
 - `/clear` - Clear the in-memory transcript buffer for this session.
@@ -363,6 +386,7 @@ def build_status_text(config: dict[str, Any], history_size: int, persistent_stat
     saved_lineups = len(persistent_state.get("saved_lineups", {}))
     saved_personas = len(config.get("persona_overrides", {}))
     telemetry = config["telemetry"]
+    automation = config["automation"]
     return (
         "**Simulator Status**\n"
         f"- Mode: `{config['mode']}`\n"
@@ -377,6 +401,7 @@ def build_status_text(config: dict[str, Any], history_size: int, persistent_stat
         f"- Transcript entries: `{history_size}`\n"
         f"- Saved lineups: `{saved_lineups}`\n"
         f"- Custom personas: `{saved_personas}`\n"
+        f"- Scheduled automation: `{'on' if automation['enabled'] else 'off'}`\n"
         f"- Enabled agents: {enabled}"
     )
 
@@ -489,6 +514,47 @@ def set_moderator_mode(config: dict[str, Any], raw_value: str) -> tuple[bool, st
 
 
 
+def configure_automation(config: dict[str, Any], raw_interval: str, raw_runs: str | None = None) -> tuple[bool, str]:
+    try:
+        interval_seconds = int(raw_interval)
+    except ValueError:
+        return False, "Schedule interval must be an integer between 5 and 86400 seconds."
+
+    if interval_seconds < 5 or interval_seconds > 86400:
+        return False, "Schedule interval must be an integer between 5 and 86400 seconds."
+
+    run_limit = DEFAULT_AUTOMATION_RUNS
+    if raw_runs:
+        try:
+            run_limit = int(raw_runs)
+        except ValueError:
+            return False, "Scheduled run count must be an integer between 1 and 1000."
+        if run_limit < 1 or run_limit > 1000:
+            return False, "Scheduled run count must be an integer between 1 and 1000."
+
+    automation = config["automation"]
+    automation["enabled"] = True
+    automation["interval_seconds"] = interval_seconds
+    automation["remaining_runs"] = run_limit
+    automation["run_limit"] = run_limit
+    automation["last_run_at"] = None
+    automation["next_run_at"] = None
+    return True, (
+        f"Scheduled **{run_limit}** autonomous run(s) every **{interval_seconds}** second(s)."
+    )
+
+
+
+def stop_automation(config: dict[str, Any]) -> str:
+    automation = config["automation"]
+    automation["enabled"] = False
+    automation["remaining_runs"] = 0
+    automation["run_limit"] = 0
+    automation["next_run_at"] = None
+    return "Autonomous scheduling stopped."
+
+
+
 def apply_scenario(
     config: dict[str, Any],
     raw_name: str,
@@ -554,8 +620,30 @@ def record_prompt_telemetry(config: dict[str, Any], prompt: str, is_direct_messa
 
 
 
-def record_judge_run(config: dict[str, Any]):
-    config["telemetry"]["judge_runs"] += 1
+def record_judge_run(config: dict[str, Any], prompt: str):
+    telemetry = config["telemetry"]
+    telemetry["prompts_sent"] += 1
+    telemetry["judge_runs"] += 1
+    telemetry["last_prompt"] = prompt
+
+
+
+def record_scheduled_run(config: dict[str, Any], prompt: str):
+    telemetry = config["telemetry"]
+    automation = config["automation"]
+    telemetry["prompts_sent"] += 1
+    telemetry["scheduled_runs"] += 1
+    telemetry["last_prompt"] = prompt
+    automation["last_run_at"] = datetime.now().isoformat()
+    if config["mode"] == "broadcast":
+        telemetry["broadcast_runs"] += 1
+    else:
+        telemetry["discuss_runs"] += 1
+
+
+
+def record_replay_view(config: dict[str, Any]):
+    config["telemetry"]["replay_views"] += 1
 
 
 
@@ -586,12 +674,17 @@ def build_telemetry_text(config: dict[str, Any], agent_specs: dict[str, dict[str
         f"- Broadcast runs: `{telemetry['broadcast_runs']}`",
         f"- Discuss runs: `{telemetry['discuss_runs']}`",
         f"- Judge runs: `{telemetry['judge_runs']}`",
+        f"- Scheduled runs: `{telemetry['scheduled_runs']}`",
+        f"- Replay views: `{telemetry['replay_views']}`",
         f"- Errors: `{telemetry['errors']}`",
         "",
         "**Per-Agent Telemetry**",
     ]
 
-    for agent_name in list(agent_specs.keys()) + [name for name in telemetry["per_agent"].keys() if name not in agent_specs]:
+    ordered_agent_names = list(agent_specs.keys()) + [
+        name for name in telemetry["per_agent"].keys() if name not in agent_specs
+    ]
+    for agent_name in ordered_agent_names:
         if agent_name not in telemetry["per_agent"]:
             continue
         stats = telemetry["per_agent"][agent_name]
@@ -623,7 +716,37 @@ def build_analytics_text(config: dict[str, Any], history: list[dict[str, Any]], 
         f"- Estimated output tokens: `{total_estimated_tokens}`\n"
         f"- Average response latency: `{average_latency}` ms\n"
         f"- Most talkative agent: `{top_agent}`\n"
+        f"- Scheduled runs completed: `{telemetry['scheduled_runs']}`\n"
+        f"- Replay views: `{telemetry['replay_views']}`\n"
         f"- Last prompt: {telemetry['last_prompt'] or 'n/a'}"
+    )
+
+
+
+def build_schedule_status_text(config: dict[str, Any]) -> str:
+    automation = config["automation"]
+    status = "enabled" if automation["enabled"] else "disabled"
+    next_run = automation["next_run_at"] or "n/a"
+    last_run = automation["last_run_at"] or "n/a"
+    return (
+        "**Autonomous Schedule**\n"
+        f"- Status: `{status}`\n"
+        f"- Interval seconds: `{automation['interval_seconds']}`\n"
+        f"- Remaining runs: `{automation['remaining_runs']}`\n"
+        f"- Run limit: `{automation['run_limit']}`\n"
+        f"- Last run at: `{last_run}`\n"
+        f"- Next run at: `{next_run}`"
+    )
+
+
+
+def build_autonomous_prompt(config: dict[str, Any]) -> str:
+    run_number = config["telemetry"]["scheduled_runs"] + 1
+    return (
+        f"Autonomous simulation run #{run_number}. "
+        f"Scenario: {config['scenario']}. Mode: {config['mode']}. Topic: {config['topic']}. "
+        "Advance the conversation from a fresh angle, compare tradeoffs, surface disagreements, "
+        "and end with concrete next steps."
     )
 
 
@@ -699,15 +822,79 @@ def build_judge_prompt(history: list[dict[str, Any]], config: dict[str, Any], fo
 
 
 
+def list_export_files(export_dir: Path = EXPORT_DIR, limit: int = 25) -> list[Path]:
+    if not export_dir.exists():
+        return []
+    files = [path for path in export_dir.glob("agentirc-*.json") if path.is_file()]
+    files.sort(key=lambda path: path.stat().st_mtime, reverse=True)
+    return files[:limit]
+
+
+
+def build_replays_text(paths: list[Path]) -> str:
+    if not paths:
+        return "*** No transcript exports found in `exports/`."
+
+    lines = []
+    for path in paths:
+        lines.append(f"- `{path.name}`")
+    return "**Available Replays**\n" + "\n".join(lines)
+
+
+
+def resolve_replay_file(raw_name: str, export_dir: Path = EXPORT_DIR) -> Path | None:
+    available = list_export_files(export_dir, limit=200)
+    if not available:
+        return None
+
+    cleaned = raw_name.strip()
+    if not cleaned or cleaned.lower() == "latest":
+        return available[0]
+
+    direct_path = export_dir / cleaned
+    if direct_path.exists() and direct_path.is_file():
+        return direct_path
+
+    for path in available:
+        if path.name == cleaned:
+            return path
+    return None
+
+
+
+def load_replay_payload(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Replay payload is not a JSON object.")
+    return payload
+
+
+
+def build_replay_text(payload: dict[str, Any], replay_name: str, count: int) -> str:
+    history = payload.get("history", [])
+    config = payload.get("config", {})
+    recent_entries = history[-count:]
+    lines = [render_entry(entry) for entry in recent_entries if isinstance(entry, dict)]
+    rendered = "\n".join(f"- `{line}`" for line in lines) if lines else "- `(no transcript lines found)`"
+    return (
+        f"**Replay: `{replay_name}`**\n"
+        f"- Topic: {config.get('topic', 'n/a')}\n"
+        f"- Scenario: `{config.get('scenario', 'n/a')}`\n"
+        f"- Mode: `{config.get('mode', 'n/a')}`\n"
+        f"- Showing last `{len(lines)}` line(s)\n\n"
+        f"{rendered}"
+    )
+
+
+
 def export_transcript(
     history: list[dict[str, Any]],
     config: dict[str, Any],
     export_format: str,
 ) -> list[str]:
-    export_dir = Path("exports")
-    export_dir.mkdir(parents=True, exist_ok=True)
+    EXPORT_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    file_root = export_dir / f"agentirc-{timestamp}"
+    file_root = EXPORT_DIR / f"agentirc-{timestamp}"
     written_paths: list[str] = []
 
     if export_format in {"md", "both"}:
@@ -731,6 +918,8 @@ def export_transcript(
             f"- Broadcast runs: `{config['telemetry']['broadcast_runs']}`",
             f"- Discuss runs: `{config['telemetry']['discuss_runs']}`",
             f"- Judge runs: `{config['telemetry']['judge_runs']}`",
+            f"- Scheduled runs: `{config['telemetry']['scheduled_runs']}`",
+            f"- Replay views: `{config['telemetry']['replay_views']}`",
             "",
             "## Transcript",
         ]
