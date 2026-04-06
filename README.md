@@ -19,6 +19,8 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Room-Scoped Reset/Clear**: `/clear` and `/reset` operate on the active room rather than the whole session.
 - **Cross-Room Bridge Notes**: Summarize recent activity from one room into another with `/bridge`.
 - **Model-Generated Bridge Notes**: Use `/bridge-ai` to have a role-specific bridge agent generate a higher-level cross-room summary.
+- **Auto-Bridge Policies**: Use `/auto-bridge` to automatically route bridge notes between rooms every N prompts.
+- **Persistent Room Archives**: Save and restore room snapshots with `/archive-room`, `/archives`, and `/restore-room`.
 
 ### External Bridge Foundations
 - **External Room Snapshot Export**: `/bridge-export <room> [count]` writes a standardized payload for external consumers.
@@ -94,6 +96,12 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/bridge <source> <target> [count]`
 - `/bridge-ai <source> <target> [role] [focus]`
 - `/bridge-roles`
+- `/auto-bridge`
+- `/auto-bridge <target> <interval> [note|ai] [role] [focus]`
+- `/auto-bridge stop`
+- `/archives`
+- `/archive-room [name]`
+- `/restore-room <archive> [room]`
 - `/bridge-export <room> [count]`
 - `/bridge-runtime`
 - `/connectors`
@@ -159,6 +167,7 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `docs/ai/implementation/` - implementation pass documentation.
 - `docs/ai/testing/` - testing strategy and feature-specific verification notes.
 - `data/simulator_state.json` - saved lineups, persona overrides, and saved jobs.
+- `data/archives/` - archived room snapshots for later restoration.
 - `exports/` - generated transcript exports and replay source files.
 - `outbox/` - generated external bridge payloads for future connectors.
 - `inbox/` - inbound external bridge payloads awaiting manual or runtime import.
@@ -184,6 +193,6 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
    ```
 
 ## 🧭 Recommended Next Feature Passes
-- persistent archived room snapshots across restarts
 - external IRC / websocket bridge runtime on top of the current connector layer
 - opt-in live integration tests for Chainlit + provider calls
+- auto-bridge routing policies persisted as reusable policies

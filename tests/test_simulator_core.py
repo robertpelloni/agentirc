@@ -13,6 +13,8 @@ from simulator_core import (
     apply_scenario,
     append_history,
     build_analytics_text,
+    build_archives_text,
+    build_auto_bridge_status_text,
     build_autonomous_prompt,
     OUTBOX_DIR,
     build_bridge_note,
@@ -41,6 +43,7 @@ from simulator_core import (
     build_status_text,
     build_telemetry_text,
     calculate_cost_usd,
+    configure_auto_bridge,
     configure_automation,
     create_room,
     delete_job,
@@ -53,8 +56,10 @@ from simulator_core import (
     list_export_files,
     list_inbox_files,
     list_outbox_files,
+    list_room_archives,
     load_external_payload,
     load_job,
+    load_room_archive,
     load_lineup,
     load_persistent_state,
     make_initial_rooms,
@@ -81,6 +86,7 @@ from simulator_core import (
     save_job,
     save_lineup,
     save_persistent_state,
+    save_room_archive,
     write_outbox_payload,
     set_agent_enabled,
     set_moderator_mode,
@@ -88,6 +94,7 @@ from simulator_core import (
     set_persona_override,
     set_rounds,
     set_tool_enabled,
+    stop_auto_bridge,
     stop_automation,
 )
 
@@ -162,6 +169,8 @@ class SimulatorCoreTests(unittest.TestCase):
         changed, message = set_tool_enabled(config, "unknown_tool", True)
         self.assertFalse(changed)
         self.assertIn("Unknown tool", message)
+
+    def test_set_rounds_validates_range(self):
         config = make_default_config(AGENT_SPECS)
         changed, message = set_rounds(config, "12")
         self.assertTrue(changed)
@@ -169,6 +178,31 @@ class SimulatorCoreTests(unittest.TestCase):
         changed, message = set_rounds(config, "99")
         self.assertFalse(changed)
         self.assertIn("between 2 and 30", message)
+
+    def test_auto_bridge_configuration_and_stop(self):
+        config = make_default_config(AGENT_SPECS)
+        changed, message = configure_auto_bridge(config, "war-room", "3", "ai", "technical", "focus")
+        self.assertTrue(changed)
+        self.assertIn("Auto-bridge enabled", message)
+        status = build_auto_bridge_status_text(config)
+        self.assertIn("war-room", status)
+        self.assertIn("technical", status)
+        stop_message = stop_auto_bridge(config)
+        self.assertIn("stopped", stop_message.lower())
+
+    def test_room_archive_save_load_and_list(self):
+        persistent_state = make_default_store()
+        rooms = make_initial_rooms(AGENT_SPECS, persistent_state)
+        rooms[DEFAULT_ROOM_NAME]["history"].append(make_entry("Claude", "archived hello"))
+        with tempfile.TemporaryDirectory() as temp_dir:
+            archive_dir = Path(temp_dir)
+            path = save_room_archive(DEFAULT_ROOM_NAME, rooms[DEFAULT_ROOM_NAME], archive_dir)
+            self.assertTrue(path.exists())
+            payload = load_room_archive(path)
+            self.assertEqual(payload["room_name"], DEFAULT_ROOM_NAME)
+            listed = list_room_archives(archive_dir)
+            self.assertEqual(len(listed), 1)
+            self.assertIn(path.name, build_archives_text(listed))
 
     def test_set_moderator_mode(self):
         config = make_default_config(AGENT_SPECS)

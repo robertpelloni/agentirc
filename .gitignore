@@ -2,3 +2,7 @@
 __pycache__/
 *.pyc
 coding/
+outbox/
+inbox/
+processed/
+data/archives/

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.0 - 2026-04-05
+- Added `/auto-bridge`, `/auto-bridge stop`, and status rendering for prompt-interval bridge automation.
+- Added room archive workflow with `/archives`, `/archive-room`, and `/restore-room`.
+- Added `data/archives/` archive support in the core helper layer.
+- Expanded runtime docs and operator docs for room persistence and auto-bridge behavior.
+- Expanded unit coverage from 32 to 35 tests.
+
 ## 0.13.0 - 2026-04-05
 - Added tool-use plugin support via `simulator_tools.py` with default memory/calc/time tools.
 - Added tool-control commands: `/tools`, `/enable-tool <name>`, `/disable-tool <name>`.

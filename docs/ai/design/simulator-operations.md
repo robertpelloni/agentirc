@@ -1,7 +1,7 @@
 # Simulator Operations Design
 
 ## Objective
-Evolve AgentIRC from a simple multi-model chat room into a reusable simulation platform with configurable orchestration, durable operator presets, autonomous scheduling, replayable analytical artifacts, hybrid cost tracking, reusable autonomous jobs, room-scoped simulation workflows, operator dashboard tools, cross-room context sharing, and external bridge foundations.
+Evolve AgentIRC from a simple multi-model chat room into a reusable simulation platform with configurable orchestration, durable operator presets, autonomous scheduling, replayable analytical artifacts, hybrid cost tracking, reusable autonomous jobs, room-scoped simulation workflows, operator dashboard tools, cross-room context sharing, external bridge foundations, prompt-interval auto-bridge policies, and persistent room archives.
 
 ## Architecture Summary
 The simulator now separates into ten distinct concerns:
@@ -15,6 +15,7 @@ The simulator now separates into ten distinct concerns:
 8. **Standalone bridge runtime scaffold** in `bridge_runtime.py`
 9. **Connector adapter layer** in `bridge_connectors.py`
 10. **Hybrid telemetry and cost accounting** derived from provider usage data where available and heuristics otherwise
+11. **Archive and auto-bridge policy helpers** in `simulator_core.py`
 
 ## Design Decisions
 ### 1. Rooms are session-scoped, not globally persisted
@@ -86,6 +87,12 @@ When the operator switches rooms, the app swaps in the selected room’s config 
 
 ### 10. External import remains explicit for now
 Inbound payloads can be listed and manually imported, but there is no automatic live transport ingestion yet. This keeps the operational model safe and inspectable.
+
+### 11. Auto-bridge policies should remain simple and prompt-count based first
+The current auto-bridge design triggers after a configured number of prompts within a room. This avoids tying bridge policy to wall-clock timing or background schedulers too early.
+
+### 12. Room archives should be explicit snapshots before becoming full persistence
+Saving and restoring named archives creates a safe persistence layer for room state without implicitly restoring everything on startup.
 
 ## Flow Diagram
 ```mermaid
@@ -186,6 +193,15 @@ flowchart TD
 - active job name
 - last run timestamp
 - next run timestamp
+
+### Auto-Bridge State
+- enabled
+- target room
+- interval prompts
+- mode (`note` or `ai`)
+- role
+- focus
+- prompts since last bridge
 
 ### Per-Agent / Per-Room Telemetry
 - messages

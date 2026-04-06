@@ -24,6 +24,7 @@ EXPORT_DIR = Path("exports")
 OUTBOX_DIR = Path("outbox")
 INBOX_DIR = Path("inbox")
 PROCESSED_DIR = Path("processed")
+ARCHIVE_DIR = Path("data/archives")
 
 SCENARIO_PRESETS: dict[str, dict[str, Any]] = {
     "omni": {
@@ -234,6 +235,15 @@ def make_default_config(
         "persona_overrides": persona_overrides,
         "telemetry": make_default_telemetry(agent_specs),
         "automation": make_default_automation(),
+        "auto_bridge": {
+            "enabled": False,
+            "target_room": "",
+            "interval_prompts": 5,
+            "mode": "note",
+            "role": "",
+            "focus": "",
+            "prompts_since_last": 0,
+        },
     }
 
 
@@ -390,6 +400,9 @@ def build_help_text() -> str:
 - `/tools` - List available tools.
 - `/enable-tool <name>` - Enable a tool globally.
 - `/disable-tool <name>` - Disable a globally enabled tool.
+- `/auto-bridge <target> <interval> [note|ai] [role] [focus]` - Auto-send a bridge note every N prompts.
+- `/auto-bridge stop` - Stop the active auto-bridge.
+- `/auto-bridge` - Show auto-bridge status.
 - `/bridge-export <room> [count]` - Export a room snapshot as an external bridge payload.
 - `/bridge-runtime` - Show external bridge runtime directory status.
 - `/connectors` - List available external connector adapters.
@@ -400,6 +413,12 @@ def build_help_text() -> str:
 - `/room [name]` - Show the current room or switch to another room.
 - `/new-room <name>` - Create a new room and switch into it.
 - `/delete-room <name>` - Delete a room.
+- `/auto-bridge` - Show auto-bridge status.
+- `/auto-bridge <target> <interval> [note|ai] [role] [focus]` - Auto-send bridge notes every N prompts.
+- `/auto-bridge stop` - Stop the active auto-bridge.
+- `/archives` - List saved room archives.
+- `/archive-room [name]` - Save the active room to a room archive.
+- `/restore-room <archive> [room]` - Restore an archive into a room.
 - `/lineup` - Show enabled models and backing API model IDs.
 - `/agents` - Show agent bios, models, and enabled status.
 - `/whois <agent>` - Inspect one agent in detail.
@@ -619,6 +638,7 @@ def build_status_text(config: dict[str, Any], history_size: int, persistent_stat
     saved_jobs = len(persistent_state.get("saved_jobs", {}))
     telemetry = config["telemetry"]
     automation = config["automation"]
+    auto_bridge = config.get("auto_bridge", {})
     return (
         "**Simulator Status**\n"
         f"- Room: `{config['room_name']}`\n"
@@ -638,6 +658,7 @@ def build_status_text(config: dict[str, Any], history_size: int, persistent_stat
         f"- Saved jobs: `{saved_jobs}`\n"
         f"- Custom personas: `{saved_personas}`\n"
         f"- Scheduled automation: `{'on' if automation['enabled'] else 'off'}`\n"
+        f"- Auto-bridge: `{'on' if auto_bridge.get('enabled') else 'off'}`\n"
         f"- Enabled agents: {enabled}"
     )
 
@@ -766,6 +787,58 @@ def delete_room(
         next_room_name = sorted(rooms.keys())[0]
         return True, f"Deleted room **{room_name}** and switched to **{next_room_name}**.", next_room_name
     return True, f"Deleted room **{room_name}**.", next_room_name
+
+
+
+def list_room_archives(archive_dir: Path = ARCHIVE_DIR, limit: int = 50) -> list[Path]:
+    return list_payload_files(archive_dir, limit)
+
+
+
+def build_archives_text(paths: list[Path]) -> str:
+    if not paths:
+        return "*** No room archives found in `data/archives/`."
+    return "**Room Archives**\n" + "\n".join(f"- `{path.name}`" for path in paths)
+
+
+
+def save_room_archive(room_name: str, room_state: dict[str, Any], archive_dir: Path = ARCHIVE_DIR) -> Path:
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    safe_name = sanitize_key(room_name) or DEFAULT_ROOM_NAME
+    path = archive_dir / f"agentirc-room-{safe_name}-{timestamp}.json"
+    payload = {
+        "archived_at": datetime.now().isoformat(),
+        "room_name": room_name,
+        "room_state": room_state,
+    }
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+
+def load_room_archive(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or "room_state" not in payload:
+        raise ValueError("Archive payload is invalid.")
+    return payload
+
+
+
+def resolve_room_archive(raw_name: str, archive_dir: Path = ARCHIVE_DIR) -> Path | None:
+    archives = list_room_archives(archive_dir, limit=200)
+    if not archives:
+        return None
+    cleaned = raw_name.strip().lower()
+    if not cleaned or cleaned == "latest":
+        return archives[0]
+    direct = archive_dir / raw_name.strip()
+    if direct.exists() and direct.is_file():
+        return direct
+    for path in archives:
+        if path.name == raw_name.strip():
+            return path
+    return None
 
 
 
@@ -900,6 +973,67 @@ def stop_automation(config: dict[str, Any]) -> str:
     automation["next_run_at"] = None
     automation["active_job_name"] = None
     return "Autonomous scheduling stopped."
+
+
+
+def configure_auto_bridge(
+    config: dict[str, Any],
+    target_room: str,
+    raw_interval: str,
+    mode: str,
+    role: str = "",
+    focus: str = "",
+) -> tuple[bool, str]:
+    target = sanitize_key(target_room)
+    if not target:
+        return False, "Target room cannot be empty."
+    
+    try:
+        interval_prompts = int(raw_interval)
+    except ValueError:
+        return False, "Auto-bridge interval must be an integer between 1 and 100."
+        
+    if interval_prompts < 1 or interval_prompts > 100:
+        return False, "Auto-bridge interval must be an integer between 1 and 100."
+        
+    bridge_mode = mode.lower().strip()
+    if bridge_mode not in {"note", "ai"}:
+        return False, "Auto-bridge mode must be either `note` or `ai`."
+
+    auto_bridge = config.setdefault("auto_bridge", {})
+    auto_bridge["enabled"] = True
+    auto_bridge["target_room"] = target
+    auto_bridge["interval_prompts"] = interval_prompts
+    auto_bridge["mode"] = bridge_mode
+    auto_bridge["role"] = role
+    auto_bridge["focus"] = focus
+    auto_bridge["prompts_since_last"] = 0
+
+    return True, f"Auto-bridge enabled: sending `{bridge_mode}` to **{target}** every {interval_prompts} prompt(s)."
+
+
+
+def stop_auto_bridge(config: dict[str, Any]) -> str:
+    auto_bridge = config.setdefault("auto_bridge", {})
+    auto_bridge["enabled"] = False
+    return "Auto-bridge stopped."
+
+
+
+def build_auto_bridge_status_text(config: dict[str, Any]) -> str:
+    ab = config.get("auto_bridge", {})
+    if not ab.get("enabled"):
+        return "*** Auto-bridge is currently disabled."
+    
+    return (
+        "**Auto-Bridge Status**\n"
+        f"- Target room: `{ab.get('target_room')}`\n"
+        f"- Mode: `{ab.get('mode')}`\n"
+        f"- Interval: every `{ab.get('interval_prompts')}` prompt(s)\n"
+        f"- Progress: `{ab.get('prompts_since_last', 0)}` prompt(s) since last bridge\n"
+        f"- Role: `{ab.get('role') or 'n/a'}`\n"
+        f"- Focus: {ab.get('focus') or 'n/a'}"
+    )
 
 
 

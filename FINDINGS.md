@@ -281,7 +281,23 @@ The project now has stronger unit coverage around the deterministic parts of the
 - actual-cost behavior has not been verified end-to-end against provider usage metadata
 - replay cursor behavior is not yet integration-tested in a live session loop
 
-## 20. Recommended Next Architecture Moves
+## 20. Auto-Bridge Policies Are the Right Follow-On to Manual Bridge Workflows
+Manual room-to-room bridges are useful, but still depend on operator attention.
+
+### Findings
+- Prompt-count-based auto-bridges are a safe first automation model because they piggyback on already-observed activity rather than requiring timers or background daemons.
+- Supporting both `note` and `ai` modes preserves the same quality/cost tradeoff used elsewhere in the bridge system.
+- Auto-bridge turns the simulator from a reactive system into a more policy-driven one.
+
+## 21. Room Archives Are the Right First Persistence Primitive for Live Room State
+Persisting every room automatically would be premature. Explicit archives are a better first step.
+
+### Findings
+- Archives preserve a scenario snapshot without forcing a full persistent multi-room database design.
+- Restore operations are easier to reason about than implicit session resurrection.
+- Operators can now branch, archive, restore, and compare room states as deliberate workflows.
+
+## 22. Recommended Next Architecture Moves
 Based on the current shape of the project, the next strongest additions would be:
 1. **external IRC/websocket bridge runtime** for non-Chainlit clients on top of the connector layer
 2. **richer observer/dashboard views with live metrics panels**

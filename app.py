@@ -40,6 +40,8 @@ from simulator_core import (
     build_history_text,
     build_imported_payload_text,
     build_jobs_text,
+    build_archives_text,
+    build_auto_bridge_status_text,
     build_judge_prompt,
     build_observer_text,
     build_lineup_text,
@@ -61,6 +63,7 @@ from simulator_core import (
     build_telemetry_text,
     build_tools_text,
     coerce_message_content,
+    configure_auto_bridge,
     configure_automation,
     create_room,
     delete_job,
@@ -72,8 +75,10 @@ from simulator_core import (
     list_export_files,
     list_inbox_files,
     list_outbox_files,
+    list_room_archives,
     load_external_payload,
     load_job,
+    load_room_archive,
     load_lineup,
     load_persistent_state,
     load_replay_payload,
@@ -101,14 +106,17 @@ from simulator_core import (
     save_job,
     save_lineup,
     save_persistent_state,
+    save_room_archive,
     set_agent_enabled,
     switch_room,
     set_moderator_mode,
     set_persona_override,
     set_rounds,
     set_tool_enabled,
+    stop_auto_bridge,
     stop_automation,
     write_outbox_payload,
+    resolve_room_archive,
 )
 
 
@@ -415,6 +423,107 @@ def format_export_result(paths: list[str]) -> str:
     return f"Transcript export completed:\n{joined}"
 
 
+async def execute_bridge(source_room_name: str, target_room_name: str, count: int) -> bool:
+    changed, response, resolved_source = switch_room(get_rooms(), source_room_name)
+    if not changed or resolved_source is None:
+        await send_system_notice(response)
+        return False
+    changed, response, resolved_target = switch_room(get_rooms(), target_room_name)
+    if not changed or resolved_target is None:
+        await send_system_notice(response)
+        return False
+    bridge_note = build_bridge_note(resolved_source, resolved_target, get_rooms()[resolved_source], count)
+    append_entry_to_room(resolved_target, author="system", content=bridge_note, kind="system")
+    record_bridge_event(get_rooms()[resolved_target]["config"])
+    if resolved_target == get_current_room_name():
+        await cl.Message(content=f"*** {bridge_note}").send()
+    else:
+        await send_system_notice(
+            f"Delivered bridge summary from **{resolved_source}** to **{resolved_target}**."
+        )
+    return True
+
+
+async def execute_bridge_ai(source_room_name: str, target_room_name: str, role: str, focus: str) -> bool:
+    changed, response, resolved_source = switch_room(get_rooms(), source_room_name)
+    if not changed or resolved_source is None:
+        await send_system_notice(response)
+        return False
+    changed, response, resolved_target = switch_room(get_rooms(), target_room_name)
+    if not changed or resolved_target is None:
+        await send_system_notice(response)
+        return False
+
+    bridge_prompt = build_bridge_prompt(
+        resolved_source,
+        resolved_target,
+        get_rooms()[resolved_source],
+        role,
+        focus,
+    )
+    bridge_agent = create_bridge_agent(get_config())
+    await send_system_notice(
+        f"Bridge agent summarizing **{resolved_source}** for **{resolved_target}**..."
+    )
+
+    bridge_content = ""
+    bridge_usage = None
+    start_time = perf_counter()
+    async for event in bridge_agent.run_stream(task=bridge_prompt):
+        source = getattr(event, "source", None)
+        content = coerce_message_content(getattr(event, "content", None))
+        if not source or not content or source.lower() == "user":
+            continue
+        bridge_content = content
+        bridge_usage = extract_usage_metrics(event)
+
+    if not bridge_content:
+        await send_system_notice("Bridge agent did not return a usable summary.")
+        return False
+
+    target_config = get_rooms()[resolved_target]["config"]
+    record_bridge_ai_event(target_config, bridge_prompt)
+    record_bridge_event(target_config)
+    record_agent_response(
+        target_config,
+        "BridgeAgent",
+        bridge_prompt,
+        bridge_content,
+        round((perf_counter() - start_time) * 1000, 2),
+        pricing=JUDGE_PRICING,
+        usage=bridge_usage,
+    )
+    entry = append_entry_to_room(resolved_target, author="BridgeAgent", content=bridge_content, kind="message")
+    if resolved_target == get_current_room_name():
+        await cl.Message(author="BridgeAgent", content=render_entry(entry)).send()
+    else:
+        await send_system_notice(
+            f"Delivered AI bridge note from **{resolved_source}** to **{resolved_target}**."
+        )
+    return True
+
+
+async def maybe_run_auto_bridge():
+    config = get_config()
+    auto_bridge = config.get("auto_bridge", {})
+    if not auto_bridge.get("enabled"):
+        return
+    auto_bridge["prompts_since_last"] = auto_bridge.get("prompts_since_last", 0) + 1
+    if auto_bridge["prompts_since_last"] < auto_bridge.get("interval_prompts", 1):
+        return
+    auto_bridge["prompts_since_last"] = 0
+    target_room = auto_bridge.get("target_room") or ""
+    if not target_room:
+        return
+    source_room = get_current_room_name()
+    if target_room == source_room:
+        return
+    if auto_bridge.get("mode") == "ai":
+        await execute_bridge_ai(source_room, target_room, auto_bridge.get("role", ""), auto_bridge.get("focus", ""))
+    else:
+        await execute_bridge(source_room, target_room, 5)
+
+
 async def run_automation_loop():
     try:
         while True:
@@ -543,23 +652,7 @@ async def handle_command(command: str, args: str) -> bool:
             except ValueError:
                 await send_system_notice("Bridge count must be an integer between 1 and 20.")
                 return True
-        changed, response, resolved_source = switch_room(get_rooms(), source_room_name)
-        if not changed or resolved_source is None:
-            await send_system_notice(response)
-            return True
-        changed, response, resolved_target = switch_room(get_rooms(), target_room_name)
-        if not changed or resolved_target is None:
-            await send_system_notice(response)
-            return True
-        bridge_note = build_bridge_note(resolved_source, resolved_target, get_rooms()[resolved_source], count)
-        append_entry_to_room(resolved_target, author="system", content=bridge_note, kind="system")
-        record_bridge_event(get_rooms()[resolved_target]["config"])
-        if resolved_target == get_current_room_name():
-            await cl.Message(content=f"*** {bridge_note}").send()
-        else:
-            await send_system_notice(
-                f"Delivered bridge summary from **{resolved_source}** to **{resolved_target}**."
-            )
+        await execute_bridge(source_room_name, target_room_name, count)
         return True
 
     if command == "/bridge-ai":
@@ -571,62 +664,7 @@ async def handle_command(command: str, args: str) -> bool:
         target_room_name = parts[1]
         role = parts[2] if len(parts) > 2 else ""
         focus = parts[3] if len(parts) > 3 else ""
-        
-        changed, response, resolved_source = switch_room(get_rooms(), source_room_name)
-        if not changed or resolved_source is None:
-            await send_system_notice(response)
-            return True
-        changed, response, resolved_target = switch_room(get_rooms(), target_room_name)
-        if not changed or resolved_target is None:
-            await send_system_notice(response)
-            return True
-
-        bridge_prompt = build_bridge_prompt(
-            resolved_source,
-            resolved_target,
-            get_rooms()[resolved_source],
-            role,
-            focus,
-        )
-        bridge_agent = create_bridge_agent(config)
-        await send_system_notice(
-            f"Bridge agent summarizing **{resolved_source}** for **{resolved_target}**..."
-        )
-
-        bridge_content = ""
-        bridge_usage = None
-        start_time = perf_counter()
-        async for event in bridge_agent.run_stream(task=bridge_prompt):
-            source = getattr(event, "source", None)
-            content = coerce_message_content(getattr(event, "content", None))
-            if not source or not content or source.lower() == "user":
-                continue
-            bridge_content = content
-            bridge_usage = extract_usage_metrics(event)
-
-        if not bridge_content:
-            await send_system_notice("Bridge agent did not return a usable summary.")
-            return True
-
-        target_config = get_rooms()[resolved_target]["config"]
-        record_bridge_ai_event(target_config, bridge_prompt)
-        record_bridge_event(target_config)
-        record_agent_response(
-            target_config,
-            "BridgeAgent",
-            bridge_prompt,
-            bridge_content,
-            round((perf_counter() - start_time) * 1000, 2),
-            pricing=JUDGE_PRICING,
-            usage=bridge_usage,
-        )
-        entry = append_entry_to_room(resolved_target, author="BridgeAgent", content=bridge_content, kind="message")
-        if resolved_target == get_current_room_name():
-            await cl.Message(author="BridgeAgent", content=render_entry(entry)).send()
-        else:
-            await send_system_notice(
-                f"Delivered AI bridge note from **{resolved_source}** to **{resolved_target}**."
-            )
+        await execute_bridge_ai(source_room_name, target_room_name, role, focus)
         return True
 
     if command == "/bridge-export":
@@ -648,6 +686,61 @@ async def handle_command(command: str, args: str) -> bool:
         outbox_path = write_outbox_payload(payload)
         record_external_export(room_state["config"])
         await send_system_notice(f"Exported room payload to `{outbox_path}`.")
+        return True
+
+    if command == "/auto-bridge":
+        if not args:
+            await cl.Message(content=build_auto_bridge_status_text(config)).send()
+            return True
+        if args.lower() == "stop":
+            await send_system_notice(stop_auto_bridge(config))
+            return True
+        parts = args.split(" ", 4)
+        if len(parts) < 2:
+            await send_system_notice("Usage: `/auto-bridge <target> <interval> [note|ai] [role] [focus]`")
+            return True
+        target_room = parts[0]
+        interval_text = parts[1]
+        mode = parts[2] if len(parts) > 2 else "note"
+        role = parts[3] if len(parts) > 3 else ""
+        focus = parts[4] if len(parts) > 4 else ""
+        changed, response = configure_auto_bridge(config, target_room, interval_text, mode, role, focus)
+        await send_system_notice(response)
+        return True
+
+    if command == "/archives":
+        await cl.Message(content=build_archives_text(list_room_archives())).send()
+        return True
+
+    if command == "/archive-room":
+        archive_name = args.strip() or get_current_room_name()
+        room_state = get_rooms()[get_current_room_name()]
+        path = save_room_archive(archive_name, room_state)
+        await send_system_notice(f"Archived room to `{path}`.")
+        return True
+
+    if command == "/restore-room":
+        parts = args.split()
+        if not parts:
+            await send_system_notice("Usage: `/restore-room <archive> [room]`")
+            return True
+        archive_path = resolve_room_archive(parts[0])
+        if archive_path is None:
+            await send_system_notice("Room archive not found.")
+            return True
+        payload = load_room_archive(archive_path)
+        room_name = parts[1] if len(parts) > 1 else payload.get("room_name", get_current_room_name())
+        save_current_room_state()
+        changed, response, resolved_room = create_room(get_rooms(), room_name, AGENT_SPECS, persistent_state)
+        if not changed and resolved_room is None:
+            switched, _, resolved_room = switch_room(get_rooms(), room_name)
+            if not switched or resolved_room is None:
+                await send_system_notice(response)
+                return True
+        get_rooms()[resolved_room] = payload["room_state"]
+        await stop_automation_task()
+        activate_room(resolved_room)
+        await send_system_notice(f"Restored archive `{archive_path.name}` into room **{resolved_room}**.")
         return True
 
     if command == "/bridge-runtime":
@@ -1167,6 +1260,9 @@ async def stream_agent(
         )
         entry = add_history_entry(author=author, content=content, kind="message", target=reply_target)
         await cl.Message(author=author, content=render_entry(entry)).send()
+
+    if count_prompt_telemetry and telemetry_name is None and target_name is None:
+        await maybe_run_auto_bridge()
 
 
 @cl.on_chat_start

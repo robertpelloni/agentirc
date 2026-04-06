@@ -9,45 +9,44 @@
 
 ## What I Changed
 ### Core Code
-- Added `simulator_tools.py` with custom python functions acting as AutoGen tool plugins.
 - Expanded `simulator_core.py` with:
-  - tool-use toggle logic
-  - tool catalog listing helpers
-  - bridge agent role specifications
-  - markdown table generators for dashboard and observer views
-- Expanded `bridge_connectors.py` with:
-  - `webhook` connector adapter using `urllib` to deliver payloads via HTTP POST
+  - auto-bridge configuration helpers
+  - auto-bridge status rendering
+  - room archive save/list/load helpers under `data/archives/`
+  - status reporting for auto-bridge activation
 - Reworked `app.py` to support:
-  - `/tools`, `/enable-tool <name>`, `/disable-tool <name>`
-  - `/bridge-roles`
-  - `/bridge-ai <source> <target> [role] [focus]`
-- Expanded tests with `tests/test_simulator_core.py` and additional helper assertions (now 32 tests passing).
+  - `/auto-bridge`
+  - `/auto-bridge stop`
+  - `/archives`
+  - `/archive-room [name]`
+  - `/restore-room <archive> [room]`
+  - automatic bridge execution after prompt intervals in normal room activity
+- Expanded `tests/test_simulator_core.py` with archive and auto-bridge helper coverage.
+- Updated `.gitignore` to ignore runtime artifact directories like `outbox/`, `inbox/`, `processed/`, and `data/archives/`.
 
 ### Documentation
-- Updated `README.md` with tool plugins, bridge roles, webhook integration, and tabular metrics.
-- Updated `docs/ai/design/simulator-operations.md` with tool architecture notes.
-- Updated `docs/ai/implementation/multi-model-simulator-expansion.md`.
-- Updated `docs/ai/testing/multi-model-simulator-expansion.md`.
-- Updated `FINDINGS.md` with detailed analysis of tool usage, role-specific bridge routing, and webhook adapter utility.
-- Bumped `VERSION` to `0.13.0` and updated `CHANGELOG.md`.
+- Updated `README.md` with auto-bridge and room archive commands.
+- Updated `CHANGELOG.md` and bumped `VERSION` to `0.14.0`.
+- Existing architecture/testing docs should be updated next to reflect auto-bridge and room-archive behavior in more detail.
 
 ## Validation Performed
-- Ran `python -m unittest discover -s tests -v` ✅ (32 tests passed)
+- Ran `python -m unittest discover -s tests -v` ✅ (35 tests passed)
 - Ran `python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py` ✅
 
 ## Findings and Analysis
-1. Markdown tables for dashboard views are significantly more readable than long bullet lists and eliminate the immediate need for a custom React/Chainlit UI.
-2. Webhook payload connectors are an easy, zero-dependency alternative to raw WebSockets, moving the simulator closer to "headless integration" with arbitrary platforms.
-3. Passing modular tools down to AutoGen agents greatly enhances the scope of what the simulator can represent (e.g. agents testing out calculator functions during a debate).
-4. Role-specific bridge agents (e.g. Red Team vs Technical) vastly improve the quality of abstract cross-room communication over generic bridge notes.
+1. Auto-bridge is the natural next step after manual bridge workflows because it turns cross-room coordination into an actual repeatable policy.
+2. Room archives are the right first form of persistence for live room state because they preserve operator experimentation without requiring a full database.
+3. Archive/restore works well as an explicit operator action before deciding whether full automatic persistence is desirable.
+4. The simulator now supports a stronger loop: run rooms, route bridges, archive outcomes, restore scenarios, and compare results.
 
 ## Potential Risks / Follow-Up
-- tool execution hasn't been mocked/tested extensively inside the `app.py` UI harness yet
-- webhook delivery failure handling is minimal; retry mechanisms might be required for production use
-- bridge-AI role delivery is not yet integration-tested against a live Chainlit session
-- persistent state remains local-file based and not multi-user synchronized
+- auto-bridge execution is helper- and command-level validated, but not yet integration-tested through full live Chainlit flow
+- archive restore currently assumes payload compatibility with current room-state structure
+- persistent room archives are local-file based and not multi-user synchronized
+- bridge runtime processing is still not behavior-tested end-to-end
 
 ## Recommended Next Steps
-1. Add live opt-in integration tests for streaming, judging, scheduling, tool execution, room switching, bridge delivery, bridge-AI generation, external export/import, and replay stepping.
-2. Provide a persistent room archive format that survives application restarts.
-3. Create auto-bridge policies (e.g., auto-delivering cross-room notes every N steps).
+1. Add live opt-in integration tests for streaming, judging, scheduling, tool execution, room switching, auto-bridge execution, bridge delivery, external export/import, and replay stepping.
+2. Update architecture/testing docs to fully document auto-bridge and room archives.
+3. Add reusable named auto-bridge policies and bridge-routing presets.
+4. Build the live IRC/websocket connector runtime on top of the existing connector layer.
