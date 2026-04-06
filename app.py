@@ -42,6 +42,7 @@ from simulator_core import (
     build_history_text,
     build_imported_payload_text,
     build_jobs_text,
+    build_leaderboard_text,
     build_archives_text,
     build_auto_bridge_status_text,
     build_judge_prompt,
@@ -623,6 +624,10 @@ async def handle_command(command: str, args: str) -> bool:
 
     if command == "/health":
         await cl.Message(content=build_room_health_text(get_rooms(), get_current_room_name())).send()
+        return True
+
+    if command == "/leaderboard":
+        await cl.Message(content=build_leaderboard_text(get_rooms(), AGENT_SPECS)).send()
         return True
 
     if command == "/room-summary":

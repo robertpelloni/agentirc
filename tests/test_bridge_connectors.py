@@ -1,6 +1,8 @@
 import json
 import tempfile
+import threading
 import unittest
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 from bridge_connectors import (
@@ -55,6 +57,34 @@ class BridgeConnectorTests(unittest.TestCase):
     def test_deliver_to_webhook_requires_endpoint(self):
         with self.assertRaises(ValueError):
             deliver_to_webhook(PAYLOAD, None)
+
+    def test_deliver_to_webhook_local_server(self):
+        received: list[bytes] = []
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_POST(self):  # type: ignore[override]
+                length = int(self.headers.get("Content-Length", "0"))
+                received.append(self.rfile.read(length))
+                self.send_response(200)
+                self.end_headers()
+
+            def log_message(self, format, *args):  # noqa: A003
+                return
+
+        server = HTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.handle_request, daemon=True)
+        thread.start()
+        try:
+            endpoint = f"http://127.0.0.1:{server.server_port}/hook"
+            result = deliver_to_webhook(PAYLOAD, endpoint)
+            thread.join(timeout=2)
+            self.assertEqual(result["connector"], "webhook")
+            self.assertEqual(result["status"], 200)
+            self.assertTrue(received)
+            body = json.loads(received[0].decode("utf-8"))
+            self.assertEqual(body["kind"], "room_snapshot")
+        finally:
+            server.server_close()
 
     def test_route_payload(self):
         with tempfile.TemporaryDirectory() as temp_dir:

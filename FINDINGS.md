@@ -329,11 +329,43 @@ Provider-backed and network-backed tests are useful, but dangerous if they run b
 - A skipped-by-default live suite communicates intended future test coverage without surprising local or CI runs.
 - It is better to scaffold live tests clearly now than to leave external/runtime validation completely undocumented.
 
-## 26. Recommended Next Architecture Moves
+## 26. A Room Health View Is the Right Next Dashboard Increment
+Once the simulator has dashboards, observer views, archives, and bridges, operators need a quick prioritization surface.
+
+### Findings
+- A compact health score is easier to scan than a full analytics dump when several rooms are active.
+- Simple health heuristics are sufficient for a first operator view as long as they remain interpretable.
+- Room health complements, rather than replaces, the richer observer/dashboard views.
+
+## 27. Leaderboards Are the Right Complement to Health Scores
+Health shows urgency; leaderboards show intensity.
+
+### Findings
+- Room and agent leaderboards help operators spot the most active or expensive parts of the simulation quickly.
+- Leaderboards are a natural extension of existing telemetry because they reuse already-collected volume and cost data.
+- They add operator value without requiring any new backend systems.
+
+## 28. Bridge Runtime Behavior Tests Are the Right Next Validation Step After Scaffolding
+Before building more live transport complexity, the file-processing loop itself should be behavior-tested.
+
+### Findings
+- Validating outbox-to-processed flow catches real runtime issues earlier than compile-only checks.
+- Testing runtime behavior at the artifact-processing layer gives confidence without requiring flaky external network dependencies.
+- This is the right bridge between scaffold code and future endpoint-backed integration tests.
+
+## 29. Local Webhook Validation Is the Right First Endpoint-Level Connector Test
+A tiny local HTTP server is enough to exercise a real connector path.
+
+### Findings
+- This validates more than compile structure while remaining deterministic and cheap.
+- A local endpoint test is safer and more reliable than starting with public network dependencies.
+- It proves the connector adapter model is practical for real integrations.
+
+## 30. Recommended Next Architecture Moves
 Based on the current shape of the project, the next strongest additions would be:
 1. **deeper live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, external export/import, auto-bridge execution, websocket delivery, and replay stepping
 2. **richer observer/dashboard views with live metrics panels**
 3. **role-specific bridge agents** or bridge-routing policies
 4. **tool-use plugins** for structured tasks inside simulations
 5. **persistent archived room snapshots** across restarts
-6. **behavior-tested bridge runtime processing** end-to-end
+6. **websocket/IRC endpoint-backed behavior tests**

@@ -47,6 +47,7 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Operator Dashboard**: `/dashboard` provides a tabular top-level summary across rooms, jobs, active context, aggregate prompts, bridge activity, external exports/imports, and aggregate estimated cost.
 - **Observer View**: `/observer` gives a rich, tabular ranked multi-room operational view.
 - **Room Health View**: `/health` gives a compact room health score table across the session.
+- **Leaderboards**: `/leaderboard` shows top rooms and top agents across the current session.
 - **Room Summary**: `/room-summary [count]` shows recent activity snapshots across rooms.
 - **Room Analytics**: `/room-analytics [name]` shows one room’s specific analytics view.
 - **Telemetry**: Per-agent response counts, character volume, token totals, average response latency, scheduled-run count, replay-view count, comparison-view count, bridge-event count, bridge-AI count, observer-view count, external-export count, and external-import count.
@@ -98,6 +99,7 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/dashboard`
 - `/observer`
 - `/health`
+- `/leaderboard`
 - `/room-summary [count]`
 - `/room-analytics [name]`
 - `/bridge <source> <target> [count]`
@@ -175,7 +177,7 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `simulator_core.py` - Shared simulator logic, room helpers, persistence, telemetry, hybrid cost tracking, analytics, dashboard helpers, observer helpers, bridge helpers, external payload helpers, replay helpers, replay-window helpers, job helpers, scheduling helpers, exports, and transcript utilities.
 - `simulator_tools.py` - Custom functions registered as agent tools.
 - `tests/test_simulator_core.py` - Regression coverage for helper-layer behavior.
-- `tests/test_bridge_connectors.py` - Connector adapter coverage.
+- `tests/test_bridge_connectors.py` - Connector adapter coverage, including local webhook delivery.
 - `tests/test_bridge_runtime.py` - bridge runtime behavior coverage.
 - `tests/test_irc_bridge_runtime.py` - IRC runtime formatting coverage.
 - `tests/test_websocket_bridge_runtime.py` - websocket runtime formatting and dry-run coverage.
@@ -226,4 +228,4 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - deeper opt-in live integration coverage for provider-backed streaming and bridge workflows
 - persistent archived room snapshots across restarts with optional startup restore flows
 - role-specific bridge-routing presets layered on top of saved bridge policies
-- websocket/IRC transport behavior tests with controlled local endpoints
+- websocket/IRC transport behavior tests with controlled local endpoints and richer metrics panels

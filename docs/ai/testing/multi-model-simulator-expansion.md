@@ -10,7 +10,7 @@ python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_br
 ```
 
 ## Results
-- `python -m unittest discover -s tests -v` passed on 2026-04-05 (46 tests discovered, 44 passed, 2 skipped by opt-in live gate)
+- `python -m unittest discover -s tests -v` passed on 2026-04-05 (47 tests discovered, 45 passed, 2 skipped by opt-in live gate)
 - `python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_bridge_runtime.py websocket_bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py tests/test_irc_bridge_runtime.py tests/test_websocket_bridge_runtime.py tests/test_live_integration.py` passed on 2026-04-05
 
 ## Covered Behaviors
@@ -28,6 +28,7 @@ python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_br
 - connector catalog rendering
 - connector delivery to inbox/jsonl
 - connector payload routing
+- local webhook delivery through connector adapters
 - IRC runtime message formatting helpers
 - websocket runtime formatting and dry-run processing helpers
 - opt-in live integration test gating
@@ -75,5 +76,5 @@ python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_br
 - add a bridge-delivery integration test validating inactive-room insertion behavior
 - add a bridge-AI integration test validating model output capture and target-room insertion
 - add an external-export / inbox-import integration test validating end-to-end file handoff
-- add a bridge-runtime behavior test validating outbox processing into `processed/`
+- add websocket/IRC endpoint-backed behavior tests beyond scaffold-level dry runs
 - add a live opt-in end-to-end test suite gated behind environment variables

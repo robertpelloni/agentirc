@@ -396,6 +396,7 @@ def build_help_text() -> str:
 - `/dashboard` - Show a high-level operator dashboard across rooms.
 - `/observer` - Show a richer ranked observer view across rooms.
 - `/health` - Show room health scores across the session.
+- `/leaderboard` - Show room and agent leaderboards across the session.
 - `/room-summary [count]` - Summarize room activity across the session.
 - `/room-analytics [name]` - Show analytics for one room.
 - `/bridge <source> <target> [count]` - Send a summarized bridge note from one room into another.
@@ -542,6 +543,66 @@ def build_dashboard_text(
         f"| Saved jobs | `{len(persistent_state.get('saved_jobs', {}))}` |\n"
         f"| Aggregate estimated cost | `{format_usd(total_estimated_cost)}` |\n"
     )
+
+
+
+def build_leaderboard_text(
+    rooms: dict[str, dict[str, Any]],
+    agent_specs: dict[str, dict[str, Any]],
+) -> str:
+    room_rankings = sorted(
+        (
+            (
+                room_name,
+                len(room_state.get("history", [])),
+                room_state.get("config", {}).get("telemetry", {}).get("prompts_sent", 0),
+                float(room_state.get("config", {}).get("telemetry", {}).get("total_estimated_cost_usd", 0.0)),
+            )
+            for room_name, room_state in rooms.items()
+        ),
+        key=lambda item: (item[1], item[2], -item[3]),
+        reverse=True,
+    )
+
+    agent_totals: dict[str, dict[str, float]] = {}
+    for room_state in rooms.values():
+        per_agent = room_state.get("config", {}).get("telemetry", {}).get("per_agent", {})
+        for agent_name, stats in per_agent.items():
+            aggregate = agent_totals.setdefault(agent_name, {"messages": 0, "tokens": 0, "cost": 0.0})
+            aggregate["messages"] += int(stats.get("messages", 0))
+            aggregate["tokens"] += int(stats.get("total_tokens", 0))
+            aggregate["cost"] += float(stats.get("estimated_cost_usd", 0.0))
+
+    agent_rankings = sorted(
+        agent_totals.items(),
+        key=lambda item: (item[1]["messages"], item[1]["tokens"], -item[1]["cost"]),
+        reverse=True,
+    )
+
+    lines = [
+        "**Leaderboards**",
+        "",
+        "| Top Rooms | Entries | Prompts | Est. Cost |",
+        "|---|---:|---:|---:|",
+    ]
+    for room_name, entries, prompts, cost in room_rankings[:5]:
+        lines.append(f"| **{room_name}** | `{entries}` | `{prompts}` | `{format_usd(cost)}` |")
+
+    lines.extend([
+        "",
+        "| Top Agents | Messages | Tokens | Est. Cost |",
+        "|---|---:|---:|---:|",
+    ])
+    for agent_name, stats in agent_rankings[:8]:
+        display_name = display_agent_name(agent_name)
+        lines.append(
+            f"| **{display_name}** | `{int(stats['messages'])}` | `{int(stats['tokens'])}` | `{format_usd(float(stats['cost']))}` |"
+        )
+
+    if len(lines) == 8:
+        lines.append("| _(no data yet)_ | `0` | `0` | `$0.000000` |")
+
+    return "\n".join(lines)
 
 
 

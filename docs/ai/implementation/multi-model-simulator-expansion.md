@@ -142,6 +142,20 @@ It adds a compact prioritization surface without forcing a graphical dashboard r
 ### 13. Bridge runtime behavior tests are the right next step after scaffolding
 Testing payload movement into `processed/` validates the runtime loop before real network endpoints are introduced.
 
+## Metrics and Runtime Validation Expansion
+### New Visibility/Test Surfaces
+- `/health`
+- `/leaderboard`
+- `tests/test_bridge_runtime.py`
+- local webhook connector validation
+
+## Findings and Analysis
+### 14. A compact leaderboard is the right complement to room health
+Health scores prioritize rooms, while leaderboards show volume and cost leaders across the session.
+
+### 15. Local webhook validation is the right first connector endpoint test
+It validates a real network path without depending on external infrastructure.
+
 ## Recommended Follow-Up
 - richer observer/dashboard views with live metrics panels
 - role-specific bridge agents and routing policies

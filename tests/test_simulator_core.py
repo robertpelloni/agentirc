@@ -24,6 +24,7 @@ from simulator_core import (
     build_dashboard_text,
     build_jobs_text,
     build_judge_prompt,
+    build_leaderboard_text,
     build_lineups_text,
     build_bridge_runtime_status_text,
     build_external_bridge_payload,
@@ -323,6 +324,7 @@ class SimulatorCoreTests(unittest.TestCase):
         self.assertIn("Operator Dashboard", build_dashboard_text(rooms, DEFAULT_ROOM_NAME, persistent_state))
         self.assertIn("Room Summary", build_room_summary_text(rooms, 2))
         self.assertIn("Room Health", build_room_health_text(rooms, DEFAULT_ROOM_NAME))
+        self.assertIn("Leaderboards", build_leaderboard_text(rooms, AGENT_SPECS))
         changed, message, room_name = switch_room(rooms, "war-room")
         self.assertTrue(changed)
         self.assertEqual(room_name, "war-room")
