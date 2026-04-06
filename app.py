@@ -16,6 +16,7 @@ from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from bridge_connectors import build_connector_catalog_text
+from simulator_tools import get_tools_by_names
 from simulator_core import (
     DEFAULT_ROOM_NAME,
     EXPORT_DIR,
@@ -34,6 +35,7 @@ from simulator_core import (
     build_external_room_payload,
     build_dashboard_text,
     build_bridge_runtime_status_text,
+    build_bridge_roles_text,
     build_help_text,
     build_history_text,
     build_imported_payload_text,
@@ -57,6 +59,7 @@ from simulator_core import (
     build_scenarios_text,
     build_status_text,
     build_telemetry_text,
+    build_tools_text,
     coerce_message_content,
     configure_automation,
     create_room,
@@ -103,6 +106,7 @@ from simulator_core import (
     set_moderator_mode,
     set_persona_override,
     set_rounds,
+    set_tool_enabled,
     stop_automation,
     write_outbox_payload,
 )
@@ -358,6 +362,7 @@ def create_team(config: dict):
             name=name,
             model_client=get_client(spec["model"]),
             system_message=system_message,
+            tools=get_tools_by_names(config.get("enabled_tools", [])) or None,
         )
         agents.append(agent)
 
@@ -558,13 +563,15 @@ async def handle_command(command: str, args: str) -> bool:
         return True
 
     if command == "/bridge-ai":
-        parts = args.split(" ", 2)
+        parts = args.split(" ", 3)
         if len(parts) < 2:
-            await send_system_notice("Usage: `/bridge-ai <source> <target> [focus]`")
+            await send_system_notice("Usage: `/bridge-ai <source> <target> [role] [focus]`")
             return True
         source_room_name = parts[0]
         target_room_name = parts[1]
-        focus = parts[2] if len(parts) > 2 else ""
+        role = parts[2] if len(parts) > 2 else ""
+        focus = parts[3] if len(parts) > 3 else ""
+        
         changed, response, resolved_source = switch_room(get_rooms(), source_room_name)
         if not changed or resolved_source is None:
             await send_system_notice(response)
@@ -578,6 +585,7 @@ async def handle_command(command: str, args: str) -> bool:
             resolved_source,
             resolved_target,
             get_rooms()[resolved_source],
+            role,
             focus,
         )
         bridge_agent = create_bridge_agent(config)
@@ -682,6 +690,24 @@ async def handle_command(command: str, args: str) -> bool:
             await cl.Message(content=f"*** {imported_text}").send()
         else:
             await send_system_notice(f"Imported `{file_name}` into **{resolved_target}**.")
+        return True
+
+    if command == "/bridge-roles":
+        await cl.Message(content=build_bridge_roles_text()).send()
+        return True
+
+    if command == "/tools":
+        await cl.Message(content=build_tools_text(config)).send()
+        return True
+
+    if command in {"/enable-tool", "/disable-tool"}:
+        if not args:
+            await send_system_notice(f"Usage: `{command} <tool>`")
+            return True
+        changed, response = set_tool_enabled(config, args, enabled=command == "/enable-tool")
+        if changed:
+            rebuild_team()
+        await send_system_notice(response)
         return True
 
     if command == "/rooms":

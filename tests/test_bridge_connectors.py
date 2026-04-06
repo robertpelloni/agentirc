@@ -9,6 +9,7 @@ from bridge_connectors import (
     build_connector_payload_message,
     deliver_to_inbox,
     deliver_to_jsonl,
+    deliver_to_webhook,
     route_payload,
 )
 
@@ -50,6 +51,10 @@ class BridgeConnectorTests(unittest.TestCase):
             line = output.read_text(encoding="utf-8").strip()
             payload = json.loads(line)
             self.assertEqual(payload["kind"], "room_snapshot")
+
+    def test_deliver_to_webhook_requires_endpoint(self):
+        with self.assertRaises(ValueError):
+            deliver_to_webhook(PAYLOAD, None)
 
     def test_route_payload(self):
         with tempfile.TemporaryDirectory() as temp_dir:

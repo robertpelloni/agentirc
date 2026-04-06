@@ -7,6 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from simulator_tools import TOOL_CATALOG
+
 DEFAULT_MODE = "broadcast"
 DEFAULT_TOPIC = "The Omni-Workspace and Future AI Architectures"
 DEFAULT_NICK = "BobPelloni"
@@ -74,6 +76,14 @@ MODERATOR_MODES: dict[str, str] = {
     "strict": "Be disciplined, concise, and on-topic. Avoid fluff, repeated phrasing, and derailments.",
     "critic": "Prioritize hard-nosed critique, gap analysis, and rigorous disagreement over politeness.",
     "chaos": "Lean into energetic experimentation, surprising proposals, and bold what-if exploration without becoming incoherent.",
+}
+
+
+
+BRIDGE_ROLES: dict[str, str] = {
+    "executive": "You are an Executive Bridge Agent. Summarize the room's strategic decisions, high-level status, and bottom-line impact. Avoid technical minutiae.",
+    "technical": "You are a Technical Bridge Agent. Summarize the room's architectural choices, system state, unresolved technical blockers, and engineering details.",
+    "redteam": "You are a Red Team Bridge Agent. Summarize the room's vulnerabilities, security gaps, bad assumptions, and failure modes.",
 }
 
 
@@ -216,6 +226,7 @@ def make_default_config(
         "nick": DEFAULT_NICK,
         "max_rounds": DEFAULT_MAX_ROUNDS,
         "enabled_agents": list(agent_specs.keys()),
+        "enabled_tools": [],
         "scenario": "omni",
         "simulation_count": 0,
         "moderator_mode": DEFAULT_MODERATOR_MODE,
@@ -374,7 +385,11 @@ def build_help_text() -> str:
 - `/room-summary [count]` - Summarize room activity across the session.
 - `/room-analytics [name]` - Show analytics for one room.
 - `/bridge <source> <target> [count]` - Send a summarized bridge note from one room into another.
-- `/bridge-ai <source> <target> [focus]` - Use a model-generated bridge note between rooms.
+- `/bridge-ai <source> <target> [role] [focus]` - Use a role-specific model-generated bridge note between rooms.
+- `/bridge-roles` - List available bridge agent roles.
+- `/tools` - List available tools.
+- `/enable-tool <name>` - Enable a tool globally.
+- `/disable-tool <name>` - Disable a globally enabled tool.
 - `/bridge-export <room> [count]` - Export a room snapshot as an external bridge payload.
 - `/bridge-runtime` - Show external bridge runtime directory status.
 - `/connectors` - List available external connector adapters.
@@ -482,20 +497,23 @@ def build_dashboard_text(
         for room_state in rooms.values()
     )
     active_room = rooms[current_room_name]["config"]
+    
     return (
-        "**Operator Dashboard**\n"
-        f"- Active room: `{current_room_name}`\n"
-        f"- Total rooms: `{len(rooms)}`\n"
-        f"- Total retained transcript entries: `{total_entries}`\n"
-        f"- Aggregate prompts sent: `{total_prompts}`\n"
-        f"- Aggregate bridge events: `{total_bridges}`\n"
-        f"- External exports: `{sum(room_state.get('config', {}).get('telemetry', {}).get('external_exports', 0) for room_state in rooms.values())}`\n"
-        f"- External imports: `{sum(room_state.get('config', {}).get('telemetry', {}).get('external_imports', 0) for room_state in rooms.values())}`\n"
-        f"- Saved lineups: `{len(persistent_state.get('saved_lineups', {}))}`\n"
-        f"- Saved jobs: `{len(persistent_state.get('saved_jobs', {}))}`\n"
-        f"- Aggregate estimated room cost: `{format_usd(total_estimated_cost)}`\n"
-        f"- Active topic: {active_room.get('topic', DEFAULT_TOPIC)}\n"
-        f"- Active mode: `{active_room.get('mode', DEFAULT_MODE)}`"
+        "**Operator Dashboard**\n\n"
+        "| Metric | Value |\n"
+        "|---|---|\n"
+        f"| Active room | `{current_room_name}` |\n"
+        f"| Active topic | {active_room.get('topic', DEFAULT_TOPIC)} |\n"
+        f"| Active mode | `{active_room.get('mode', DEFAULT_MODE)}` |\n"
+        f"| Total rooms | `{len(rooms)}` |\n"
+        f"| Retained transcript entries | `{total_entries}` |\n"
+        f"| Aggregate prompts sent | `{total_prompts}` |\n"
+        f"| Aggregate bridge events | `{total_bridges}` |\n"
+        f"| External exports | `{sum(room_state.get('config', {}).get('telemetry', {}).get('external_exports', 0) for room_state in rooms.values())}` |\n"
+        f"| External imports | `{sum(room_state.get('config', {}).get('telemetry', {}).get('external_imports', 0) for room_state in rooms.values())}` |\n"
+        f"| Saved lineups | `{len(persistent_state.get('saved_lineups', {}))}` |\n"
+        f"| Saved jobs | `{len(persistent_state.get('saved_jobs', {}))}` |\n"
+        f"| Aggregate estimated cost | `{format_usd(total_estimated_cost)}` |\n"
     )
 
 
@@ -512,15 +530,19 @@ def build_observer_text(
         ),
         reverse=True,
     )
-    lines = ["**Observer View**"]
+    lines = [
+        "**Observer View**\n",
+        "| Room | Status | Entries | Prompts | Bridges | Exports | Est. Cost |",
+        "|---|---|---|---|---|---|---|"
+    ]
     for room_name, room_state in ranked_rooms:
         config = room_state.get("config", {})
         telemetry = config.get("telemetry", {})
-        marker = "active" if room_name == current_room_name else "idle"
+        marker = "🟢 active" if room_name == current_room_name else "⚫ idle"
         lines.append(
-            f"- **{room_name}** ({marker}) — entries `{len(room_state.get('history', []))}`, "
-            f"prompts `{telemetry.get('prompts_sent', 0)}`, bridges `{telemetry.get('bridge_events', 0)}`, "
-            f"exports `{telemetry.get('external_exports', 0)}`, imports `{telemetry.get('external_imports', 0)}`, est cost `{format_usd(telemetry.get('total_estimated_cost_usd', 0.0))}`"
+            f"| **{room_name}** | {marker} | `{len(room_state.get('history', []))}` | "
+            f"`{telemetry.get('prompts_sent', 0)}` | `{telemetry.get('bridge_events', 0)}` | "
+            f"`{telemetry.get('external_exports', 0)}` | `{format_usd(telemetry.get('total_estimated_cost_usd', 0.0))}` |"
         )
     return "\n".join(lines)
 
@@ -608,6 +630,7 @@ def build_status_text(config: dict[str, Any], history_size: int, persistent_stat
         f"- Judge model: `{config['judge_model']}`\n"
         f"- Max discuss rounds: `{config['max_rounds']}`\n"
         f"- Simulations run: `{config['simulation_count']}`\n"
+        f"- Enabled tools: `{', '.join(config.get('enabled_tools', [])) or 'none'}`\n"
         f"- Prompts sent: `{telemetry['prompts_sent']}`\n"
         f"- Estimated cost: `{format_usd(telemetry['total_estimated_cost_usd'])}`\n"
         f"- Transcript entries: `{history_size}`\n"
@@ -644,6 +667,12 @@ def build_scenarios_text() -> str:
 def build_moderator_modes_text() -> str:
     lines = [f"- **{name}** — {description}" for name, description in MODERATOR_MODES.items()]
     return "**Moderator Modes**\n" + "\n".join(lines)
+
+
+
+def build_bridge_roles_text() -> str:
+    lines = [f"- **{name}** — {description}" for name, description in BRIDGE_ROLES.items()]
+    return "**Bridge Agent Roles**\n" + "\n".join(lines)
 
 
 
@@ -737,6 +766,47 @@ def delete_room(
         next_room_name = sorted(rooms.keys())[0]
         return True, f"Deleted room **{room_name}** and switched to **{next_room_name}**.", next_room_name
     return True, f"Deleted room **{room_name}**.", next_room_name
+
+
+
+def build_tools_text(config: dict[str, Any]) -> str:
+    enabled_tools = config.get("enabled_tools", [])
+    lines = ["**Tool Catalog**"]
+    for name, func in TOOL_CATALOG.items():
+        state = "🟢 enabled" if name in enabled_tools else "⚫ disabled"
+        doc = (func.__doc__ or "No description").strip()
+        lines.append(f"- **{name}** — {state}\n  {doc}")
+    return "\n".join(lines)
+
+
+
+def set_tool_enabled(config: dict[str, Any], raw_name: str, enabled: bool) -> tuple[bool, str]:
+    tool_name = sanitize_key(raw_name).replace("-", "_")
+    if not tool_name:
+        return False, "Tool name cannot be empty."
+
+    exact_match = None
+    for name in TOOL_CATALOG:
+        if name.lower() == tool_name.lower():
+            exact_match = name
+            break
+            
+    if not exact_match:
+        return False, f"Unknown tool: `{raw_name}`"
+
+    enabled_tools = config.setdefault("enabled_tools", [])
+    
+    if enabled:
+        if exact_match in enabled_tools:
+            return False, f"Tool `{exact_match}` is already enabled."
+        enabled_tools.append(exact_match)
+        return True, f"Enabled tool `{exact_match}`."
+    
+    if exact_match not in enabled_tools:
+        return False, f"Tool `{exact_match}` is already disabled."
+    
+    enabled_tools.remove(exact_match)
+    return True, f"Disabled tool `{exact_match}`."
 
 
 
@@ -1328,7 +1398,8 @@ def build_bridge_prompt(
     source_room_name: str,
     target_room_name: str,
     source_room_state: dict[str, Any],
-    focus: str,
+    role: str = "",
+    focus: str = "",
     count: int = 8,
 ) -> str:
     config = source_room_state.get("config", {})
@@ -1337,11 +1408,13 @@ def build_bridge_prompt(
     excerpt = "\n".join(
         render_entry(entry) for entry in recent_entries if isinstance(entry, dict)
     ) or "(no recent entries available)"
+    
+    role_instruction = BRIDGE_ROLES.get(role.lower(), "You are a generic Bridge Agent. Summarize the source room for the target room in a compact operational note.")
     requested_focus = focus or "key decisions, open risks, and what the target room should know next"
+    
     return (
-        "You are a Bridge Agent for a multi-room IRC simulation. "
-        "Summarize the source room for the target room in a compact operational note with sections: "
-        "Situation, Key Insight, Risk, Recommended Follow-Up.\n\n"
+        f"{role_instruction}\n"
+        "Produce a compact evaluation with sections: Situation, Key Insight, Risk, Recommended Follow-Up.\n\n"
         f"Source room: {source_room_name}\n"
         f"Target room: {target_room_name}\n"
         f"Source topic: {config.get('topic', DEFAULT_TOPIC)}\n"

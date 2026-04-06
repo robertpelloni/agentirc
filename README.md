@@ -1,6 +1,6 @@
 # AgentIRC: The Multi-Model Broadcast Network
 
-AgentIRC is an IRC-style multi-model simulation environment built with **Microsoft AutoGen 0.4+**, **Chainlit**, and **OpenRouter**. It lets a human operator run coordinated conversations across multiple model personas, switch between broadcast and discussion modes, inspect telemetry, persist lineups/personas/jobs, export transcripts, replay and compare old runs, estimate costs, manage multiple rooms, inspect operator dashboards, bridge context between rooms, and prepare external bridge payloads and runtime scaffolding for future non-Chainlit clients.
+AgentIRC is an IRC-style multi-model simulation environment built with **Microsoft AutoGen 0.4+**, **Chainlit**, and **OpenRouter**. It lets a human operator run coordinated conversations across multiple model personas, switch between broadcast and discussion modes, inspect telemetry, persist lineups/personas/jobs, export transcripts, replay and compare old runs, estimate costs, manage multiple rooms, inspect operator dashboards, bridge context between rooms, configure tool-use plugins, and prepare external bridge payloads and runtime scaffolding for future non-Chainlit clients.
 
 ## 🚀 Feature Overview
 
@@ -10,6 +10,7 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Direct Messages**: `@AgentName <message>` targets one model without broadcasting to the full room.
 - **Scenario Presets**: Switch quickly between `omni`, `debate`, `incident`, `redteam`, `worldbuild`, `product`, and `council`.
 - **Moderator Modes**: Apply conversation-wide behavioral shaping with `off`, `facilitator`, `strict`, `critic`, and `chaos`.
+- **Tool-Use Plugins**: Agents can optionally use integrated tools (like clocks, calculators, and memory stores) enabled via `/enable-tool`.
 
 ### Multi-Room Simulation
 - **Multiple Rooms Per Session**: Maintain separate room-local config and transcript state inside one simulator session.
@@ -17,17 +18,16 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Room Lifecycle Commands**: Create, list, switch, and delete rooms on demand.
 - **Room-Scoped Reset/Clear**: `/clear` and `/reset` operate on the active room rather than the whole session.
 - **Cross-Room Bridge Notes**: Summarize recent activity from one room into another with `/bridge`.
-- **Model-Generated Bridge Notes**: Use `/bridge-ai` to have a bridge agent generate a higher-level cross-room summary.
+- **Model-Generated Bridge Notes**: Use `/bridge-ai` to have a role-specific bridge agent generate a higher-level cross-room summary.
 
 ### External Bridge Foundations
 - **External Room Snapshot Export**: `/bridge-export <room> [count]` writes a standardized payload for external consumers.
 - **Bridge Runtime Status**: `/bridge-runtime` shows current outbox, inbox, and processed payload counts.
-- **Connector Catalog**: `/connectors` lists supported external connector adapters.
+- **Connector Catalog**: `/connectors` lists supported external connector adapters (like `console`, `inbox`, `jsonl`, and `webhook`).
 - **Outbox Tracking**: `/outbox` lists recently generated external bridge payload files.
 - **Inbox Tracking**: `/inbox` lists inbound external bridge payload files.
 - **Manual Payload Import**: `/import-bridge <file> [room]` imports an inbox payload into a room.
-- **Standalone Runtime Scaffold**: `python bridge_runtime.py --once --connector <name>` processes outbox payloads into `processed/` and logs runtime events.
-- **Connector Adapters**: `bridge_connectors.py` currently supports `console`, `inbox`, and `jsonl` delivery modes.
+- **Standalone Runtime Scaffold**: `python bridge_runtime.py --connector <name>` processes outbox payloads into `processed/` and routes them.
 - **Bridge Payload Schema**: Standardized room snapshot and bridge-note payload shapes make future websocket / IRC bridge work easier.
 - **Directories**: external payloads are written to `outbox/`, received in `inbox/`, and processed into `processed/`.
 
@@ -40,8 +40,8 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 
 ### Analysis & Operations
 - **Session Status**: Inspect room, mode, scenario, moderator, lineup, job count, persistent-state counts, and cost summary.
-- **Operator Dashboard**: `/dashboard` provides a top-level summary across rooms, jobs, active context, aggregate prompts, bridge activity, external exports/imports, and aggregate estimated cost.
-- **Observer View**: `/observer` gives a ranked multi-room operational view.
+- **Operator Dashboard**: `/dashboard` provides a tabular top-level summary across rooms, jobs, active context, aggregate prompts, bridge activity, external exports/imports, and aggregate estimated cost.
+- **Observer View**: `/observer` gives a rich, tabular ranked multi-room operational view.
 - **Room Summary**: `/room-summary [count]` shows recent activity snapshots across rooms.
 - **Room Analytics**: `/room-analytics [name]` shows one room’s specific analytics view.
 - **Telemetry**: Per-agent response counts, character volume, token totals, average response latency, scheduled-run count, replay-view count, comparison-view count, bridge-event count, bridge-AI count, observer-view count, external-export count, and external-import count.
@@ -60,10 +60,11 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **`simulator_core.py`** isolates session defaults, room helpers, command parsing, persona/lineup/job persistence, telemetry logic, cost tracking, replay helpers, replay-window helpers, comparison helpers, dashboard helpers, observer helpers, bridge-note helpers, external payload helpers, scheduling helpers, export helpers, and transcript formatting.
 - **`app.py`** focuses on Chainlit wiring, room activation, replay cursor state, AutoGen team construction, command dispatch, autonomous scheduling, replay/compare commands, dashboard commands, bridge commands, external export/import commands, and model streaming.
 - **`bridge_runtime.py`** is the first standalone external bridge runtime scaffold. It polls the outbox, routes payloads through connector adapters, moves processed payloads into `processed/`, and logs runtime events.
-- **`bridge_connectors.py`** defines the connector adapter layer for future bridge runtimes.
+- **`bridge_connectors.py`** defines the connector adapter layer for future bridge runtimes, including webhook delivery.
+- **`simulator_tools.py`** defines tool-use plugins accessible by agents.
 - **Persistent state** is stored in `data/simulator_state.json` and currently tracks saved lineups, persona overrides, and saved jobs.
 - **Exports** include transcript content plus session telemetry snapshot so old runs can be replayed, compared, and analyzed.
-- **Outbox/inbox/processed payloads** create a stable external integration boundary for future websocket / IRC connectors.
+- **Outbox/inbox/processed payloads** create a stable external integration boundary.
 
 ## 🧪 Python 3.14 Compatibility
 Operating on **Python 3.14.3** still requires defensive compatibility patching around `asyncio` / `anyio` behavior that can otherwise break Chainlit and related runtime assumptions. This project keeps those runtime patches in `run.py` and `app.py` to preserve execution under the current environment.
@@ -91,7 +92,8 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/room-summary [count]`
 - `/room-analytics [name]`
 - `/bridge <source> <target> [count]`
-- `/bridge-ai <source> <target> [focus]`
+- `/bridge-ai <source> <target> [role] [focus]`
+- `/bridge-roles`
 - `/bridge-export <room> [count]`
 - `/bridge-runtime`
 - `/connectors`
@@ -110,6 +112,9 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/whois <agent>`
 - `/enable <agent>`
 - `/disable <agent>`
+- `/tools`
+- `/enable-tool <name>`
+- `/disable-tool <name>`
 - `/rounds <2-30>`
 - `/scenario [name]`
 - `/moderator [mode]`
@@ -142,11 +147,12 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/reset`
 
 ## 📁 Important Files
-- `app.py` - Chainlit app, command handling, room activation, replay state, bridge delivery, external export/import commands, AutoGen orchestration, autonomous scheduling, replay/compare commands, dashboard commands, observer commands, and judge execution.
+- `app.py` - Chainlit app, command handling, room activation, replay state, bridge delivery, external export/import commands, AutoGen orchestration, autonomous scheduling, replay/compare commands, dashboard commands, observer commands, tool handling, and judge execution.
 - `run.py` - Python 3.14 compatibility launcher for Chainlit.
 - `bridge_runtime.py` - standalone bridge runtime scaffold for processing `outbox/` payloads into `processed/`.
 - `bridge_connectors.py` - connector adapter layer for bridge runtime delivery.
 - `simulator_core.py` - Shared simulator logic, room helpers, persistence, telemetry, hybrid cost tracking, analytics, dashboard helpers, observer helpers, bridge helpers, external payload helpers, replay helpers, replay-window helpers, job helpers, scheduling helpers, exports, and transcript utilities.
+- `simulator_tools.py` - Custom functions registered as agent tools.
 - `tests/test_simulator_core.py` - Regression coverage for helper-layer behavior.
 - `tests/test_bridge_connectors.py` - Connector adapter coverage.
 - `docs/ai/design/simulator-operations.md` - feature-pass architecture notes and flow diagram.
@@ -178,9 +184,6 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
    ```
 
 ## 🧭 Recommended Next Feature Passes
-- external IRC / websocket bridge runtime on top of the current connector layer
-- richer observer/dashboard views with live metrics panels
-- role-specific bridge agents and routing policies
-- tool-use plugins and structured tasks
-- opt-in live integration tests for Chainlit + provider calls
 - persistent archived room snapshots across restarts
+- external IRC / websocket bridge runtime on top of the current connector layer
+- opt-in live integration tests for Chainlit + provider calls

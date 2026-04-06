@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.13.0 - 2026-04-05
+- Added tool-use plugin support via `simulator_tools.py` with default memory/calc/time tools.
+- Added tool-control commands: `/tools`, `/enable-tool <name>`, `/disable-tool <name>`.
+- Added role-specific bridge agents via `/bridge-ai <source> <target> [role] [focus]`.
+- Added `/bridge-roles` command to inspect available bridge agent specializations.
+- Added `webhook` connector adapter in `bridge_connectors.py` with `--endpoint` URL support.
+- Replaced bulleted observer and dashboard views with richer Markdown metrics tables.
+- Included `simulator_tools.py` in compilation checks.
+- Expanded unit coverage from 31 to 32 tests.
+- Expanded README, findings, design, implementation, testing, changelog, and handoff documentation for tools and role-based bridge agents.
+
 ## 0.12.0 - 2026-04-05
 - Added `/connectors` for connector adapter inspection.
 - Added `bridge_connectors.py` with `console`, `inbox`, and `jsonl` connector adapters.

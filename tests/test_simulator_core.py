@@ -87,6 +87,7 @@ from simulator_core import (
     switch_room,
     set_persona_override,
     set_rounds,
+    set_tool_enabled,
     stop_automation,
 )
 
@@ -146,7 +147,21 @@ class SimulatorCoreTests(unittest.TestCase):
         self.assertFalse(changed)
         self.assertIn("At least one agent", message)
 
-    def test_set_rounds_validates_range(self):
+    def test_set_tool_enabled(self):
+        config = make_default_config(AGENT_SPECS)
+        self.assertEqual(config.get("enabled_tools", []), [])
+        changed, message = set_tool_enabled(config, "get_current_time", True)
+        self.assertTrue(changed)
+        self.assertIn("get_current_time", config["enabled_tools"])
+        changed, message = set_tool_enabled(config, "get_current_time", True)
+        self.assertFalse(changed)
+        self.assertIn("already enabled", message)
+        changed, message = set_tool_enabled(config, "get_current_time", False)
+        self.assertTrue(changed)
+        self.assertNotIn("get_current_time", config["enabled_tools"])
+        changed, message = set_tool_enabled(config, "unknown_tool", True)
+        self.assertFalse(changed)
+        self.assertIn("Unknown tool", message)
         config = make_default_config(AGENT_SPECS)
         changed, message = set_rounds(config, "12")
         self.assertTrue(changed)

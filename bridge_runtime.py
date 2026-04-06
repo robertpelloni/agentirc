@@ -20,9 +20,9 @@ def log_runtime_event(event: dict) -> None:
 
 
 
-def process_outbox_payload(path: Path, connector: str) -> dict:
+def process_outbox_payload(path: Path, connector: str, endpoint: str | None = None) -> dict:
     payload = load_external_payload(path)
-    delivery = route_payload(payload, connector)
+    delivery = route_payload(payload, connector, endpoint)
     processed_path = PROCESSED_DIR / path.name
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     shutil.move(str(path), str(processed_path))
@@ -39,11 +39,11 @@ def process_outbox_payload(path: Path, connector: str) -> dict:
 
 
 
-def poll_outbox_once(connector: str) -> list[dict]:
+def poll_outbox_once(connector: str, endpoint: str | None = None) -> list[dict]:
     events: list[dict] = []
     for path in list_payload_files(OUTBOX_DIR, limit=1000):
         try:
-            events.append(process_outbox_payload(path, connector))
+            events.append(process_outbox_payload(path, connector, endpoint))
         except Exception as exc:  # pragma: no cover - defensive runtime logging
             error_event = {
                 "processed_at": datetime.now().isoformat(),
@@ -57,9 +57,10 @@ def poll_outbox_once(connector: str) -> list[dict]:
 
 
 
-def runtime_status(connector: str) -> dict:
+def runtime_status(connector: str, endpoint: str | None = None) -> dict:
     return {
         "connector": connector,
+        "endpoint": endpoint,
         "outbox_files": len(list_payload_files(OUTBOX_DIR, limit=1000)),
         "inbox_files": len(list_payload_files(INBOX_DIR, limit=1000)),
         "processed_files": len(list_payload_files(PROCESSED_DIR, limit=1000)),
@@ -73,18 +74,19 @@ def main() -> int:
     parser.add_argument("--once", action="store_true", help="Process the outbox once and exit")
     parser.add_argument("--interval", type=float, default=2.0, help="Polling interval in seconds")
     parser.add_argument("--connector", choices=sorted(CONNECTOR_CATALOG.keys()), default="console", help="Connector used to route processed payloads")
+    parser.add_argument("--endpoint", type=str, default=None, help="Optional endpoint URL for webhook connector")
     args = parser.parse_args()
 
     if args.once:
-        events = poll_outbox_once(args.connector)
-        print(json.dumps({"status": runtime_status(args.connector), "events": events}, indent=2))
+        events = poll_outbox_once(args.connector, args.endpoint)
+        print(json.dumps({"status": runtime_status(args.connector, args.endpoint), "events": events}, indent=2))
         return 0
 
     print(f"AgentIRC bridge runtime polling started with connector '{args.connector}'.")
     while True:
-        events = poll_outbox_once(args.connector)
+        events = poll_outbox_once(args.connector, args.endpoint)
         if events:
-            print(json.dumps({"processed": len(events), "status": runtime_status(args.connector)}, indent=2))
+            print(json.dumps({"processed": len(events), "status": runtime_status(args.connector, args.endpoint)}, indent=2))
         time.sleep(max(0.25, args.interval))
 
 

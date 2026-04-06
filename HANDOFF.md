@@ -9,55 +9,45 @@
 
 ## What I Changed
 ### Core Code
-- Added `bridge_connectors.py` with connector adapters for:
-  - `console`
-  - `inbox`
-  - `jsonl`
-- Expanded `bridge_runtime.py` to support `--connector <name>` and route payloads through connector adapters.
+- Added `simulator_tools.py` with custom python functions acting as AutoGen tool plugins.
 - Expanded `simulator_core.py` with:
-  - connector-aware help text
-  - inbox/processed directory support
-  - inbox payload listing helpers
-  - bridge runtime status rendering
-  - imported-payload rendering helpers
-  - external import telemetry accounting
+  - tool-use toggle logic
+  - tool catalog listing helpers
+  - bridge agent role specifications
+  - markdown table generators for dashboard and observer views
+- Expanded `bridge_connectors.py` with:
+  - `webhook` connector adapter using `urllib` to deliver payloads via HTTP POST
 - Reworked `app.py` to support:
-  - `/connectors`
-  - `/bridge-runtime`
-  - `/inbox`
-  - `/import-bridge <file> [room]`
-  - room-local insertion of imported external payloads
-  - external import telemetry updates
-- Updated `build.bat` to compile `bridge_connectors.py`, `bridge_runtime.py`, and connector tests.
-- Expanded tests with `tests/test_bridge_connectors.py` and additional helper assertions.
+  - `/tools`, `/enable-tool <name>`, `/disable-tool <name>`
+  - `/bridge-roles`
+  - `/bridge-ai <source> <target> [role] [focus]`
+- Expanded tests with `tests/test_simulator_core.py` and additional helper assertions (now 32 tests passing).
 
 ### Documentation
-- Updated `README.md` with connector adapter commands and runtime usage.
-- Updated `docs/ai/design/simulator-operations.md` with connector-layer architecture notes.
+- Updated `README.md` with tool plugins, bridge roles, webhook integration, and tabular metrics.
+- Updated `docs/ai/design/simulator-operations.md` with tool architecture notes.
 - Updated `docs/ai/implementation/multi-model-simulator-expansion.md`.
 - Updated `docs/ai/testing/multi-model-simulator-expansion.md`.
-- Updated `FINDINGS.md` with detailed analysis of staged connector evolution and adapter layering.
-- Bumped `VERSION` to `0.12.0` and updated `CHANGELOG.md`.
+- Updated `FINDINGS.md` with detailed analysis of tool usage, role-specific bridge routing, and webhook adapter utility.
+- Bumped `VERSION` to `0.13.0` and updated `CHANGELOG.md`.
 
 ## Validation Performed
-- Ran `python -m unittest discover -s tests -v` ✅ (31 tests passed)
-- Ran `python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py simulator_core.py tests/test_simulator_core.py tests/test_bridge_connectors.py` ✅
+- Ran `python -m unittest discover -s tests -v` ✅ (32 tests passed)
+- Ran `python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py` ✅
 
 ## Findings and Analysis
-1. External connector architecture benefits from an explicit adapter layer between payload processing and future transports.
-2. Bidirectional import/export flow is significantly more useful once paired with manual import commands and runtime visibility.
-3. Runtime scaffolding belongs outside the main UI app, while connector adapters belong outside the runtime loop.
-4. The simulator now has a credible staged path toward live IRC/websocket bridges without overcommitting too early.
+1. Markdown tables for dashboard views are significantly more readable than long bullet lists and eliminate the immediate need for a custom React/Chainlit UI.
+2. Webhook payload connectors are an easy, zero-dependency alternative to raw WebSockets, moving the simulator closer to "headless integration" with arbitrary platforms.
+3. Passing modular tools down to AutoGen agents greatly enhances the scope of what the simulator can represent (e.g. agents testing out calculator functions during a debate).
+4. Role-specific bridge agents (e.g. Red Team vs Technical) vastly improve the quality of abstract cross-room communication over generic bridge notes.
 
 ## Potential Risks / Follow-Up
-- bridge runtime processing is not yet behavior-tested end-to-end
-- bridge-AI delivery is not yet integration-tested against a live Chainlit session
-- actual-cost behavior still depends on provider usage metadata appearing in streamed events
+- tool execution hasn't been mocked/tested extensively inside the `app.py` UI harness yet
+- webhook delivery failure handling is minimal; retry mechanisms might be required for production use
+- bridge-AI role delivery is not yet integration-tested against a live Chainlit session
 - persistent state remains local-file based and not multi-user synchronized
 
 ## Recommended Next Steps
-1. Add external IRC/websocket bridge runtime on top of the connector layer.
-2. Add richer observer/dashboard views with live metrics panels.
-3. Add role-specific bridge agents or bridge-routing policies.
-4. Add tool-use plugins.
-5. Add live opt-in integration tests for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, external export/import, and replay stepping.
+1. Add live opt-in integration tests for streaming, judging, scheduling, tool execution, room switching, bridge delivery, bridge-AI generation, external export/import, and replay stepping.
+2. Provide a persistent room archive format that survives application restarts.
+3. Create auto-bridge policies (e.g., auto-delivering cross-room notes every N steps).

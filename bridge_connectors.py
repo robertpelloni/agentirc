@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import urllib.request
+import urllib.error
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -12,6 +14,7 @@ CONNECTOR_CATALOG: dict[str, str] = {
     "console": "Print payload delivery results to stdout for local debugging and runtime visibility.",
     "inbox": "Deliver payloads into the local `inbox/` directory for manual or app-driven import.",
     "jsonl": "Append delivery events to a JSONL file for downstream automation or auditing.",
+    "webhook": "Deliver payloads via HTTP POST to a remote endpoint. Requires --endpoint flag.",
 }
 
 JSONL_OUTPUT = Path("processed/connector_output.jsonl")
@@ -75,7 +78,31 @@ def deliver_to_jsonl(payload: dict[str, Any], output_path: Path = JSONL_OUTPUT) 
 
 
 
-def route_payload(payload: dict[str, Any], connector: str) -> dict[str, Any]:
+def deliver_to_webhook(payload: dict[str, Any], endpoint: str | None) -> dict[str, Any]:
+    if not endpoint:
+        raise ValueError("Webhook connector requires an endpoint.")
+
+    req = urllib.request.Request(
+        endpoint,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as response:
+            status = response.status
+    except Exception as exc:
+        status = str(exc)
+
+    return {
+        "connector": "webhook",
+        "destination": endpoint,
+        "status": status,
+    }
+
+
+
+def route_payload(payload: dict[str, Any], connector: str, endpoint: str | None = None) -> dict[str, Any]:
     normalized = connector.strip().lower()
     if normalized == "console":
         return deliver_to_console(payload)
@@ -83,4 +110,6 @@ def route_payload(payload: dict[str, Any], connector: str) -> dict[str, Any]:
         return deliver_to_inbox(payload)
     if normalized == "jsonl":
         return deliver_to_jsonl(payload)
+    if normalized == "webhook":
+        return deliver_to_webhook(payload, endpoint)
     raise ValueError(f"Unknown connector: {connector}")
