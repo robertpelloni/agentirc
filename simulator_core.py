@@ -123,6 +123,7 @@ def make_default_store() -> dict[str, Any]:
         "saved_lineups": {},
         "saved_personas": {},
         "saved_jobs": {},
+        "saved_bridge_policies": {},
     }
 
 
@@ -144,6 +145,8 @@ def load_persistent_state(path: Path = STATE_FILE) -> dict[str, Any]:
             state["saved_personas"] = payload["saved_personas"]
         if isinstance(payload.get("saved_jobs"), dict):
             state["saved_jobs"] = payload["saved_jobs"]
+        if isinstance(payload.get("saved_bridge_policies"), dict):
+            state["saved_bridge_policies"] = payload["saved_bridge_policies"]
     return state
 
 
@@ -442,6 +445,10 @@ def build_help_text() -> str:
 - `/save-job <name>` - Save the current simulator config plus schedule settings as a reusable job.
 - `/run-job <name>` - Load a saved job and start its schedule.
 - `/delete-job <name>` - Delete a saved job preset.
+- `/bridge-policies` - List saved auto-bridge policy presets.
+- `/save-bridge-policy <name>` - Save the current auto-bridge settings.
+- `/load-bridge-policy <name>` - Load a saved auto-bridge policy.
+- `/delete-bridge-policy <name>` - Delete a saved auto-bridge policy.
 - `/schedule` - Show autonomous scheduling status.
 - `/schedule <seconds> [runs]` - Start scheduled autonomous simulations.
 - `/schedule stop` - Stop the active autonomous schedule.
@@ -740,6 +747,21 @@ def build_jobs_text(persistent_state: dict[str, Any]) -> str:
             f"  Scenario `{job.get('scenario', 'omni')}`, mode `{job.get('mode', DEFAULT_MODE)}`, agents: {enabled or 'none'}"
         )
     return "**Saved Jobs**\n" + "\n".join(lines)
+
+
+
+def build_bridge_policies_text(persistent_state: dict[str, Any]) -> str:
+    policies = persistent_state.get("saved_bridge_policies", {})
+    if not policies:
+        return "*** No saved bridge policies yet."
+
+    lines = []
+    for name, policy in policies.items():
+        lines.append(
+            f"- **{name}** — target `{policy.get('target_room', '')}`, interval `{policy.get('interval_prompts', 0)}`, mode `{policy.get('mode', 'note')}`  \n"
+            f"  Role `{policy.get('role', '') or 'n/a'}`, focus: {policy.get('focus', '') or 'n/a'}"
+        )
+    return "**Saved Bridge Policies**\n" + "\n".join(lines)
 
 
 
@@ -1505,6 +1527,51 @@ def delete_job(persistent_state: dict[str, Any], raw_name: str) -> tuple[bool, s
 
     del saved_jobs[job_name]
     return True, f"Deleted job **{job_name}**."
+
+
+
+def save_bridge_policy(config: dict[str, Any], persistent_state: dict[str, Any], raw_name: str) -> tuple[bool, str]:
+    policy_name = sanitize_key(raw_name)
+    if not policy_name:
+        return False, "Bridge policy name cannot be empty."
+    auto_bridge = config.get("auto_bridge", {})
+    if not auto_bridge.get("target_room"):
+        return False, "Configure auto-bridge before saving a policy."
+    persistent_state.setdefault("saved_bridge_policies", {})[policy_name] = {
+        "target_room": auto_bridge.get("target_room", ""),
+        "interval_prompts": auto_bridge.get("interval_prompts", 5),
+        "mode": auto_bridge.get("mode", "note"),
+        "role": auto_bridge.get("role", ""),
+        "focus": auto_bridge.get("focus", ""),
+    }
+    return True, f"Saved bridge policy **{policy_name}**."
+
+
+
+def load_bridge_policy(config: dict[str, Any], persistent_state: dict[str, Any], raw_name: str) -> tuple[bool, str]:
+    policy_name = sanitize_key(raw_name)
+    policy = persistent_state.get("saved_bridge_policies", {}).get(policy_name)
+    if not policy:
+        return False, f"Unknown bridge policy: `{raw_name}`"
+    auto_bridge = config.setdefault("auto_bridge", {})
+    auto_bridge["enabled"] = True
+    auto_bridge["target_room"] = policy.get("target_room", "")
+    auto_bridge["interval_prompts"] = int(policy.get("interval_prompts", 5))
+    auto_bridge["mode"] = policy.get("mode", "note")
+    auto_bridge["role"] = policy.get("role", "")
+    auto_bridge["focus"] = policy.get("focus", "")
+    auto_bridge["prompts_since_last"] = 0
+    return True, f"Loaded bridge policy **{policy_name}**."
+
+
+
+def delete_bridge_policy(persistent_state: dict[str, Any], raw_name: str) -> tuple[bool, str]:
+    policy_name = sanitize_key(raw_name)
+    policies = persistent_state.get("saved_bridge_policies", {})
+    if policy_name not in policies:
+        return False, f"Unknown bridge policy: `{raw_name}`"
+    del policies[policy_name]
+    return True, f"Deleted bridge policy **{policy_name}**."
 
 
 

@@ -19,6 +19,7 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Room-Scoped Reset/Clear**: `/clear` and `/reset` operate on the active room rather than the whole session.
 - **Cross-Room Bridge Notes**: Summarize recent activity from one room into another with `/bridge`.
 - **Model-Generated Bridge Notes**: Use `/bridge-ai` to have a role-specific bridge agent generate a higher-level cross-room summary.
+- **Auto-Bridge Policies**: Configure prompt-interval bridge automation with `/auto-bridge` and save reusable policies with `/save-bridge-policy`.
 - **Auto-Bridge Policies**: Use `/auto-bridge` to automatically route bridge notes between rooms every N prompts.
 - **Persistent Room Archives**: Save and restore room snapshots with `/archive-room`, `/archives`, and `/restore-room`.
 
@@ -99,6 +100,13 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/auto-bridge`
 - `/auto-bridge <target> <interval> [note|ai] [role] [focus]`
 - `/auto-bridge stop`
+- `/bridge-policies`
+- `/save-bridge-policy <name>`
+- `/load-bridge-policy <name>`
+- `/delete-bridge-policy <name>`
+- `/auto-bridge`
+- `/auto-bridge <target> <interval> [note|ai] [role] [focus]`
+- `/auto-bridge stop`
 - `/archives`
 - `/archive-room [name]`
 - `/restore-room <archive> [room]`
@@ -166,7 +174,7 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `docs/ai/design/simulator-operations.md` - feature-pass architecture notes and flow diagram.
 - `docs/ai/implementation/` - implementation pass documentation.
 - `docs/ai/testing/` - testing strategy and feature-specific verification notes.
-- `data/simulator_state.json` - saved lineups, persona overrides, and saved jobs.
+- `data/simulator_state.json` - saved lineups, persona overrides, saved jobs, and saved bridge policies.
 - `data/archives/` - archived room snapshots for later restoration.
 - `exports/` - generated transcript exports and replay source files.
 - `outbox/` - generated external bridge payloads for future connectors.
@@ -195,4 +203,5 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 ## 🧭 Recommended Next Feature Passes
 - external IRC / websocket bridge runtime on top of the current connector layer
 - opt-in live integration tests for Chainlit + provider calls
+- persistent archived room snapshots across restarts with optional startup restore flows
 - auto-bridge routing policies persisted as reusable policies

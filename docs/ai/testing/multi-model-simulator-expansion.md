@@ -10,7 +10,7 @@ python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py simula
 ```
 
 ## Results
-- `python -m unittest discover -s tests -v` passed on 2026-04-05 (35 tests passed)
+- `python -m unittest discover -s tests -v` passed on 2026-04-05 (36 tests passed)
 - `python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py` passed on 2026-04-05
 
 ## Covered Behaviors
@@ -41,6 +41,7 @@ python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py simula
 - persona override set/clear flow
 - lineup save/load/delete flow
 - job save/load/delete flow
+- bridge-policy save/load/delete flow
 - telemetry counters and response aggregation
 - usage normalization and extraction
 - cost calculation helpers
@@ -55,7 +56,7 @@ python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py simula
 - no live integration test currently exercises Chainlit + AutoGen streaming
 - no API-backed end-to-end test currently validates OpenRouter model responses
 - background schedule execution is not yet integration-tested against a live Chainlit session
-- room switching, bridge delivery, bridge-AI generation, external export/import, auto-bridge execution, and replay stepping are not yet integration-tested with live UI runtime state
+- room switching, bridge delivery, bridge-AI generation, external export/import, auto-bridge execution, saved bridge policy application, and replay stepping are not yet integration-tested with live UI runtime state
 - bridge runtime processing is only compile-validated right now, not behavior-tested end-to-end
 - actual cost tracking depends on provider usage metadata that is not simulated in a live end-to-end environment yet
 - browser/UI verification remains manual

@@ -69,6 +69,7 @@ Persistent state currently stores:
 - saved lineups
 - saved persona overrides
 - saved jobs
+- saved bridge policies
 
 This preserves high-value reusable operator assets without persisting volatile room histories or live automation state.
 
@@ -193,6 +194,13 @@ flowchart TD
 - active job name
 - last run timestamp
 - next run timestamp
+
+### Saved Bridge Policy
+- target room
+- interval prompts
+- mode (`note` or `ai`)
+- role
+- focus
 
 ### Auto-Bridge State
 - enabled

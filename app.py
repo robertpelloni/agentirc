@@ -34,6 +34,7 @@ from simulator_core import (
     build_external_bridge_payload,
     build_external_room_payload,
     build_dashboard_text,
+    build_bridge_policies_text,
     build_bridge_runtime_status_text,
     build_bridge_roles_text,
     build_help_text,
@@ -66,6 +67,7 @@ from simulator_core import (
     configure_auto_bridge,
     configure_automation,
     create_room,
+    delete_bridge_policy,
     delete_job,
     delete_lineup,
     delete_room,
@@ -76,6 +78,7 @@ from simulator_core import (
     list_inbox_files,
     list_outbox_files,
     list_room_archives,
+    load_bridge_policy,
     load_external_payload,
     load_job,
     load_room_archive,
@@ -103,6 +106,7 @@ from simulator_core import (
     resolve_agent_name,
     resolve_replay_file,
     resolve_replay_window,
+    save_bridge_policy,
     save_job,
     save_lineup,
     save_persistent_state,
@@ -708,6 +712,38 @@ async def handle_command(command: str, args: str) -> bool:
         await send_system_notice(response)
         return True
 
+    if command == "/bridge-policies":
+        await cl.Message(content=build_bridge_policies_text(persistent_state)).send()
+        return True
+
+    if command == "/save-bridge-policy":
+        if not args:
+            await send_system_notice("Usage: `/save-bridge-policy <name>`")
+            return True
+        changed, response = save_bridge_policy(config, persistent_state, args)
+        if changed:
+            persist_state()
+        await send_system_notice(response)
+        return True
+
+    if command == "/load-bridge-policy":
+        if not args:
+            await send_system_notice("Usage: `/load-bridge-policy <name>`")
+            return True
+        changed, response = load_bridge_policy(config, persistent_state, args)
+        await send_system_notice(response)
+        return True
+
+    if command == "/delete-bridge-policy":
+        if not args:
+            await send_system_notice("Usage: `/delete-bridge-policy <name>`")
+            return True
+        changed, response = delete_bridge_policy(persistent_state, args)
+        if changed:
+            persist_state()
+        await send_system_notice(response)
+        return True
+
     if command == "/archives":
         await cl.Message(content=build_archives_text(list_room_archives())).send()
         return True
@@ -1004,6 +1040,38 @@ async def handle_command(command: str, args: str) -> bool:
 
     if command == "/jobs":
         await cl.Message(content=build_jobs_text(persistent_state)).send()
+        return True
+
+    if command == "/bridge-policies":
+        await cl.Message(content=build_bridge_policies_text(persistent_state)).send()
+        return True
+
+    if command == "/save-bridge-policy":
+        if not args:
+            await send_system_notice("Usage: `/save-bridge-policy <name>`")
+            return True
+        changed, response = save_bridge_policy(config, persistent_state, args)
+        if changed:
+            persist_state()
+        await send_system_notice(response)
+        return True
+
+    if command == "/load-bridge-policy":
+        if not args:
+            await send_system_notice("Usage: `/load-bridge-policy <name>`")
+            return True
+        changed, response = load_bridge_policy(config, persistent_state, args)
+        await send_system_notice(response)
+        return True
+
+    if command == "/delete-bridge-policy":
+        if not args:
+            await send_system_notice("Usage: `/delete-bridge-policy <name>`")
+            return True
+        changed, response = delete_bridge_policy(persistent_state, args)
+        if changed:
+            persist_state()
+        await send_system_notice(response)
         return True
 
     if command == "/save-job":

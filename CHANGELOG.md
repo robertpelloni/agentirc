@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.0 - 2026-04-05
+- Added reusable saved auto-bridge policy presets with `/bridge-policies`, `/save-bridge-policy`, `/load-bridge-policy`, and `/delete-bridge-policy`.
+- Added helper-layer persistence support for `saved_bridge_policies` in `data/simulator_state.json`.
+- Expanded unit coverage from 35 to 36 tests.
+- Expanded README, design, implementation, testing, findings, changelog, and handoff documentation for auto-bridge policy persistence.
+
 ## 0.14.0 - 2026-04-05
 - Added `/auto-bridge`, `/auto-bridge stop`, and status rendering for prompt-interval bridge automation.
 - Added room archive workflow with `/archives`, `/archive-room`, and `/restore-room`.

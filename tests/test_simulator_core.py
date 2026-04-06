@@ -18,6 +18,7 @@ from simulator_core import (
     build_autonomous_prompt,
     OUTBOX_DIR,
     build_bridge_note,
+    build_bridge_policies_text,
     build_bridge_prompt,
     build_costs_text,
     build_dashboard_text,
@@ -46,6 +47,7 @@ from simulator_core import (
     configure_auto_bridge,
     configure_automation,
     create_room,
+    delete_bridge_policy,
     delete_job,
     delete_lineup,
     delete_room,
@@ -57,6 +59,7 @@ from simulator_core import (
     list_inbox_files,
     list_outbox_files,
     list_room_archives,
+    load_bridge_policy,
     load_external_payload,
     load_job,
     load_room_archive,
@@ -83,6 +86,7 @@ from simulator_core import (
     resolve_agent_name,
     resolve_replay_file,
     resolve_replay_window,
+    save_bridge_policy,
     save_job,
     save_lineup,
     save_persistent_state,
@@ -189,6 +193,23 @@ class SimulatorCoreTests(unittest.TestCase):
         self.assertIn("technical", status)
         stop_message = stop_auto_bridge(config)
         self.assertIn("stopped", stop_message.lower())
+
+    def test_bridge_policy_save_load_delete_cycle(self):
+        config = make_default_config(AGENT_SPECS)
+        persistent_state = make_default_store()
+        configure_auto_bridge(config, "war-room", "4", "ai", "technical", "focus area")
+        changed, message = save_bridge_policy(config, persistent_state, "nightly bridge")
+        self.assertTrue(changed)
+        self.assertIn("nightly-bridge", message)
+        self.assertIn("nightly-bridge", build_bridge_policies_text(persistent_state))
+        config["auto_bridge"]["enabled"] = False
+        changed, message = load_bridge_policy(config, persistent_state, "nightly-bridge")
+        self.assertTrue(changed)
+        self.assertEqual(config["auto_bridge"]["target_room"], "war-room")
+        self.assertEqual(config["auto_bridge"]["mode"], "ai")
+        changed, message = delete_bridge_policy(persistent_state, "nightly-bridge")
+        self.assertTrue(changed)
+        self.assertIn("Deleted bridge policy", message)
 
     def test_room_archive_save_load_and_list(self):
         persistent_state = make_default_store()

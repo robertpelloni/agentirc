@@ -80,8 +80,20 @@ Manual bridge commands prove the workflow; auto-bridge turns it into a repeatabl
 ### 5. Room archives are the right first step before full persistent room state
 Explicit archive/restore commands preserve operator control while still giving durable scenario snapshots.
 
+## Saved Auto-Bridge Policy Expansion
+### Reusable Policy Presets
+- `/bridge-policies`
+- `/save-bridge-policy <name>`
+- `/load-bridge-policy <name>`
+- `/delete-bridge-policy <name>`
+- persistent storage of auto-bridge settings inside `data/simulator_state.json`
+
+## Findings and Analysis
+### 6. Saved auto-bridge policies are the right next step after one-off auto-bridge configuration
+Once prompt-interval bridge automation exists, operators quickly need reusable presets for recurring workflows.
+
 ## Recommended Follow-Up
 - external IRC/websocket bridge runtime on top of the connector layer
 - richer observer/dashboard views with live metrics panels
 - role-specific bridge agents and routing policies
-- opt-in integration tests for bridge runtime processing, bridge import, live streaming, auto-bridge execution, and room archive restore
+- opt-in integration tests for bridge runtime processing, bridge import, live streaming, auto-bridge execution, room archive restore, and saved bridge policies

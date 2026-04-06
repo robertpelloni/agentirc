@@ -297,11 +297,19 @@ Persisting every room automatically would be premature. Explicit archives are a 
 - Restore operations are easier to reason about than implicit session resurrection.
 - Operators can now branch, archive, restore, and compare room states as deliberate workflows.
 
-## 22. Recommended Next Architecture Moves
+## 22. Saved Auto-Bridge Policies Are the Right Follow-On to Auto-Bridge Itself
+Once prompt-interval bridge automation exists, operators quickly need repeatable presets.
+
+### Findings
+- Saving auto-bridge policies removes repeated manual configuration for common room-routing workflows.
+- Policies belong in the same persistence layer as saved jobs and saved lineups because they are reusable operator assets rather than volatile runtime state.
+- Loading a bridge policy is a safer first step than inventing a full bridge automation orchestration engine.
+
+## 23. Recommended Next Architecture Moves
 Based on the current shape of the project, the next strongest additions would be:
 1. **external IRC/websocket bridge runtime** for non-Chainlit clients on top of the connector layer
 2. **richer observer/dashboard views with live metrics panels**
 3. **role-specific bridge agents** or bridge-routing policies
 4. **tool-use plugins** for structured tasks inside simulations
-5. **live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, external export/import, and replay stepping
+5. **live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, external export/import, auto-bridge execution, and replay stepping
 6. **persistent archived room snapshots** across restarts
