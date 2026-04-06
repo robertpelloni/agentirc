@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.0 - 2026-04-05
+- Added `irc_bridge_runtime.py` as a standard-library IRC transport scaffold for outbox payloads.
+- Added `tests/test_irc_bridge_runtime.py` for IRC payload formatting coverage.
+- Added `tests/test_live_integration.py` as an opt-in live provider integration test gate.
+- Updated build tooling to compile IRC runtime and live test modules.
+- Expanded README, findings, design, implementation, testing, changelog, and handoff documentation for IRC/runtime scaffolding and live test strategy.
+- Expanded unit/test discovery coverage to 42 discovered tests with 2 opt-in live tests skipped by default.
+
 ## 0.15.0 - 2026-04-05
 - Added reusable saved auto-bridge policy presets with `/bridge-policies`, `/save-bridge-policy`, `/load-bridge-policy`, and `/delete-bridge-policy`.
 - Added helper-layer persistence support for `saved_bridge_policies` in `data/simulator_state.json`.

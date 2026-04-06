@@ -1,7 +1,7 @@
 # Multi-Model Simulator Expansion
 
 ## Summary
-This implementation pass extends AgentIRC beyond runtime scaffolding into a cleaner external connector architecture with inbox support, runtime status, a connector adapter layer, prompt-interval auto-bridge policies, and persistent room archives.
+This implementation pass extends AgentIRC beyond runtime scaffolding into a cleaner external connector architecture with inbox support, runtime status, a connector adapter layer, prompt-interval auto-bridge policies, persistent room archives, an IRC runtime scaffold, and opt-in live integration tests.
 
 ## Newly Added Capabilities
 ### External Connector Runtime Expansion
@@ -92,8 +92,38 @@ Explicit archive/restore commands preserve operator control while still giving d
 ### 6. Saved auto-bridge policies are the right next step after one-off auto-bridge configuration
 Once prompt-interval bridge automation exists, operators quickly need reusable presets for recurring workflows.
 
+## IRC Runtime and Live Test Expansion
+### New Runtime/Test Surfaces
+- `irc_bridge_runtime.py`
+- `tests/test_irc_bridge_runtime.py`
+- `tests/test_live_integration.py`
+- standard-library IRC payload formatting and delivery scaffold
+- opt-in live test gating via environment variables
+
+## Findings and Analysis
+### 7. A standard-library IRC scaffold is the right first live transport experiment
+It proves the connector direction without introducing extra dependencies or a full daemonized bridge service.
+
+### 8. Live integration tests must remain opt-in
+Provider-backed and network-backed tests should never run by accident in normal local CI or development loops.
+
+## IRC Runtime and Live-Test Expansion
+### New Runtime/Test Surfaces
+- `irc_bridge_runtime.py`
+- `tests/test_irc_bridge_runtime.py`
+- `tests/test_live_integration.py`
+- standard-library IRC payload formatting and delivery scaffold
+- opt-in live test gating via environment variables
+
+## Findings and Analysis
+### 9. A standard-library IRC scaffold is the right first live transport experiment
+It proves the connector direction without introducing extra dependencies or a full daemonized bridge service.
+
+### 10. Live integration tests must remain opt-in
+Provider-backed and network-backed tests should never run by accident in normal local CI or development loops.
+
 ## Recommended Follow-Up
-- external IRC/websocket bridge runtime on top of the connector layer
+- external websocket bridge runtime on top of the connector layer
 - richer observer/dashboard views with live metrics panels
 - role-specific bridge agents and routing policies
-- opt-in integration tests for bridge runtime processing, bridge import, live streaming, auto-bridge execution, room archive restore, and saved bridge policies
+- deeper opt-in integration tests for bridge runtime processing, live streaming, auto-bridge execution, room archive restore, and saved bridge policies

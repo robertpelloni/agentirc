@@ -9,44 +9,34 @@
 
 ## What I Changed
 ### Core Code
-- Expanded `simulator_core.py` with:
-  - saved bridge policy persistence in `data/simulator_state.json`
-  - bridge policy save/load/delete helpers
-  - bridge policy list rendering helpers
-  - room archive helpers under `data/archives/`
-  - auto-bridge configuration/status helpers
-- Reworked `app.py` to support:
-  - `/bridge-policies`
-  - `/save-bridge-policy <name>`
-  - `/load-bridge-policy <name>`
-  - `/delete-bridge-policy <name>`
-  - existing `/auto-bridge` and room archive commands using the updated helper layer
-- Expanded `tests/test_simulator_core.py` with bridge policy helper coverage.
-- Updated `.gitignore` to ignore runtime/archive artifact directories.
+- Added `irc_bridge_runtime.py` as a standard-library IRC transport scaffold for exporting room payloads as IRC PRIVMSG lines.
+- Added `tests/test_irc_bridge_runtime.py` for IRC runtime helper coverage.
+- Added `tests/test_live_integration.py` as an opt-in live provider integration gate controlled by environment variables.
+- Updated `build.bat` and py_compile validation targets to include the IRC runtime and live test modules.
 
 ### Documentation
-- Updated `README.md` with bridge policy commands and archive workflow references.
-- Updated `CHANGELOG.md` and bumped `VERSION` to `0.15.0`.
-- Updated AI DevKit design/implementation/testing docs and `FINDINGS.md` to reflect saved auto-bridge policy persistence.
+- Updated `README.md` with IRC runtime usage, live-test guidance, and revised next steps.
+- Updated `CHANGELOG.md` and bumped `VERSION` to `0.16.0`.
+- Updated AI DevKit design/implementation/testing docs and `FINDINGS.md` to reflect the staged runtime + transport evolution and opt-in live test strategy.
 
 ## Validation Performed
-- Ran `python -m unittest discover -s tests -v` ✅ (35 tests passed)
-- Ran `python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py` ✅
+- Ran `python -m unittest discover -s tests -v` ✅ (42 tests discovered, 40 passed, 2 skipped by opt-in live gate)
+- Ran `python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py tests/test_irc_bridge_runtime.py tests/test_live_integration.py` ✅
 
 ## Findings and Analysis
-1. Saved auto-bridge policies are the right next step after one-off auto-bridge configuration.
-2. Bridge policies belong in the same persistence layer as saved jobs and lineups because they are reusable operator assets.
-3. Room archives and bridge policies together make long-lived experimentation workflows much more practical.
-4. The simulator now supports a stronger loop: configure policies, run rooms, route bridges, archive outcomes, restore scenarios, and compare results.
+1. A standard-library IRC scaffold is the right first live transport experiment on top of the connector layer.
+2. Live integration tests must remain opt-in so provider-backed behavior never runs accidentally.
+3. Transport-specific scaffolds belong outside the main UI app just like the bridge runtime itself.
+4. The simulator now has a clearer staged path: payloads → runtime scaffold → connector adapters → transport scaffold → future live transports.
 
 ## Potential Risks / Follow-Up
-- auto-bridge execution is helper- and command-level validated, but not yet integration-tested through full live Chainlit flow
-- archive restore currently assumes payload compatibility with current room-state structure
-- persistent room archives and policies are local-file based and not multi-user synchronized
+- IRC runtime networking is scaffolded but not exercised in automated network tests
 - bridge runtime processing is still not behavior-tested end-to-end
+- bridge-AI delivery is not yet integration-tested against a live Chainlit session
+- persistent room archives and policies are local-file based and not multi-user synchronized
 
 ## Recommended Next Steps
-1. Add live opt-in integration tests for streaming, judging, scheduling, tool execution, room switching, auto-bridge execution, bridge delivery, external export/import, and replay stepping.
-2. Build the live IRC/websocket connector runtime on top of the existing connector layer.
+1. Build the live websocket bridge runtime on top of the existing connector layer.
+2. Add deeper opt-in integration tests for streaming, judging, scheduling, tool execution, room switching, auto-bridge execution, bridge delivery, external export/import, and replay stepping.
 3. Add richer observer/dashboard views with live metrics panels.
 4. Add role-specific bridge-routing presets layered on top of saved bridge policies.

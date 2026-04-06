@@ -305,11 +305,27 @@ Once prompt-interval bridge automation exists, operators quickly need repeatable
 - Policies belong in the same persistence layer as saved jobs and saved lineups because they are reusable operator assets rather than volatile runtime state.
 - Loading a bridge policy is a safer first step than inventing a full bridge automation orchestration engine.
 
-## 23. Recommended Next Architecture Moves
+## 23. A Standard-Library IRC Runtime Is the Right First Live Transport Experiment
+The next practical step after the connector layer is a transport-specific scaffold that still avoids extra dependencies.
+
+### Findings
+- A standard-library IRC runtime proves the transport direction while keeping the dependency footprint small.
+- IRC is a natural fit for this project’s interaction model and helps validate how exported room payloads map to line-oriented network messages.
+- A transport-specific scaffold is a cleaner next step than jumping straight to a full multiplexed connector service.
+
+## 24. Live Integration Tests Must Stay Opt-In
+Provider-backed and network-backed tests are useful, but dangerous if they run by default.
+
+### Findings
+- Environment-gated live tests are the right compromise between realism and safety.
+- A skipped-by-default live suite communicates intended future test coverage without surprising local or CI runs.
+- It is better to scaffold live tests clearly now than to leave external/runtime validation completely undocumented.
+
+## 25. Recommended Next Architecture Moves
 Based on the current shape of the project, the next strongest additions would be:
-1. **external IRC/websocket bridge runtime** for non-Chainlit clients on top of the connector layer
+1. **external websocket bridge runtime** for non-Chainlit clients on top of the connector layer
 2. **richer observer/dashboard views with live metrics panels**
 3. **role-specific bridge agents** or bridge-routing policies
 4. **tool-use plugins** for structured tasks inside simulations
-5. **live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, external export/import, auto-bridge execution, and replay stepping
+5. **deeper live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, external export/import, auto-bridge execution, and replay stepping
 6. **persistent archived room snapshots** across restarts

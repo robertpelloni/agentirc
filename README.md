@@ -20,7 +20,6 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Cross-Room Bridge Notes**: Summarize recent activity from one room into another with `/bridge`.
 - **Model-Generated Bridge Notes**: Use `/bridge-ai` to have a role-specific bridge agent generate a higher-level cross-room summary.
 - **Auto-Bridge Policies**: Configure prompt-interval bridge automation with `/auto-bridge` and save reusable policies with `/save-bridge-policy`.
-- **Auto-Bridge Policies**: Use `/auto-bridge` to automatically route bridge notes between rooms every N prompts.
 - **Persistent Room Archives**: Save and restore room snapshots with `/archive-room`, `/archives`, and `/restore-room`.
 
 ### External Bridge Foundations
@@ -31,6 +30,7 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Inbox Tracking**: `/inbox` lists inbound external bridge payload files.
 - **Manual Payload Import**: `/import-bridge <file> [room]` imports an inbox payload into a room.
 - **Standalone Runtime Scaffold**: `python bridge_runtime.py --connector <name>` processes outbox payloads into `processed/` and routes them.
+- **IRC Runtime Scaffold**: `python irc_bridge_runtime.py --channel <channel> --once --dry-run` formats outbox payloads into IRC PRIVMSG lines and can send them via a standard-library IRC client.
 - **Bridge Payload Schema**: Standardized room snapshot and bridge-note payload shapes make future websocket / IRC bridge work easier.
 - **Directories**: external payloads are written to `outbox/`, received in `inbox/`, and processed into `processed/`.
 
@@ -57,12 +57,14 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Autonomous Scheduling**: Queue repeated autonomous simulations on a timed interval with `/schedule` or run saved jobs with `/run-job`.
 - **Transcript Export**: Export Markdown and JSON snapshots into `exports/`.
 - **Persistent Logging**: Append IRC-formatted output to `irc_session.log`.
+- **Opt-In Live Integration Tests**: `tests/test_live_integration.py` is gated by `RUN_LIVE_INTEGRATION=1` and `OPENROUTER_API_KEY` so provider-backed tests never run accidentally.
 
 ## 🧠 Architecture Notes
 - **Chainlit session state** holds the live simulator config, transcript history, active team, current room name, room registry, replay cursor state, persistent settings, and the current automation task handle.
 - **`simulator_core.py`** isolates session defaults, room helpers, command parsing, persona/lineup/job persistence, telemetry logic, cost tracking, replay helpers, replay-window helpers, comparison helpers, dashboard helpers, observer helpers, bridge-note helpers, external payload helpers, scheduling helpers, export helpers, and transcript formatting.
 - **`app.py`** focuses on Chainlit wiring, room activation, replay cursor state, AutoGen team construction, command dispatch, autonomous scheduling, replay/compare commands, dashboard commands, bridge commands, external export/import commands, and model streaming.
 - **`bridge_runtime.py`** is the first standalone external bridge runtime scaffold. It polls the outbox, routes payloads through connector adapters, moves processed payloads into `processed/`, and logs runtime events.
+- **`irc_bridge_runtime.py`** is a standard-library IRC bridge scaffold for formatting and optionally sending room payloads to IRC channels.
 - **`bridge_connectors.py`** defines the connector adapter layer for future bridge runtimes, including webhook delivery.
 - **`simulator_tools.py`** defines tool-use plugins accessible by agents.
 - **Persistent state** is stored in `data/simulator_state.json` and currently tracks saved lineups, persona overrides, and saved jobs.
@@ -104,9 +106,6 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/save-bridge-policy <name>`
 - `/load-bridge-policy <name>`
 - `/delete-bridge-policy <name>`
-- `/auto-bridge`
-- `/auto-bridge <target> <interval> [note|ai] [role] [focus]`
-- `/auto-bridge stop`
 - `/archives`
 - `/archive-room [name]`
 - `/restore-room <archive> [room]`
@@ -166,11 +165,14 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `app.py` - Chainlit app, command handling, room activation, replay state, bridge delivery, external export/import commands, AutoGen orchestration, autonomous scheduling, replay/compare commands, dashboard commands, observer commands, tool handling, and judge execution.
 - `run.py` - Python 3.14 compatibility launcher for Chainlit.
 - `bridge_runtime.py` - standalone bridge runtime scaffold for processing `outbox/` payloads into `processed/`.
+- `irc_bridge_runtime.py` - standard-library IRC bridge scaffold for formatting/sending room payloads as IRC messages.
 - `bridge_connectors.py` - connector adapter layer for bridge runtime delivery.
 - `simulator_core.py` - Shared simulator logic, room helpers, persistence, telemetry, hybrid cost tracking, analytics, dashboard helpers, observer helpers, bridge helpers, external payload helpers, replay helpers, replay-window helpers, job helpers, scheduling helpers, exports, and transcript utilities.
 - `simulator_tools.py` - Custom functions registered as agent tools.
 - `tests/test_simulator_core.py` - Regression coverage for helper-layer behavior.
 - `tests/test_bridge_connectors.py` - Connector adapter coverage.
+- `tests/test_irc_bridge_runtime.py` - IRC runtime formatting coverage.
+- `tests/test_live_integration.py` - opt-in live integration gate.
 - `docs/ai/design/simulator-operations.md` - feature-pass architecture notes and flow diagram.
 - `docs/ai/implementation/` - implementation pass documentation.
 - `docs/ai/testing/` - testing strategy and feature-specific verification notes.
@@ -195,13 +197,22 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
    ```bash
    python bridge_runtime.py --once --connector console
    ```
-5. Run the tests:
+5. Optionally run the IRC bridge scaffold in dry-run mode:
+   ```bash
+   python irc_bridge_runtime.py --channel #agentirc --once --dry-run
+   ```
+6. Run the tests:
    ```bash
    python -m unittest discover -s tests -v
    ```
+7. Optionally enable live provider integration tests:
+   ```bash
+   set RUN_LIVE_INTEGRATION=1
+   python -m unittest tests.test_live_integration -v
+   ```
 
 ## 🧭 Recommended Next Feature Passes
-- external IRC / websocket bridge runtime on top of the current connector layer
-- opt-in live integration tests for Chainlit + provider calls
+- external websocket bridge runtime on top of the current connector layer
+- deeper opt-in live integration coverage for provider-backed streaming and bridge workflows
 - persistent archived room snapshots across restarts with optional startup restore flows
-- auto-bridge routing policies persisted as reusable policies
+- role-specific bridge-routing presets layered on top of saved bridge policies

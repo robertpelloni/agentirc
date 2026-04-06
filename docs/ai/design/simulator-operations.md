@@ -4,7 +4,7 @@
 Evolve AgentIRC from a simple multi-model chat room into a reusable simulation platform with configurable orchestration, durable operator presets, autonomous scheduling, replayable analytical artifacts, hybrid cost tracking, reusable autonomous jobs, room-scoped simulation workflows, operator dashboard tools, cross-room context sharing, external bridge foundations, prompt-interval auto-bridge policies, and persistent room archives.
 
 ## Architecture Summary
-The simulator now separates into ten distinct concerns:
+The simulator now separates into twelve distinct concerns:
 1. **UI and runtime orchestration** in `app.py`
 2. **Pure helper/domain logic** in `simulator_core.py`
 3. **Session room registry** in Chainlit session state
@@ -14,8 +14,9 @@ The simulator now separates into ten distinct concerns:
 7. **External bridge payload outbox/inbox/processed directories**
 8. **Standalone bridge runtime scaffold** in `bridge_runtime.py`
 9. **Connector adapter layer** in `bridge_connectors.py`
-10. **Hybrid telemetry and cost accounting** derived from provider usage data where available and heuristics otherwise
-11. **Archive and auto-bridge policy helpers** in `simulator_core.py`
+10. **IRC transport scaffold** in `irc_bridge_runtime.py`
+11. **Hybrid telemetry and cost accounting** derived from provider usage data where available and heuristics otherwise
+12. **Archive and auto-bridge policy helpers** in `simulator_core.py`
 
 ## Design Decisions
 ### 1. Rooms are session-scoped, not globally persisted
@@ -50,13 +51,14 @@ The simulator supports two bridge styles:
 
 This dual approach gives operators a practical cost/quality tradeoff.
 
-### 5. External connectors should evolve in layers: payloads, runtime scaffold, connector adapters, then live transports
+### 5. External connectors should evolve in layers: payloads, runtime scaffold, connector adapters, transport-specific scaffolds, then live transports
 This pass extends the earlier outbox idea by adding:
 - `outbox/` for outbound payloads
 - `inbox/` for inbound payloads
 - `processed/` for consumed payloads
 - `bridge_runtime.py` as a standalone polling scaffold
 - `bridge_connectors.py` as a connector adapter layer
+- `irc_bridge_runtime.py` as a transport-specific IRC scaffold
 
 This layered approach:
 - keeps transport concerns decoupled from simulation logic
@@ -236,6 +238,7 @@ flowchart TD
 - outbox/inbox/processed directories create a stable connector boundary before live transports are added
 - standalone runtime scaffold enables incremental external integration without daemon complexity inside the main app
 - connector adapters make future runtime expansion cleaner
+- transport-specific scaffolds can be added incrementally without changing the payload contract
 - persistence footprint stays small
 - autonomous runs are bounded and explicit
 
