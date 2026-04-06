@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.17.0 - 2026-04-05
+- Added `websocket_bridge_runtime.py` as a websocket transport scaffold for outbox payloads.
+- Added `tests/test_websocket_bridge_runtime.py` for websocket runtime scaffold coverage.
+- Added `websockets>=13.0` to `requirements.txt`.
+- Updated build tooling to compile websocket runtime modules and tests.
+- Expanded README, design, implementation, testing, changelog, and handoff documentation for websocket transport scaffolding.
+
 ## 0.16.0 - 2026-04-05
 - Added `irc_bridge_runtime.py` as a standard-library IRC transport scaffold for outbox payloads.
 - Added `tests/test_irc_bridge_runtime.py` for IRC payload formatting coverage.

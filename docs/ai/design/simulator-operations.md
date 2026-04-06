@@ -4,7 +4,7 @@
 Evolve AgentIRC from a simple multi-model chat room into a reusable simulation platform with configurable orchestration, durable operator presets, autonomous scheduling, replayable analytical artifacts, hybrid cost tracking, reusable autonomous jobs, room-scoped simulation workflows, operator dashboard tools, cross-room context sharing, external bridge foundations, prompt-interval auto-bridge policies, and persistent room archives.
 
 ## Architecture Summary
-The simulator now separates into twelve distinct concerns:
+The simulator now separates into thirteen distinct concerns:
 1. **UI and runtime orchestration** in `app.py`
 2. **Pure helper/domain logic** in `simulator_core.py`
 3. **Session room registry** in Chainlit session state
@@ -15,8 +15,9 @@ The simulator now separates into twelve distinct concerns:
 8. **Standalone bridge runtime scaffold** in `bridge_runtime.py`
 9. **Connector adapter layer** in `bridge_connectors.py`
 10. **IRC transport scaffold** in `irc_bridge_runtime.py`
-11. **Hybrid telemetry and cost accounting** derived from provider usage data where available and heuristics otherwise
-12. **Archive and auto-bridge policy helpers** in `simulator_core.py`
+11. **WebSocket transport scaffold** in `websocket_bridge_runtime.py`
+12. **Hybrid telemetry and cost accounting** derived from provider usage data where available and heuristics otherwise
+13. **Archive and auto-bridge policy helpers** in `simulator_core.py`
 
 ## Design Decisions
 ### 1. Rooms are session-scoped, not globally persisted
@@ -59,6 +60,7 @@ This pass extends the earlier outbox idea by adding:
 - `bridge_runtime.py` as a standalone polling scaffold
 - `bridge_connectors.py` as a connector adapter layer
 - `irc_bridge_runtime.py` as a transport-specific IRC scaffold
+- `websocket_bridge_runtime.py` as a transport-specific websocket scaffold
 
 This layered approach:
 - keeps transport concerns decoupled from simulation logic
@@ -128,6 +130,8 @@ flowchart TD
     Connectors --> Inbox
     Connectors --> Console[stdout]
     Connectors --> Jsonl[connector_output.jsonl]
+    Connectors --> Webhook[HTTP webhook]
+    Outbox --> WSRuntime[websocket_bridge_runtime.py]
     Rooms --> Team
     Jobs --> Task
     Task --> Team

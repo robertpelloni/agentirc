@@ -6,12 +6,12 @@ Validate the helper layer that powers command parsing, room management, dashboar
 ## Test Commands
 ```bash
 python -m unittest discover -s tests -v
-python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py tests/test_irc_bridge_runtime.py tests/test_live_integration.py
+python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_bridge_runtime.py websocket_bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py tests/test_irc_bridge_runtime.py tests/test_websocket_bridge_runtime.py tests/test_live_integration.py
 ```
 
 ## Results
-- `python -m unittest discover -s tests -v` passed on 2026-04-05 (42 tests discovered, 40 passed, 2 skipped by opt-in live gate)
-- `python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py tests/test_irc_bridge_runtime.py tests/test_live_integration.py` passed on 2026-04-05
+- `python -m unittest discover -s tests -v` passed on 2026-04-05 (46 tests discovered, 44 passed, 2 skipped by opt-in live gate)
+- `python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_bridge_runtime.py websocket_bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py tests/test_irc_bridge_runtime.py tests/test_websocket_bridge_runtime.py tests/test_live_integration.py` passed on 2026-04-05
 
 ## Covered Behaviors
 - slash-command parsing
@@ -29,6 +29,7 @@ python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_br
 - connector delivery to inbox/jsonl
 - connector payload routing
 - IRC runtime message formatting helpers
+- websocket runtime formatting and dry-run processing helpers
 - opt-in live integration test gating
 - auto-bridge configuration and stop flow
 - room archive save/load/list flow
@@ -61,6 +62,7 @@ python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_br
 - room switching, bridge delivery, bridge-AI generation, external export/import, auto-bridge execution, saved bridge policy application, and replay stepping are not yet integration-tested with live UI runtime state
 - bridge runtime processing is only compile-validated right now, not behavior-tested end-to-end
 - IRC runtime networking is only scaffolded and not exercised in automated network tests
+- websocket runtime networking is only scaffolded and not exercised in automated network tests
 - actual cost tracking depends on provider usage metadata that is not simulated in a live end-to-end environment yet
 - browser/UI verification remains manual
 

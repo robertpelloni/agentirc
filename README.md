@@ -26,6 +26,7 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **External Room Snapshot Export**: `/bridge-export <room> [count]` writes a standardized payload for external consumers.
 - **Bridge Runtime Status**: `/bridge-runtime` shows current outbox, inbox, and processed payload counts.
 - **Connector Catalog**: `/connectors` lists supported external connector adapters (like `console`, `inbox`, `jsonl`, and `webhook`).
+- **WebSocket Runtime Scaffold**: `python websocket_bridge_runtime.py --uri ws://localhost:8765 --once --dry-run` processes outbox payloads using a websocket transport scaffold.
 - **Outbox Tracking**: `/outbox` lists recently generated external bridge payload files.
 - **Inbox Tracking**: `/inbox` lists inbound external bridge payload files.
 - **Manual Payload Import**: `/import-bridge <file> [room]` imports an inbox payload into a room.
@@ -65,6 +66,7 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **`app.py`** focuses on Chainlit wiring, room activation, replay cursor state, AutoGen team construction, command dispatch, autonomous scheduling, replay/compare commands, dashboard commands, bridge commands, external export/import commands, and model streaming.
 - **`bridge_runtime.py`** is the first standalone external bridge runtime scaffold. It polls the outbox, routes payloads through connector adapters, moves processed payloads into `processed/`, and logs runtime events.
 - **`irc_bridge_runtime.py`** is a standard-library IRC bridge scaffold for formatting and optionally sending room payloads to IRC channels.
+- **`websocket_bridge_runtime.py`** is a websocket transport scaffold for sending room payloads to websocket endpoints.
 - **`bridge_connectors.py`** defines the connector adapter layer for future bridge runtimes, including webhook delivery.
 - **`simulator_tools.py`** defines tool-use plugins accessible by agents.
 - **Persistent state** is stored in `data/simulator_state.json` and currently tracks saved lineups, persona overrides, and saved jobs.
@@ -166,12 +168,14 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `run.py` - Python 3.14 compatibility launcher for Chainlit.
 - `bridge_runtime.py` - standalone bridge runtime scaffold for processing `outbox/` payloads into `processed/`.
 - `irc_bridge_runtime.py` - standard-library IRC bridge scaffold for formatting/sending room payloads as IRC messages.
+- `websocket_bridge_runtime.py` - websocket transport scaffold for sending outbox payloads to websocket endpoints.
 - `bridge_connectors.py` - connector adapter layer for bridge runtime delivery.
 - `simulator_core.py` - Shared simulator logic, room helpers, persistence, telemetry, hybrid cost tracking, analytics, dashboard helpers, observer helpers, bridge helpers, external payload helpers, replay helpers, replay-window helpers, job helpers, scheduling helpers, exports, and transcript utilities.
 - `simulator_tools.py` - Custom functions registered as agent tools.
 - `tests/test_simulator_core.py` - Regression coverage for helper-layer behavior.
 - `tests/test_bridge_connectors.py` - Connector adapter coverage.
 - `tests/test_irc_bridge_runtime.py` - IRC runtime formatting coverage.
+- `tests/test_websocket_bridge_runtime.py` - websocket runtime formatting and dry-run coverage.
 - `tests/test_live_integration.py` - opt-in live integration gate.
 - `docs/ai/design/simulator-operations.md` - feature-pass architecture notes and flow diagram.
 - `docs/ai/implementation/` - implementation pass documentation.
@@ -201,7 +205,11 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
    ```bash
    python irc_bridge_runtime.py --channel #agentirc --once --dry-run
    ```
-6. Run the tests:
+6. Optionally run the websocket bridge scaffold in dry-run mode:
+   ```bash
+   python websocket_bridge_runtime.py --uri ws://localhost:8765 --once --dry-run
+   ```
+7. Run the tests:
    ```bash
    python -m unittest discover -s tests -v
    ```
@@ -212,7 +220,7 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
    ```
 
 ## 🧭 Recommended Next Feature Passes
-- external websocket bridge runtime on top of the current connector layer
 - deeper opt-in live integration coverage for provider-backed streaming and bridge workflows
 - persistent archived room snapshots across restarts with optional startup restore flows
 - role-specific bridge-routing presets layered on top of saved bridge policies
+- behavior-tested bridge runtime processing end-to-end

@@ -313,7 +313,15 @@ The next practical step after the connector layer is a transport-specific scaffo
 - IRC is a natural fit for this project’s interaction model and helps validate how exported room payloads map to line-oriented network messages.
 - A transport-specific scaffold is a cleaner next step than jumping straight to a full multiplexed connector service.
 
-## 24. Live Integration Tests Must Stay Opt-In
+## 24. A WebSocket Scaffold Is the Right Next Transport Step After IRC
+Once an IRC transport exists, the next useful transport experiment is a message-oriented websocket flow.
+
+### Findings
+- WebSocket transport better matches browser and service-style integrations than IRC does.
+- A websocket scaffold can reuse the same payload contract while validating asynchronous delivery semantics.
+- Introducing it as a scaffold keeps the architecture layered and avoids overcommitting to a production transport prematurely.
+
+## 25. Live Integration Tests Must Stay Opt-In
 Provider-backed and network-backed tests are useful, but dangerous if they run by default.
 
 ### Findings
@@ -321,11 +329,11 @@ Provider-backed and network-backed tests are useful, but dangerous if they run b
 - A skipped-by-default live suite communicates intended future test coverage without surprising local or CI runs.
 - It is better to scaffold live tests clearly now than to leave external/runtime validation completely undocumented.
 
-## 25. Recommended Next Architecture Moves
+## 26. Recommended Next Architecture Moves
 Based on the current shape of the project, the next strongest additions would be:
-1. **external websocket bridge runtime** for non-Chainlit clients on top of the connector layer
+1. **deeper live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, external export/import, auto-bridge execution, websocket delivery, and replay stepping
 2. **richer observer/dashboard views with live metrics panels**
 3. **role-specific bridge agents** or bridge-routing policies
 4. **tool-use plugins** for structured tasks inside simulations
-5. **deeper live opt-in integration tests** for streaming, judging, scheduling, room switching, bridge delivery, bridge-AI generation, external export/import, auto-bridge execution, and replay stepping
-6. **persistent archived room snapshots** across restarts
+5. **persistent archived room snapshots** across restarts
+6. **behavior-tested bridge runtime processing** end-to-end

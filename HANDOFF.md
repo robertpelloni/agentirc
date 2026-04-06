@@ -9,34 +9,34 @@
 
 ## What I Changed
 ### Core Code
-- Added `irc_bridge_runtime.py` as a standard-library IRC transport scaffold for exporting room payloads as IRC PRIVMSG lines.
-- Added `tests/test_irc_bridge_runtime.py` for IRC runtime helper coverage.
-- Added `tests/test_live_integration.py` as an opt-in live provider integration gate controlled by environment variables.
-- Updated `build.bat` and py_compile validation targets to include the IRC runtime and live test modules.
+- Added `websocket_bridge_runtime.py` as a websocket transport scaffold for exporting outbox payloads to websocket endpoints.
+- Added `tests/test_websocket_bridge_runtime.py` for websocket runtime helper coverage.
+- Added `websockets>=13.0` to `requirements.txt`.
+- Updated `build.bat` and py_compile validation targets to include the websocket runtime and related tests.
 
 ### Documentation
-- Updated `README.md` with IRC runtime usage, live-test guidance, and revised next steps.
-- Updated `CHANGELOG.md` and bumped `VERSION` to `0.16.0`.
-- Updated AI DevKit design/implementation/testing docs and `FINDINGS.md` to reflect the staged runtime + transport evolution and opt-in live test strategy.
+- Updated `README.md` with websocket runtime usage and revised next steps.
+- Updated `CHANGELOG.md` and bumped `VERSION` to `0.17.0`.
+- Updated AI DevKit design/implementation/testing docs and `FINDINGS.md` to reflect the next staged transport layer after IRC.
 
 ## Validation Performed
-- Ran `python -m unittest discover -s tests -v` ✅ (42 tests discovered, 40 passed, 2 skipped by opt-in live gate)
-- Ran `python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py tests/test_irc_bridge_runtime.py tests/test_live_integration.py` ✅
+- Ran `python -m unittest discover -s tests -v` ✅ (46 tests discovered, 44 passed, 2 skipped by opt-in live gate)
+- Ran `python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_bridge_runtime.py websocket_bridge_runtime.py simulator_core.py simulator_tools.py tests/test_simulator_core.py tests/test_bridge_connectors.py tests/test_irc_bridge_runtime.py tests/test_websocket_bridge_runtime.py tests/test_live_integration.py` ✅
 
 ## Findings and Analysis
-1. A standard-library IRC scaffold is the right first live transport experiment on top of the connector layer.
-2. Live integration tests must remain opt-in so provider-backed behavior never runs accidentally.
-3. Transport-specific scaffolds belong outside the main UI app just like the bridge runtime itself.
-4. The simulator now has a clearer staged path: payloads → runtime scaffold → connector adapters → transport scaffold → future live transports.
+1. A websocket scaffold is the right next transport experiment after IRC.
+2. Transport-specific scaffolds continue to fit best outside the main UI app.
+3. The project now has a more credible progression from abstract payloads to real transport implementations.
+4. Opt-in live tests remain the right safety mechanism for future provider/network validation.
 
 ## Potential Risks / Follow-Up
-- IRC runtime networking is scaffolded but not exercised in automated network tests
+- websocket runtime networking is scaffolded but not exercised in automated network tests
 - bridge runtime processing is still not behavior-tested end-to-end
 - bridge-AI delivery is not yet integration-tested against a live Chainlit session
 - persistent room archives and policies are local-file based and not multi-user synchronized
 
 ## Recommended Next Steps
-1. Build the live websocket bridge runtime on top of the existing connector layer.
-2. Add deeper opt-in integration tests for streaming, judging, scheduling, tool execution, room switching, auto-bridge execution, bridge delivery, external export/import, and replay stepping.
-3. Add richer observer/dashboard views with live metrics panels.
-4. Add role-specific bridge-routing presets layered on top of saved bridge policies.
+1. Add deeper opt-in integration tests for streaming, judging, scheduling, tool execution, room switching, auto-bridge execution, bridge delivery, bridge-AI generation, external export/import, websocket delivery, and replay stepping.
+2. Add richer observer/dashboard views with live metrics panels.
+3. Add role-specific bridge-routing presets layered on top of saved bridge policies.
+4. Add behavior-tested bridge runtime processing end-to-end.

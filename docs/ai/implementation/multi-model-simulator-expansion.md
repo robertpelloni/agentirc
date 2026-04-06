@@ -107,23 +107,29 @@ It proves the connector direction without introducing extra dependencies or a fu
 ### 8. Live integration tests must remain opt-in
 Provider-backed and network-backed tests should never run by accident in normal local CI or development loops.
 
-## IRC Runtime and Live-Test Expansion
+## IRC / WebSocket Runtime and Live-Test Expansion
 ### New Runtime/Test Surfaces
 - `irc_bridge_runtime.py`
+- `websocket_bridge_runtime.py`
 - `tests/test_irc_bridge_runtime.py`
+- `tests/test_websocket_bridge_runtime.py`
 - `tests/test_live_integration.py`
 - standard-library IRC payload formatting and delivery scaffold
+- websocket payload transport scaffold
 - opt-in live test gating via environment variables
 
 ## Findings and Analysis
 ### 9. A standard-library IRC scaffold is the right first live transport experiment
 It proves the connector direction without introducing extra dependencies or a full daemonized bridge service.
 
-### 10. Live integration tests must remain opt-in
+### 10. A websocket scaffold is the right next transport experiment after IRC
+It reuses the same payload contract while validating a message-oriented transport more appropriate for browser and service integrations.
+
+### 11. Live integration tests must remain opt-in
 Provider-backed and network-backed tests should never run by accident in normal local CI or development loops.
 
 ## Recommended Follow-Up
-- external websocket bridge runtime on top of the connector layer
 - richer observer/dashboard views with live metrics panels
 - role-specific bridge agents and routing policies
-- deeper opt-in integration tests for bridge runtime processing, live streaming, auto-bridge execution, room archive restore, and saved bridge policies
+- deeper opt-in integration tests for bridge runtime processing, live streaming, auto-bridge execution, room archive restore, saved bridge policies, and websocket delivery
+- end-to-end behavior tests for bridge runtime processing into processed artifacts
