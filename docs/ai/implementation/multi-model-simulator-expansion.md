@@ -128,8 +128,22 @@ It reuses the same payload contract while validating a message-oriented transpor
 ### 11. Live integration tests must remain opt-in
 Provider-backed and network-backed tests should never run by accident in normal local CI or development loops.
 
+## Health View and Runtime Behavior Expansion
+### New Visibility/Test Surfaces
+- `/health`
+- `tests/test_bridge_runtime.py`
+- room health score table across rooms
+- bridge runtime outbox processing behavior coverage
+
+## Findings and Analysis
+### 12. A lightweight room health table is the right next dashboard increment
+It adds a compact prioritization surface without forcing a graphical dashboard redesign.
+
+### 13. Bridge runtime behavior tests are the right next step after scaffolding
+Testing payload movement into `processed/` validates the runtime loop before real network endpoints are introduced.
+
 ## Recommended Follow-Up
 - richer observer/dashboard views with live metrics panels
 - role-specific bridge agents and routing policies
 - deeper opt-in integration tests for bridge runtime processing, live streaming, auto-bridge execution, room archive restore, saved bridge policies, and websocket delivery
-- end-to-end behavior tests for bridge runtime processing into processed artifacts
+- websocket/IRC endpoint-backed behavior tests

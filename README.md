@@ -46,6 +46,7 @@ AgentIRC is an IRC-style multi-model simulation environment built with **Microso
 - **Session Status**: Inspect room, mode, scenario, moderator, lineup, job count, persistent-state counts, and cost summary.
 - **Operator Dashboard**: `/dashboard` provides a tabular top-level summary across rooms, jobs, active context, aggregate prompts, bridge activity, external exports/imports, and aggregate estimated cost.
 - **Observer View**: `/observer` gives a rich, tabular ranked multi-room operational view.
+- **Room Health View**: `/health` gives a compact room health score table across the session.
 - **Room Summary**: `/room-summary [count]` shows recent activity snapshots across rooms.
 - **Room Analytics**: `/room-analytics [name]` shows one room’s specific analytics view.
 - **Telemetry**: Per-agent response counts, character volume, token totals, average response latency, scheduled-run count, replay-view count, comparison-view count, bridge-event count, bridge-AI count, observer-view count, external-export count, and external-import count.
@@ -96,6 +97,7 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `/status`
 - `/dashboard`
 - `/observer`
+- `/health`
 - `/room-summary [count]`
 - `/room-analytics [name]`
 - `/bridge <source> <target> [count]`
@@ -174,6 +176,7 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - `simulator_tools.py` - Custom functions registered as agent tools.
 - `tests/test_simulator_core.py` - Regression coverage for helper-layer behavior.
 - `tests/test_bridge_connectors.py` - Connector adapter coverage.
+- `tests/test_bridge_runtime.py` - bridge runtime behavior coverage.
 - `tests/test_irc_bridge_runtime.py` - IRC runtime formatting coverage.
 - `tests/test_websocket_bridge_runtime.py` - websocket runtime formatting and dry-run coverage.
 - `tests/test_live_integration.py` - opt-in live integration gate.
@@ -223,4 +226,4 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - deeper opt-in live integration coverage for provider-backed streaming and bridge workflows
 - persistent archived room snapshots across restarts with optional startup restore flows
 - role-specific bridge-routing presets layered on top of saved bridge policies
-- behavior-tested bridge runtime processing end-to-end
+- websocket/IRC transport behavior tests with controlled local endpoints

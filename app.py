@@ -36,6 +36,7 @@ from simulator_core import (
     build_dashboard_text,
     build_bridge_policies_text,
     build_bridge_runtime_status_text,
+    build_room_health_text,
     build_bridge_roles_text,
     build_help_text,
     build_history_text,
@@ -618,6 +619,10 @@ async def handle_command(command: str, args: str) -> bool:
     if command == "/observer":
         record_observer_view(config)
         await cl.Message(content=build_observer_text(get_rooms(), get_current_room_name())).send()
+        return True
+
+    if command == "/health":
+        await cl.Message(content=build_room_health_text(get_rooms(), get_current_room_name())).send()
         return True
 
     if command == "/room-summary":

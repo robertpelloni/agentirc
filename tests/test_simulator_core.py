@@ -38,6 +38,7 @@ from simulator_core import (
     build_replay_window_text,
     build_replays_text,
     build_room_analytics_text,
+    build_room_health_text,
     build_room_summary_text,
     build_rooms_text,
     build_schedule_status_text,
@@ -321,6 +322,7 @@ class SimulatorCoreTests(unittest.TestCase):
         self.assertIn("war-room", build_rooms_text(rooms, DEFAULT_ROOM_NAME))
         self.assertIn("Operator Dashboard", build_dashboard_text(rooms, DEFAULT_ROOM_NAME, persistent_state))
         self.assertIn("Room Summary", build_room_summary_text(rooms, 2))
+        self.assertIn("Room Health", build_room_health_text(rooms, DEFAULT_ROOM_NAME))
         changed, message, room_name = switch_room(rooms, "war-room")
         self.assertTrue(changed)
         self.assertEqual(room_name, "war-room")

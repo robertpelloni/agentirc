@@ -395,6 +395,7 @@ def build_help_text() -> str:
 - `/status` - Show the live simulator configuration.
 - `/dashboard` - Show a high-level operator dashboard across rooms.
 - `/observer` - Show a richer ranked observer view across rooms.
+- `/health` - Show room health scores across the session.
 - `/room-summary [count]` - Summarize room activity across the session.
 - `/room-analytics [name]` - Show analytics for one room.
 - `/bridge <source> <target> [count]` - Send a summarized bridge note from one room into another.
@@ -541,6 +542,28 @@ def build_dashboard_text(
         f"| Saved jobs | `{len(persistent_state.get('saved_jobs', {}))}` |\n"
         f"| Aggregate estimated cost | `{format_usd(total_estimated_cost)}` |\n"
     )
+
+
+
+def build_room_health_text(rooms: dict[str, dict[str, Any]], current_room_name: str) -> str:
+    lines = [
+        "**Room Health**\n",
+        "| Room | Status | Score | Entries | Prompts | Est. Cost |",
+        "|---|---|---:|---:|---:|---:|",
+    ]
+    for room_name in sorted(rooms.keys()):
+        room_state = rooms[room_name]
+        telemetry = room_state.get("config", {}).get("telemetry", {})
+        entries = len(room_state.get("history", []))
+        prompts = telemetry.get("prompts_sent", 0)
+        cost = float(telemetry.get("total_estimated_cost_usd", 0.0))
+        bridges = telemetry.get("bridge_events", 0) + telemetry.get("bridge_ai_events", 0)
+        score = max(0, min(100, 100 - int(cost * 1000) - max(0, prompts - entries) + min(20, bridges * 2)))
+        status = "🟢 active" if room_name == current_room_name else "⚫ idle"
+        lines.append(
+            f"| **{room_name}** | {status} | `{score}` | `{entries}` | `{prompts}` | `{format_usd(cost)}` |"
+        )
+    return "\n".join(lines)
 
 
 

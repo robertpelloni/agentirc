@@ -60,7 +60,7 @@ python -m py_compile app.py run.py bridge_connectors.py bridge_runtime.py irc_br
 - no API-backed end-to-end test currently validates OpenRouter model responses
 - background schedule execution is not yet integration-tested against a live Chainlit session
 - room switching, bridge delivery, bridge-AI generation, external export/import, auto-bridge execution, saved bridge policy application, and replay stepping are not yet integration-tested with live UI runtime state
-- bridge runtime processing is only compile-validated right now, not behavior-tested end-to-end
+- bridge runtime processing is validated at the outbox-processing layer, but not yet against live network endpoints end-to-end
 - IRC runtime networking is only scaffolded and not exercised in automated network tests
 - websocket runtime networking is only scaffolded and not exercised in automated network tests
 - actual cost tracking depends on provider usage metadata that is not simulated in a live end-to-end environment yet

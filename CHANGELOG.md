@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.0 - 2026-04-05
+- Added `/health` for compact room health scoring across the session.
+- Added `tests/test_bridge_runtime.py` for bridge runtime outbox-processing behavior coverage.
+- Updated build tooling to compile bridge runtime behavior tests.
+- Expanded README, design, implementation, testing, changelog, and handoff documentation for room health and runtime behavior validation.
+- Expanded test discovery coverage to 44 discovered tests with 2 opt-in live tests skipped by default.
+
 ## 0.17.0 - 2026-04-05
 - Added `websocket_bridge_runtime.py` as a websocket transport scaffold for outbox payloads.
 - Added `tests/test_websocket_bridge_runtime.py` for websocket runtime scaffold coverage.

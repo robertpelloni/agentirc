@@ -44,6 +44,7 @@ This approach:
 - fits the IRC/control-console aesthetic
 - provides value before a custom visual dashboard exists
 - remains easy to test at the helper layer
+- supports incremental additions like room health scoring without a full UI rewrite
 
 ### 4. Cross-room bridges have two modes: deterministic and model-generated
 The simulator supports two bridge styles:
