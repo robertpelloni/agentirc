@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.19.0 - 2026-04-05
+- Added `/leaderboard` for session-wide room and agent rankings by message volume, tokens, and cost.
+- Added live behavior tests for the `webhook` connector using a local threaded HTTP server.
+- Added live behavior tests for the `websocket` bridge runtime using a local threaded WebSocket server.
+- Refined unit tests and helper assertions for metrics and external payload delivery.
+- Expanded unit coverage from 44 to 48 tests.
+- Updated README, findings, design, implementation, testing, and handoff documentation for leaderboards and endpoint-backed validation.
+
 ## 0.18.0 - 2026-04-05
 - Added `/health` for compact room health scoring across the session.
 - Added `tests/test_bridge_runtime.py` for bridge runtime outbox-processing behavior coverage.
