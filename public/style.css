@@ -1,0 +1,179 @@
+/* AgentIRC 1990s IRC Terminal Aesthetic */
+
+/* --- Base Body & Typography --- */
+body, html, #root {
+    background-color: #000000 !important;
+    color: #c0c0c0 !important;
+    font-family: "Courier New", Courier, monospace !important;
+    font-size: 14px !important;
+    letter-spacing: 0px !important;
+    font-weight: 400 !important;
+    -webkit-font-smoothing: none !important;
+}
+
+/* Force everything to monospace */
+* {
+    font-family: "Courier New", Courier, monospace !important;
+    border-radius: 0px !important;
+    box-shadow: none !important;
+    letter-spacing: 0px !important;
+}
+
+/* --- Override MUI & Tailwind Backgrounds --- */
+.MuiPaper-root, 
+.MuiBox-root, 
+.MuiDrawer-paper,
+.MuiPopover-paper,
+.MuiCard-root,
+div[class*="bg-"] {
+    background-color: #000000 !important;
+    background-image: none !important;
+    color: #c0c0c0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+/* --- Borders for structural elements (DOS/Windows 3.1 feel) --- */
+.MuiDrawer-paper {
+    border-right: 2px solid #555555 !important;
+}
+header {
+    border-bottom: 2px solid #555555 !important;
+}
+
+/* --- Message Container & Text --- */
+.message-content, .step, .message-row {
+    color: #00ff00 !important; /* Classic terminal green for text */
+    background: transparent !important;
+    border: none !important;
+    padding: 2px 4px !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+}
+
+/* User Messages */
+.message-row[data-author="BobPelloni"], 
+.message-row[data-author="user"] {
+    color: #ffffff !important; /* White for user */
+}
+
+/* System notices / info */
+.message-row[data-author="system"] {
+    color: #ffff00 !important; /* Yellow for system */
+}
+
+/* Code blocks & Preformatted text */
+pre, code {
+    background-color: #0c0c0c !important;
+    border: 1px dashed #444 !important;
+    color: #00ffff !important; /* Cyan for code */
+    padding: 4px !important;
+}
+
+/* Markdown specific overrides to look less "modern" */
+.prose h1, .prose h2, .prose h3, .prose h4 {
+    color: #ff00ff !important; /* Magenta headers */
+    font-weight: bold !important;
+    margin-top: 8px !important;
+    margin-bottom: 4px !important;
+    text-transform: uppercase !important;
+    border-bottom: 1px dashed #555 !important;
+}
+
+.prose a {
+    color: #0000ff !important; /* Blue links */
+    text-decoration: underline !important;
+}
+
+.prose ul, .prose ol {
+    margin-top: 2px !important;
+    margin-bottom: 2px !important;
+    padding-left: 20px !important;
+}
+
+.prose li::marker {
+    color: #ffff00 !important;
+}
+
+/* --- Input Area & Chat Box --- */
+#chat-input, textarea, input[type="text"] {
+    background-color: #000080 !important; /* Classic mIRC blue input box */
+    color: #ffffff !important; /* White text */
+    border: 2px solid #ffffff !important;
+    border-radius: 0 !important;
+    padding: 4px 8px !important;
+    font-family: "Courier New", Courier, monospace !important;
+    font-weight: bold !important;
+    caret-color: #ffffff !important;
+}
+
+#chat-input:focus, textarea:focus, input[type="text"]:focus {
+    outline: none !important;
+    border-color: #00ff00 !important; /* Green focus ring */
+}
+
+/* --- Send Button & Actions --- */
+button, .MuiButtonBase-root, .MuiIconButton-root {
+    background-color: #c0c0c0 !important; /* Win95 grey */
+    color: #000000 !important; /* Black text */
+    border: 2px solid !important;
+    border-color: #ffffff #555555 #555555 #ffffff !important; /* Outset border */
+    border-radius: 0 !important;
+    text-transform: uppercase !important;
+    font-weight: bold !important;
+    padding: 2px 8px !important;
+    margin: 2px !important;
+}
+
+button:active, .MuiButtonBase-root:active {
+    border-color: #555555 #ffffff #ffffff #555555 !important; /* Inset border on click */
+    background-color: #a0a0a0 !important;
+}
+
+button svg, .MuiIconButton-root svg {
+    fill: #000000 !important;
+}
+
+/* Disable the hover background changes on buttons to keep the solid grey */
+button:hover, .MuiButtonBase-root:hover {
+    background-color: #d0d0d0 !important;
+}
+
+/* Hide avatars completely for the pure IRC text look */
+.message-avatar, img[alt="Avatar"], .MuiAvatar-root {
+    display: none !important;
+}
+
+/* Scrollbars - retro style if browser supports it */
+::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+    background: #dfdfdf;
+    border-left: 1px solid #ffffff;
+}
+::-webkit-scrollbar-thumb {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #ffffff #555555 #555555 #ffffff;
+}
+::-webkit-scrollbar-button {
+    background: #dfdfdf;
+    border: 2px solid;
+    border-color: #ffffff #555555 #555555 #ffffff;
+    height: 16px;
+    width: 16px;
+}
+
+/* Remove modern UI fluff */
+.watermark { display: none !important; }
+.MuiTooltip-popper {
+    background-color: #ffffdd !important; /* classic tooltip yellow */
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+}
+
+/* Main chat container padding tight */
+.chat-container {
+    padding: 0 !important;
+    margin: 0 !important;
+}

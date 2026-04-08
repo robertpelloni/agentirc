@@ -1,0 +1,36 @@
+{
+  "variables": {
+    "light": {
+      "background": "0 0% 100%",
+      "foreground": "0 0% 0%",
+      "primary": "120 100% 50%",
+      "primary-foreground": "0 0% 100%",
+      "secondary": "180 100% 50%",
+      "secondary-foreground": "0 0% 0%",
+      "accent": "0 0% 96%",
+      "accent-foreground": "0 0% 0%",
+      "destructive": "0 84% 60%",
+      "destructive-foreground": "0 0% 98%",
+      "border": "0 0% 90%",
+      "input": "0 0% 90%",
+      "ring": "0 0% 0%",
+      "radius": "0"
+    },
+    "dark": {
+      "background": "0 0% 0%",
+      "foreground": "0 0% 75%",
+      "primary": "120 100% 50%",
+      "primary-foreground": "0 0% 0%",
+      "secondary": "180 100% 50%",
+      "secondary-foreground": "0 0% 0%",
+      "accent": "0 0% 15%",
+      "accent-foreground": "0 0% 98%",
+      "destructive": "0 62% 30%",
+      "destructive-foreground": "0 0% 98%",
+      "border": "0 0% 20%",
+      "input": "0 0% 20%",
+      "ring": "0 0% 83%",
+      "radius": "0"
+    }
+  }
+}

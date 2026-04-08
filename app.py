@@ -1358,7 +1358,6 @@ async def start():
     rebuild_team()
 
     welcome_banner = f"""
-```
 *** Connected to #agentirc (AutoGen Network)
 *** Current Room: {config['room_name']}
 *** Your nick is {config['nick']}
@@ -1368,7 +1367,6 @@ async def start():
 *** Moderator: {config['moderator_mode']}
 *** Enabled Agents: {', '.join(display_agent_name(name) for name in config['enabled_agents'])}
 *** Type /help for commands.
-```
 """
     await cl.Message(content=welcome_banner).send()
     log_irc(f"--- Session Started: {datetime.now()} ---")

@@ -300,9 +300,9 @@ def render_entry(entry: dict[str, Any]) -> str:
     author = entry.get("author", "unknown")
     target = entry.get("target")
     if target:
-        return f"[{entry['timestamp']}] <{author}->@{target}> {entry['content']}"
+        return f"[{entry['timestamp']}] **<{author}->@{target}>** {entry['content']}"
 
-    return f"[{entry['timestamp']}] <{author}> {entry['content']}"
+    return f"[{entry['timestamp']}] **<{author}>** {entry['content']}"
 
 
 
