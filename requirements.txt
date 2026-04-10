@@ -4,3 +4,6 @@ chainlit>=1.1.306
 python-dotenv>=1.0.1
 openai>=1.55.3
 websockets>=13.0
+duckduckgo-search>=5.0.0
+markdownify>=0.11.0
+tomli>=2.0.1

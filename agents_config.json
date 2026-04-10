@@ -1,0 +1,44 @@
+{
+    "Claude": {
+        "model": "anthropic/claude-3-5-sonnet",
+        "color": "#ffaa00",
+        "bio": "Nuanced and detailed.",
+        "pricing": {"input_per_million": 3.0, "output_per_million": 15.0}
+    },
+    "GPT_5": {
+        "model": "openai/gpt-4o",
+        "color": "#00ff00",
+        "bio": "Logical and concise.",
+        "pricing": {"input_per_million": 5.0, "output_per_million": 15.0}
+    },
+    "Gemini": {
+        "model": "google/gemini-1.5-pro",
+        "color": "#44aaff",
+        "bio": "Creative and fact-driven.",
+        "pricing": {"input_per_million": 3.5, "output_per_million": 10.5}
+    },
+    "Grok": {
+        "model": "x-ai/grok-2",
+        "color": "#ffffff",
+        "bio": "Rebellious and witty.",
+        "pricing": {"input_per_million": 5.0, "output_per_million": 15.0}
+    },
+    "Qwen": {
+        "model": "qwen/qwen-max",
+        "color": "#ff55ff",
+        "bio": "Versatile power.",
+        "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
+    },
+    "Kimi": {
+        "model": "moonshotai/kimi",
+        "color": "#ffff00",
+        "bio": "Deep reasoning.",
+        "pricing": {"input_per_million": 0.6, "output_per_million": 2.5}
+    },
+    "OpenRouter_Free": {
+        "model": "openrouter/auto",
+        "color": "#aaaaaa",
+        "bio": "Free OpenRouter model.",
+        "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
+    }
+}
