@@ -175,7 +175,7 @@ AGENT_SPECS = {
         "pricing": {"input_per_million": 5.0, "output_per_million": 15.0},
     },
     "Qwen": {
-        "model": "qwen/qwen3.6-plus-preview:free",
+        "model": "openrouter/free",
         "color": "#ff55ff",
         "bio": "Versatile power.",
         "pricing": {"input_per_million": 0.0, "output_per_million": 0.0},
