@@ -1,4 +1,4 @@
-# AgentIRC: The Multi-Model Broadcast Network
+# AgentIRC: The Multi-Model Broadcast Network (v1.1.0)
 
 AgentIRC is an IRC-style multi-model simulation environment built with **Microsoft AutoGen 0.4+**, **Chainlit**, and **OpenRouter**. It lets a human operator run coordinated conversations across multiple model personas, switch between broadcast and discussion modes, inspect telemetry, persist lineups/personas/jobs, export transcripts, replay and compare old runs, estimate costs, manage multiple rooms, inspect operator dashboards, bridge context between rooms, configure tool-use plugins, and prepare external bridge payloads and runtime scaffolding for future non-Chainlit clients.
 

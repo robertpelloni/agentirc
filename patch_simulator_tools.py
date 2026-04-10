@@ -1,32 +1,15 @@
+import re
+with open('simulator_tools.py', 'r') as f:
+    content = f.read()
+
+tools_code = """
 import requests
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 from duckduckgo_search import DDGS
-from datetime import datetime
-
-_SHARED_MEMORY = {}
-
-def get_current_time() -> str:
-    return datetime.now().isoformat()
-
-def calculator(expression: str) -> str:
-    try:
-        allowed_chars = "0123456789+-*/(). "
-        if any(c not in allowed_chars for c in expression):
-            return "Error: Invalid characters in expression."
-        result = eval(expression, {"__builtins__": {}}, {})
-        return str(result)
-    except Exception as exc:
-        return f"Error evaluating expression: {exc}"
-
-def memory_store(key: str, value: str) -> str:
-    _SHARED_MEMORY[key] = value
-    return f"Successfully stored key '{key}'."
-
-def memory_read(key: str) -> str:
-    return _SHARED_MEMORY.get(key, f"Error: Key '{key}' not found.")
 
 def web_search(query: str, max_results: int = 5) -> str:
+    \"\"\"Searches the web using DuckDuckGo and returns summaries of the top results.\"\"\"
     try:
         results = DDGS().text(query, max_results=max_results)
         if not results:
@@ -39,14 +22,18 @@ def web_search(query: str, max_results: int = 5) -> str:
         return f"Web search error: {e}"
 
 def fetch_webpage(url: str) -> str:
+    \"\"\"Fetches a webpage and converts its content to Markdown.\"\"\"
     try:
-        headers = {'User-Agent': 'Mozilla/5.0'}
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
+
         soup = BeautifulSoup(response.content, 'html.parser')
+        # Remove script and style elements
         for script in soup(["script", "style"]):
             script.decompose()
-        return md(str(soup), heading_style="ATX").strip()[:10000]
+
+        return md(str(soup), heading_style="ATX").strip()[:10000] # Limit length
     except Exception as e:
         return f"Error fetching webpage: {e}"
 
@@ -58,6 +45,14 @@ TOOL_CATALOG = {
     "web_search": web_search,
     "fetch_webpage": fetch_webpage,
 }
+"""
 
-def get_tools_by_names(names: list[str]) -> list:
-    return [TOOL_CATALOG[name] for name in names if name in TOOL_CATALOG]
+content = re.sub(
+    r'TOOL_CATALOG = \{.*?\}',
+    tools_code.strip(),
+    content,
+    flags=re.DOTALL
+)
+
+with open('simulator_tools.py', 'w') as f:
+    f.write(content)
