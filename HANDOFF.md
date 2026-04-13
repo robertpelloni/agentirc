@@ -3,6 +3,6 @@
 ## Current State
 - The AgentIRC system is fully operational.
 - The `feature/agentirc-configuration-and-tools` phase was completed.
-- The `sandbox file tool`, `terminal sounds`, and `multi-user authentication` phases are complete.
-- I just finished adding extended unit test coverage for bridge connectors and custom transports. Total tests expanded to 55.
-- The next developer should review `TODO.md` to select the next feature.
+- The `sandbox file tool`, `terminal sounds`, `multi-user authentication`, and `extended test coverage` phases are complete.
+- I just finished adding performance optimizations for large agent scaling (>10 agents). The `stream_agent` now truncates system prompts to avoid token bloat during multimodal handling and `make_default_config` restricts initial auto-loaded lineups to 10.
+- **ALL TODOs from the original list are now complete.**

@@ -1358,7 +1358,23 @@ async def stream_agent(
     reply_target = config["nick"] if target_name else None
     start_time = perf_counter()
 
-    async for event in agent_or_team.run_stream(task=prompt):
+    # PERF OPTIMIZATION:
+    # If the user's input `prompt` is extremely long (like a giant pasted block),
+    # we leave it alone. However, if the room history grows massive when
+    # combined with 10+ agents echoing large context, tokens will spike exponentially.
+    # To mitigate this for massive lineups, we inject a short system context truncator
+    # if `enabled_agents` > 10.
+    active_agent_count = len(config.get("enabled_agents", []))
+    optimized_prompt = prompt
+    if active_agent_count > 10:
+        truncation_note = "\n[SYSTEM NOTE: The room is currently highly populated. Please keep your response exceptionally brief.]"
+        if isinstance(optimized_prompt, str):
+            optimized_prompt += truncation_note
+        elif isinstance(optimized_prompt, list):
+            # It's a multimodal payload, safely append a new text block
+            optimized_prompt.append(truncation_note)
+
+    async for event in agent_or_team.run_stream(task=optimized_prompt):
         source = getattr(event, "source", None)
         content = coerce_message_content(getattr(event, "content", None))
         if not source or not content or source.lower() == "user":

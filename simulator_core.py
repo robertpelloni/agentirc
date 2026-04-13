@@ -223,13 +223,17 @@ def make_default_config(
     if persistent_state and isinstance(persistent_state.get("saved_personas"), dict):
         persona_overrides = deepcopy(persistent_state["saved_personas"])
 
+    # Optimization: Automatically limit default enabled agents if the catalog is massive
+    all_agents = list(agent_specs.keys())
+    default_agents = all_agents[:10] if len(all_agents) > 10 else all_agents
+
     return {
         "room_name": room_name,
         "mode": DEFAULT_MODE,
         "topic": DEFAULT_TOPIC,
         "nick": DEFAULT_NICK,
         "max_rounds": DEFAULT_MAX_ROUNDS,
-        "enabled_agents": list(agent_specs.keys()),
+        "enabled_agents": default_agents,
         "enabled_tools": [],
         "scenario": "omni",
         "simulation_count": 0,
