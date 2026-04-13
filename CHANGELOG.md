@@ -1,3 +1,9 @@
+## 0.22.1 - 2026-04-13
+- Added robust user authentication via `cl.password_auth_callback` mapping to `AGENTIRC_USER_<USERNAME>` env vars.
+- Added safe sandbox read/write tool integrations.
+- Added extended unit test coverage for custom connectors.
+- Decoupled model configurations to external files.
+
 # Changelog
 
 ## 0.20.0 - 2026-04-13
