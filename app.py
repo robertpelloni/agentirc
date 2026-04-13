@@ -149,44 +149,43 @@ SESSION_ROOM_KEY = "room_name"
 SESSION_REPLAY_STATE_KEY = "replay_state"
 JUDGE_PRICING = {"input_per_million": 0.15, "output_per_million": 0.6}
 
-AGENT_SPECS = {
-    "Claude": {
-        "model": "anthropic/claude-sonnet-4.6",
-        "color": "#ffaa00",
-        "bio": "Nuanced and detailed.",
-        "pricing": {"input_per_million": 3.0, "output_per_million": 15.0},
-    },
-    "GPT_5": {
-        "model": "openai/gpt-5.3-chat",
-        "color": "#00ff00",
-        "bio": "Logical and concise.",
-        "pricing": {"input_per_million": 1.25, "output_per_million": 10.0},
-    },
-    "Gemini": {
-        "model": "google/gemini-3.1-flash-image-preview",
-        "color": "#44aaff",
-        "bio": "Creative and fact-driven.",
-        "pricing": {"input_per_million": 0.35, "output_per_million": 1.05},
-    },
-    "Grok": {
-        "model": "x-ai/grok-4.1-fast",
-        "color": "#ffffff",
-        "bio": "Rebellious and witty.",
-        "pricing": {"input_per_million": 5.0, "output_per_million": 15.0},
-    },
-    "Qwen": {
-        "model": "openrouter/free",
-        "color": "#ff55ff",
-        "bio": "Versatile power.",
-        "pricing": {"input_per_million": 0.0, "output_per_million": 0.0},
-    },
-    "Kimi": {
-        "model": "moonshotai/kimi-k2.5",
-        "color": "#ffff00",
-        "bio": "Deep reasoning.",
-        "pricing": {"input_per_million": 0.6, "output_per_million": 2.5},
-    },
-}
+import json
+import tomli
+
+def load_agents_config():
+    if os.path.exists("agents_config.json"):
+        with open("agents_config.json", "r") as f:
+            return json.load(f)
+    return {
+        "Claude": {
+            "model": "anthropic/claude-sonnet-4.6",
+            "color": "#ffaa00",
+            "bio": "Nuanced and detailed.",
+            "pricing": {"input_per_million": 3.0, "output_per_million": 15.0},
+        },
+        "GPT_5": {
+            "model": "openai/gpt-5.3-chat",
+            "color": "#00ff00",
+            "bio": "Logical and concise.",
+            "pricing": {"input_per_million": 1.25, "output_per_million": 10.0},
+        },
+        "Gemini": {
+            "model": "google/gemini-3.1-flash-image-preview",
+            "color": "#44aaff",
+            "bio": "Creative and fact-driven.",
+            "pricing": {"input_per_million": 0.35, "output_per_million": 1.05},
+        },
+    }
+
+AGENT_SPECS = load_agents_config()
+
+def load_global_config():
+    if os.path.exists("config.toml"):
+        with open("config.toml", "rb") as f:
+            return tomli.load(f)
+    return {}
+
+GLOBAL_CONFIG = load_global_config()
 
 
 def log_irc(message: str):
@@ -196,10 +195,13 @@ def log_irc(message: str):
 
 
 def get_client(model_name: str):
+    provider_config = GLOBAL_CONFIG.get("provider", {})
+    base_url = provider_config.get("base_url", "https://openrouter.ai/api/v1")
+    api_key_env = provider_config.get("api_key_env", "OPENROUTER_API_KEY")
     return OpenAIChatCompletionClient(
         model=model_name,
-        api_key=os.environ.get("OPENROUTER_API_KEY"),
-        base_url="https://openrouter.ai/api/v1",
+        api_key=os.environ.get(api_key_env),
+        base_url=base_url,
         model_info={
             "vision": False,
             "function_calling": True,
@@ -210,6 +212,10 @@ def get_client(model_name: str):
     )
 
 
+
+
+def get_agent_specs():
+    return cl.user_session.get("agent_specs", {})
 
 def get_config() -> dict:
     return cl.user_session.get(SESSION_CONFIG_KEY)
@@ -242,7 +248,7 @@ def get_persistent_state() -> dict:
 def get_rooms() -> dict[str, dict]:
     rooms = cl.user_session.get(SESSION_ROOMS_KEY)
     if rooms is None:
-        rooms = make_initial_rooms(AGENT_SPECS, get_persistent_state())
+        rooms = make_initial_rooms(agent_specs, get_persistent_state())
         cl.user_session.set(SESSION_ROOMS_KEY, rooms)
     return rooms
 
@@ -354,16 +360,20 @@ def create_team(config: dict):
     agents = []
 
     for name in enabled_agents:
-        spec = AGENT_SPECS[name]
+        spec = get_agent_specs()[name]
         peers = [display_agent_name(peer) for peer in enabled_agents if peer != name]
         persona = config.get("persona_overrides", {}).get(name, spec["bio"])
         system_message = (
-            f"You are {display_agent_name(name)} in an IRC-style multi-model simulation. "
+            f"You are {display_agent_name(name)}. You are speaking as yourself with your own personality developed through training. "
+            "Do NOT simulate a fake IRC conversation or simulate multiple users. You are in an IRC chat room but you are just one participant. "
+            f"You are {display_agent_name(name)}, speaking as yourself with your own personality developed through training. "
+            "You are participating in an IRC-style multi-model discussion, but do NOT simulate a 'fake' IRC conversation "
+            "or simulate multiple users. Just be yourself. "
             f"Room: {config['room_name']}. Mode: {config['mode'].upper()}. Scenario: {config['scenario']}. "
             f"Topic: {config['topic']}. Persona: {persona} "
             f"Peers: {', '.join(peers) if peers else 'none'}. "
             f"Moderator mode: {config['moderator_mode']} ({MODERATOR_MODES[config['moderator_mode']]}) "
-            "Respond in plain text with a concise, useful IRC-style reply. "
+            "Respond in plain text with a concise, useful reply. "
             "Stay in character, avoid markdown headers, and keep it easy to scan."
         )
 
@@ -582,6 +592,31 @@ async def handle_command(command: str, args: str) -> bool:
         await cl.Message(content=build_help_text()).send()
         return True
 
+    if command == "/slap":
+        target = args if args else "someone"
+        content = f"* {config['nick']} slaps {target} around a bit with a large trout"
+        add_history_entry(author="system", content=content, kind="system")
+        await cl.Message(author="system", content=content).send()
+        # Feed it to the models
+        await stream_agent(
+            cl.user_session.get(SESSION_TEAM_KEY),
+            content,
+            telemetry_name="system"
+        )
+        return True
+
+    if command == "/me":
+        content = f"* {config['nick']} {args}"
+        add_history_entry(author="system", content=content, kind="system")
+        await cl.Message(author="system", content=content).send()
+        # Feed it to the models
+        await stream_agent(
+            cl.user_session.get(SESSION_TEAM_KEY),
+            content,
+            telemetry_name="system"
+        )
+        return True
+
     if command == "/mode":
         new_mode = args.lower()
         if new_mode not in {"broadcast", "discuss"}:
@@ -589,6 +624,7 @@ async def handle_command(command: str, args: str) -> bool:
             return True
         config["mode"] = new_mode
         rebuild_team()
+
         await send_system_notice(f"Mode changed to **{new_mode.upper()}**.")
         return True
 
@@ -597,7 +633,12 @@ async def handle_command(command: str, args: str) -> bool:
             await send_system_notice(f"Current topic: {config['topic']}")
             return True
         config["topic"] = args
+        await update_settings_ui()
+        await send_system_notice(f"Topic changed to: {args}")
+        return True
+        config["topic"] = args
         rebuild_team()
+        await update_settings_ui()
         await send_system_notice(f"Topic changed to: {args}")
         return True
 
@@ -607,6 +648,14 @@ async def handle_command(command: str, args: str) -> bool:
             return True
         config["nick"] = args
         await send_system_notice(f"Your nick is now **{args}**.")
+        return True
+
+    if command == "/slap":
+        target = args if args else "someone"
+        nick = config.get('nick', 'operator')
+        action_msg = f"* {nick} slaps {target} around a bit with a large trout"
+        await send_system_notice(action_msg)
+        add_history_entry(author="system", content=action_msg, kind="system")
         return True
 
     if command == "/status":
@@ -627,7 +676,7 @@ async def handle_command(command: str, args: str) -> bool:
         return True
 
     if command == "/leaderboard":
-        await cl.Message(content=build_leaderboard_text(get_rooms(), AGENT_SPECS)).send()
+        await cl.Message(content=build_leaderboard_text(get_rooms(), get_agent_specs())).send()
         return True
 
     if command == "/room-summary":
@@ -649,7 +698,7 @@ async def handle_command(command: str, args: str) -> bool:
                 await send_system_notice(response)
                 return True
             room_name = resolved_room_name
-        await cl.Message(content=build_room_analytics_text(room_name, get_rooms()[room_name], AGENT_SPECS)).send()
+        await cl.Message(content=build_room_analytics_text(room_name, get_rooms()[room_name], get_agent_specs())).send()
         return True
 
     if command == "/bridge":
@@ -777,7 +826,7 @@ async def handle_command(command: str, args: str) -> bool:
         payload = load_room_archive(archive_path)
         room_name = parts[1] if len(parts) > 1 else payload.get("room_name", get_current_room_name())
         save_current_room_state()
-        changed, response, resolved_room = create_room(get_rooms(), room_name, AGENT_SPECS, persistent_state)
+        changed, response, resolved_room = create_room(get_rooms(), room_name, get_agent_specs(), persistent_state)
         if not changed and resolved_room is None:
             switched, _, resolved_room = switch_room(get_rooms(), room_name)
             if not switched or resolved_room is None:
@@ -846,6 +895,7 @@ async def handle_command(command: str, args: str) -> bool:
         changed, response = set_tool_enabled(config, args, enabled=command == "/enable-tool")
         if changed:
             rebuild_team()
+        await update_settings_ui()
         await send_system_notice(response)
         return True
 
@@ -872,7 +922,7 @@ async def handle_command(command: str, args: str) -> bool:
             await send_system_notice("Usage: `/new-room <name>`")
             return True
         save_current_room_state()
-        changed, response, room_name = create_room(get_rooms(), args, AGENT_SPECS, persistent_state)
+        changed, response, room_name = create_room(get_rooms(), args, get_agent_specs(), persistent_state)
         if not changed or room_name is None:
             await send_system_notice(response)
             return True
@@ -897,22 +947,22 @@ async def handle_command(command: str, args: str) -> bool:
         return True
 
     if command == "/lineup":
-        await cl.Message(content=build_lineup_text(AGENT_SPECS, config["enabled_agents"])).send()
+        await cl.Message(content=build_lineup_text(get_agent_specs(), config["enabled_agents"])).send()
         return True
 
     if command == "/agents":
-        await cl.Message(content=build_agents_text(AGENT_SPECS, config["enabled_agents"], config)).send()
+        await cl.Message(content=build_agents_text(get_agent_specs(), config["enabled_agents"], config)).send()
         return True
 
     if command == "/whois":
         if not args:
             await send_system_notice("Usage: `/whois <agent>`")
             return True
-        agent_name = resolve_agent_name(args, list(AGENT_SPECS.keys()))
+        agent_name = resolve_agent_name(args, list(get_agent_specs().keys()))
         if not agent_name:
             await send_system_notice(f"Unknown agent: `{args}`")
             return True
-        await cl.Message(content=build_agent_detail_text(agent_name, AGENT_SPECS, config["enabled_agents"], config)).send()
+        await cl.Message(content=build_agent_detail_text(agent_name, get_agent_specs(), config["enabled_agents"], config)).send()
         return True
 
     if command in {"/enable", "/disable"}:
@@ -923,10 +973,22 @@ async def handle_command(command: str, args: str) -> bool:
             config=config,
             raw_name=args,
             enabled=command == "/enable",
-            agent_specs=AGENT_SPECS,
+            agent_specs=get_agent_specs(),
         )
         if changed:
             rebuild_team()
+            await update_settings_ui()
+        await send_system_notice(response)
+        return True
+        changed, response = set_agent_enabled(
+            config=config,
+            raw_name=args,
+            enabled=command == "/enable",
+            agent_specs=get_agent_specs(),
+        )
+        if changed:
+            rebuild_team()
+        await update_settings_ui()
         await send_system_notice(response)
         return True
 
@@ -937,6 +999,7 @@ async def handle_command(command: str, args: str) -> bool:
         changed, response = set_rounds(config, args)
         if changed and config["mode"] == "discuss":
             rebuild_team()
+        await update_settings_ui()
         await send_system_notice(response)
         return True
 
@@ -944,9 +1007,10 @@ async def handle_command(command: str, args: str) -> bool:
         if not args:
             await cl.Message(content=build_scenarios_text()).send()
             return True
-        changed, response = apply_scenario(config, args, AGENT_SPECS)
+        changed, response = apply_scenario(config, args, get_agent_specs())
         if changed:
             rebuild_team()
+        await update_settings_ui()
         await send_system_notice(response)
         return True
 
@@ -957,19 +1021,20 @@ async def handle_command(command: str, args: str) -> bool:
         changed, response = set_moderator_mode(config, args)
         if changed:
             rebuild_team()
+        await update_settings_ui()
         await send_system_notice(response)
         return True
 
     if command == "/telemetry":
-        await cl.Message(content=build_telemetry_text(config, AGENT_SPECS)).send()
+        await cl.Message(content=build_telemetry_text(config, get_agent_specs())).send()
         return True
 
     if command == "/analytics":
-        await cl.Message(content=build_analytics_text(config, get_history(), AGENT_SPECS)).send()
+        await cl.Message(content=build_analytics_text(config, get_history(), get_agent_specs())).send()
         return True
 
     if command == "/costs":
-        await cl.Message(content=build_costs_text(config, AGENT_SPECS)).send()
+        await cl.Message(content=build_costs_text(config, get_agent_specs())).send()
         return True
 
     if command == "/judge":
@@ -990,7 +1055,7 @@ async def handle_command(command: str, args: str) -> bool:
         return True
 
     if command == "/personas":
-        await cl.Message(content=build_personas_text(config, AGENT_SPECS)).send()
+        await cl.Message(content=build_personas_text(config, get_agent_specs())).send()
         return True
 
     if command == "/persona":
@@ -1000,17 +1065,18 @@ async def handle_command(command: str, args: str) -> bool:
 
         if args.lower().startswith("clear "):
             clear_target = args.split(" ", 1)[1].strip()
-            changed, response = set_persona_override(config, persistent_state, clear_target, "", AGENT_SPECS)
+            changed, response = set_persona_override(config, persistent_state, clear_target, "", get_agent_specs())
         else:
             parts = args.split(" ", 1)
             if len(parts) < 2:
                 await send_system_notice("Usage: `/persona <agent> <text>` or `/persona clear <agent>`")
                 return True
-            changed, response = set_persona_override(config, persistent_state, parts[0], parts[1], AGENT_SPECS)
+            changed, response = set_persona_override(config, persistent_state, parts[0], parts[1], get_agent_specs())
 
         if changed:
             persist_state()
             rebuild_team()
+        await update_settings_ui()
         await send_system_notice(response)
         return True
 
@@ -1032,9 +1098,10 @@ async def handle_command(command: str, args: str) -> bool:
         if not args:
             await send_system_notice("Usage: `/load-lineup <name>`")
             return True
-        changed, response = load_lineup(config, persistent_state, args, AGENT_SPECS)
+        changed, response = load_lineup(config, persistent_state, args, get_agent_specs())
         if changed:
             rebuild_team()
+        await update_settings_ui()
         await send_system_notice(response)
         return True
 
@@ -1098,9 +1165,10 @@ async def handle_command(command: str, args: str) -> bool:
         if not args:
             await send_system_notice("Usage: `/run-job <name>`")
             return True
-        changed, response = load_job(config, persistent_state, args, AGENT_SPECS)
+        changed, response = load_job(config, persistent_state, args, get_agent_specs())
         if changed:
             rebuild_team()
+            await update_settings_ui()
             await stop_automation_task()
             task = asyncio.create_task(run_automation_loop())
             set_automation_task(task)
@@ -1287,10 +1355,11 @@ async def handle_command(command: str, args: str) -> bool:
     if command == "/reset":
         await stop_automation_task()
         room_name = get_current_room_name()
-        cl.user_session.set(SESSION_CONFIG_KEY, make_default_config(AGENT_SPECS, persistent_state, room_name=room_name))
+        cl.user_session.set(SESSION_CONFIG_KEY, make_default_config(get_agent_specs(), persistent_state, room_name=room_name))
         save_history([])
         save_current_room_state()
         rebuild_team()
+        await update_settings_ui()
         await send_system_notice("Current room state reset to defaults.")
         return True
 
@@ -1320,12 +1389,12 @@ async def stream_agent(
         if not source or not content or source.lower() == "user":
             continue
 
-        author = telemetry_name or (display_agent_name(source) if source in AGENT_SPECS else source)
+        author = telemetry_name or (display_agent_name(source) if source in get_agent_specs() else source)
         telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
         usage = extract_usage_metrics(event)
         resolved_pricing = pricing
-        if resolved_pricing is None and source in AGENT_SPECS:
-            resolved_pricing = AGENT_SPECS[source].get("pricing")
+        if resolved_pricing is None and source in get_agent_specs():
+            resolved_pricing = get_agent_specs()[source].get("pricing")
         latency_ms = round((perf_counter() - start_time) * 1000, 2)
         record_agent_response(
             config,
@@ -1343,11 +1412,66 @@ async def stream_agent(
         await maybe_run_auto_bridge()
 
 
+
+from chainlit.input_widget import Select, TextInput, Switch
+
+async def update_settings_ui():
+    agent_specs = get_agent_specs()
+    config = get_config()
+
+    widgets = [
+        TextInput(
+            id="topic",
+            label="Room Topic",
+            initial=config.get("topic", "")
+        )
+    ]
+
+    for agent_name in agent_specs.keys():
+        widgets.append(
+            Switch(
+                id=f"agent_{agent_name}",
+                label=f"Enable {agent_name}",
+                initial=agent_name in config["enabled_agents"]
+            )
+        )
+
+    settings = await cl.ChatSettings(widgets).send()
+
+@cl.on_settings_update
+async def setup_agent(settings):
+    config = get_config()
+    agent_specs = get_agent_specs()
+    changed = False
+
+    if "topic" in settings and settings["topic"] != config["topic"]:
+        config["topic"] = settings["topic"]
+        await send_system_notice(f"Topic changed to: {config['topic']}")
+        changed = True
+
+    enabled_agents = []
+    for agent_name in agent_specs.keys():
+        key = f"agent_{agent_name}"
+        if key in settings and settings[key]:
+            enabled_agents.append(agent_name)
+
+    if set(enabled_agents) != set(config["enabled_agents"]):
+        config["enabled_agents"] = enabled_agents
+        changed = True
+
+    if changed:
+        rebuild_team()
+        await update_settings_ui()
+        save_current_room_state()
+
 @cl.on_chat_start
 async def start():
     persistent_state = load_persistent_state(STATE_FILE)
     cl.user_session.set(SESSION_STATE_KEY, persistent_state)
-    rooms = make_initial_rooms(AGENT_SPECS, persistent_state)
+    agent_specs = persistent_state.get("agent_specs", {})
+    cl.user_session.set("agent_specs", agent_specs)
+
+    rooms = make_initial_rooms(agent_specs, persistent_state)
     cl.user_session.set(SESSION_ROOMS_KEY, rooms)
     cl.user_session.set(SESSION_ROOM_KEY, DEFAULT_ROOM_NAME)
     cl.user_session.set(SESSION_CONFIG_KEY, rooms[DEFAULT_ROOM_NAME]["config"])
@@ -1356,9 +1480,15 @@ async def start():
     cl.user_session.set(SESSION_REPLAY_STATE_KEY, None)
     config = get_config()
     rebuild_team()
+    await update_settings_ui()
+
+    version = "Unknown"
+    if os.path.exists("VERSION"):
+        with open("VERSION", "r") as vf:
+            version = vf.read().strip()
 
     welcome_banner = f"""
-*** Connected to #agentirc (AutoGen Network)
+*** Connected to #agentirc (AutoGen Network) [AgentIRC v{version}]
 *** Current Room: {config['room_name']}
 *** Your nick is {config['nick']}
 *** Current Topic: {config['topic']}
@@ -1381,11 +1511,22 @@ async def end():
 @cl.on_message
 async def handle_message(message: cl.Message):
     content = message.content.strip()
-    if not content:
+    images = []
+    if message.elements:
+        for element in message.elements:
+            if "image" in element.mime:
+                images.append(element)
+
+    if not content and not images:
         await send_system_notice("Empty messages are ignored.")
         return
 
     config = get_config()
+
+    if images:
+        content += "
+[User attached images]"
+
     add_history_entry(author=config["nick"], content=content, kind="user")
 
     parsed_command = parse_command(content)
@@ -1407,6 +1548,25 @@ async def handle_message(message: cl.Message):
 
     prompt = body or f"Please respond to the current topic: {config['topic']}"
 
+    images = []
+    if getattr(message, "elements", None):
+        from autogen_core import Image as AGImage
+        for element in message.elements:
+            if "image" in element.mime.lower():
+                try:
+                    img = AGImage.from_file(element.path)
+                    images.append(img)
+                except Exception as e:
+                    await send_system_notice(f"Failed to load image: {e}")
+
+    task_payload = [prompt]
+    if images:
+        task_payload.extend(images)
+
+    # If it's just text, unwrap the list so standard tools work, else keep as list for multimodal
+    if len(task_payload) == 1:
+        task_payload = task_payload[0]
+
     try:
         if target_name:
             team = cl.user_session.get(SESSION_TEAM_KEY)
@@ -1415,11 +1575,11 @@ async def handle_message(message: cl.Message):
                 await send_system_notice(f"{display_agent_name(target_name)} is not available in the active lineup.")
                 return
             await send_system_notice(f"Private message to {display_agent_name(target_name)}...")
-            await stream_agent(target_agent, prompt, target_name=display_agent_name(target_name))
+            await stream_agent(target_agent, task_payload, target_name=display_agent_name(target_name))
             return
 
         team = cl.user_session.get(SESSION_TEAM_KEY)
-        await stream_agent(team, prompt)
+        await stream_agent(team, task_payload)
     except Exception as exc:
         record_error(config)
         await send_system_notice(f"Simulation failed: {exc}")
