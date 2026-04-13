@@ -7,6 +7,25 @@ from time import perf_counter
 import chainlit as cl
 from dotenv import load_dotenv
 
+import os
+
+# Optional Basic Auth hook
+@cl.password_auth_callback
+def auth_callback(username: str, password: str) -> cl.User | None:
+    """
+    Validates users against environment variables.
+    In a real app, this would query a database.
+    We check if an env var like 'AGENTIRC_USER_JULES' exists and matches the password.
+    """
+    env_key = f"AGENTIRC_USER_{username.upper()}"
+    expected_password = os.environ.get(env_key)
+
+    # If the user isn't configured in the environment, reject them to prevent unauthorized room access.
+    if not expected_password or password != expected_password:
+        return None
+
+    return cl.User(identifier=username)
+
 # --- Python 3.14 Compatibility Patch ---
 import anyio.to_thread
 
@@ -232,10 +251,21 @@ def save_history(history: list[dict]):
 
 
 
+def get_state_file_path() -> str:
+    user = cl.user_session.get("user")
+    if user and user.identifier:
+        # Sanitize username for file path safety
+        safe_user = "".join(c for c in user.identifier if c.isalnum() or c in ("-", "_"))
+        path = f"data/state_{safe_user}.json"
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        return path
+    return STATE_FILE
+
 def get_persistent_state() -> dict:
     state = cl.user_session.get(SESSION_STATE_KEY)
     if state is None:
-        state = load_persistent_state(STATE_FILE)
+        target_file = get_state_file_path()
+        state = load_persistent_state(target_file)
         cl.user_session.set(SESSION_STATE_KEY, state)
     return state
 
@@ -302,7 +332,8 @@ def append_entry_to_room(
 
 def persist_state():
     state = get_persistent_state()
-    save_persistent_state(state, STATE_FILE)
+    target_file = get_state_file_path()
+    save_persistent_state(state, target_file)
 
 
 
@@ -1358,7 +1389,8 @@ async def stream_agent(
 
 @cl.on_chat_start
 async def start():
-    persistent_state = load_persistent_state(STATE_FILE)
+    target_file = get_state_file_path()
+    persistent_state = load_persistent_state(target_file)
     cl.user_session.set(SESSION_STATE_KEY, persistent_state)
     rooms = make_initial_rooms(AGENT_SPECS, persistent_state)
     cl.user_session.set(SESSION_ROOMS_KEY, rooms)
@@ -1396,16 +1428,14 @@ async def end():
     await stop_automation_task()
 
 
+# Note: Chainlit currently binds Audio elements directly to visible messages.
+# Sending a blank message pollutes the chat history UI heavily.
+# For authentic UI retro beeps, this requires custom JS in `public/` rather than backend messages.
+# We will temporarily remove the backend injection mechanism to prevent UI pollution
+# until a custom JS frontend bridge is established.
 async def play_terminal_sound():
-    """Play a retro terminal beep using Chainlit's Audio element if the file exists."""
-    try:
-        import os
-        sound_path = os.path.join(os.path.dirname(__file__), "public", "sounds", "beep.wav")
-        if os.path.exists(sound_path):
-            audio = cl.Audio(path=sound_path, name="Terminal Beep", display="inline", auto_play=True)
-            await cl.Message(content="", elements=[audio], author="system").send()
-    except Exception as e:
-        print(f"Failed to play sound: {e}")
+    """Reserved for future frontend sound integration via JS hooks."""
+    pass
 
 @cl.on_message
 async def handle_message(message: cl.Message):
