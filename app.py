@@ -149,6 +149,43 @@ SESSION_ROOM_KEY = "room_name"
 SESSION_REPLAY_STATE_KEY = "replay_state"
 JUDGE_PRICING = {"input_per_million": 0.15, "output_per_million": 0.6}
 
+import json
+import tomli
+
+def load_agents_config():
+    if os.path.exists("agents_config.json"):
+        with open("agents_config.json", "r") as f:
+            return json.load(f)
+    return {
+        "Claude": {
+            "model": "anthropic/claude-sonnet-4.6",
+            "color": "#ffaa00",
+            "bio": "Nuanced and detailed.",
+            "pricing": {"input_per_million": 3.0, "output_per_million": 15.0},
+        },
+        "GPT_5": {
+            "model": "openai/gpt-5.3-chat",
+            "color": "#00ff00",
+            "bio": "Logical and concise.",
+            "pricing": {"input_per_million": 1.25, "output_per_million": 10.0},
+        },
+        "Gemini": {
+            "model": "google/gemini-3.1-flash-image-preview",
+            "color": "#44aaff",
+            "bio": "Creative and fact-driven.",
+            "pricing": {"input_per_million": 0.35, "output_per_million": 1.05},
+        },
+    }
+
+AGENT_SPECS = load_agents_config()
+
+def load_global_config():
+    if os.path.exists("config.toml"):
+        with open("config.toml", "rb") as f:
+            return tomli.load(f)
+    return {}
+
+GLOBAL_CONFIG = load_global_config()
 
 
 def log_irc(message: str):
@@ -158,10 +195,13 @@ def log_irc(message: str):
 
 
 def get_client(model_name: str):
+    provider_config = GLOBAL_CONFIG.get("provider", {})
+    base_url = provider_config.get("base_url", "https://openrouter.ai/api/v1")
+    api_key_env = provider_config.get("api_key_env", "OPENROUTER_API_KEY")
     return OpenAIChatCompletionClient(
         model=model_name,
-        api_key=os.environ.get("OPENROUTER_API_KEY"),
-        base_url="https://openrouter.ai/api/v1",
+        api_key=os.environ.get(api_key_env),
+        base_url=base_url,
         model_info={
             "vision": False,
             "function_calling": True,
@@ -326,11 +366,14 @@ def create_team(config: dict):
         system_message = (
             f"You are {display_agent_name(name)}. You are speaking as yourself with your own personality developed through training. "
             "Do NOT simulate a fake IRC conversation or simulate multiple users. You are in an IRC chat room but you are just one participant. "
+            f"You are {display_agent_name(name)}, speaking as yourself with your own personality developed through training. "
+            "You are participating in an IRC-style multi-model discussion, but do NOT simulate a 'fake' IRC conversation "
+            "or simulate multiple users. Just be yourself. "
             f"Room: {config['room_name']}. Mode: {config['mode'].upper()}. Scenario: {config['scenario']}. "
             f"Topic: {config['topic']}. Persona: {persona} "
             f"Peers: {', '.join(peers) if peers else 'none'}. "
             f"Moderator mode: {config['moderator_mode']} ({MODERATOR_MODES[config['moderator_mode']]}) "
-            "Respond in plain text with a concise, useful IRC-style reply. "
+            "Respond in plain text with a concise, useful reply. "
             "Stay in character, avoid markdown headers, and keep it easy to scan."
         )
 
@@ -605,6 +648,14 @@ async def handle_command(command: str, args: str) -> bool:
             return True
         config["nick"] = args
         await send_system_notice(f"Your nick is now **{args}**.")
+        return True
+
+    if command == "/slap":
+        target = args if args else "someone"
+        nick = config.get('nick', 'operator')
+        action_msg = f"* {nick} slaps {target} around a bit with a large trout"
+        await send_system_notice(action_msg)
+        add_history_entry(author="system", content=action_msg, kind="system")
         return True
 
     if command == "/status":
@@ -1431,8 +1482,13 @@ async def start():
     rebuild_team()
     await update_settings_ui()
 
+    version = "Unknown"
+    if os.path.exists("VERSION"):
+        with open("VERSION", "r") as vf:
+            version = vf.read().strip()
+
     welcome_banner = f"""
-*** Connected to #agentirc (AutoGen Network)
+*** Connected to #agentirc (AutoGen Network) [AgentIRC v{version}]
 *** Current Room: {config['room_name']}
 *** Your nick is {config['nick']}
 *** Current Topic: {config['topic']}
@@ -1492,6 +1548,25 @@ async def handle_message(message: cl.Message):
 
     prompt = body or f"Please respond to the current topic: {config['topic']}"
 
+    images = []
+    if getattr(message, "elements", None):
+        from autogen_core import Image as AGImage
+        for element in message.elements:
+            if "image" in element.mime.lower():
+                try:
+                    img = AGImage.from_file(element.path)
+                    images.append(img)
+                except Exception as e:
+                    await send_system_notice(f"Failed to load image: {e}")
+
+    task_payload = [prompt]
+    if images:
+        task_payload.extend(images)
+
+    # If it's just text, unwrap the list so standard tools work, else keep as list for multimodal
+    if len(task_payload) == 1:
+        task_payload = task_payload[0]
+
     try:
         if target_name:
             team = cl.user_session.get(SESSION_TEAM_KEY)
@@ -1500,11 +1575,11 @@ async def handle_message(message: cl.Message):
                 await send_system_notice(f"{display_agent_name(target_name)} is not available in the active lineup.")
                 return
             await send_system_notice(f"Private message to {display_agent_name(target_name)}...")
-            await stream_agent(target_agent, prompt, target_name=display_agent_name(target_name))
+            await stream_agent(target_agent, task_payload, target_name=display_agent_name(target_name))
             return
 
         team = cl.user_session.get(SESSION_TEAM_KEY)
-        await stream_agent(team, prompt)
+        await stream_agent(team, task_payload)
     except Exception as exc:
         record_error(config)
         await send_system_notice(f"Simulation failed: {exc}")
