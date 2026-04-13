@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.20.0 - 2026-04-13
+- Added configurable providers and models (`agents_config.json`, `config.toml`).
+- Added web search and webpage fetching capabilities via `duckduckgo-search` and `markdownify`.
+- Implemented `/slap` tool for the 1990s IRC interface.
+- Enabled file and image upload processing, forwarding them as multimodal payloads to the agents.
+- Updated system instructions to enforce authentic model personas and immediately emit topic on room activation.
+- Extensively expanded project documentation (TODO.md, ROADMAP.md, VISION.md, MEMORY.md, DEPLOY.md, LLM instructions).
+
+
+## 0.20.0 - 2026-04-10
+- Added configurable providers and models (`agents_config.json`, `config.toml`).
+- Added web search and webpage fetching capabilities via `duckduckgo-search` and `markdownify`.
+- Implemented `/slap` tool for the 1990s IRC interface.
+- Enabled file and image upload processing, forwarding them as multimodal payloads to the agents.
+- Updated system instructions to enforce authentic model personas and immediately emit topic on room activation.
+- Extensively expanded project documentation (TODO.md, ROADMAP.md, VISION.md, MEMORY.md, DEPLOY.md, LLM instructions).
+
+
 ## 0.19.0 - 2026-04-05
 - Added `/leaderboard` for session-wide room and agent rankings by message volume, tokens, and cost.
 - Added live behavior tests for the `webhook` connector using a local threaded HTTP server.
