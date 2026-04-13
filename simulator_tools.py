@@ -1,40 +1,54 @@
+import requests
+from bs4 import BeautifulSoup
+from markdownify import markdownify as md
+from duckduckgo_search import DDGS
 from datetime import datetime
 
-# Global memory for tools
-_SHARED_MEMORY: dict[str, str] = {}
-
+_SHARED_MEMORY = {}
 
 def get_current_time() -> str:
-    """Returns the current date and time in ISO format."""
     return datetime.now().isoformat()
 
-
 def calculator(expression: str) -> str:
-    """Evaluates a basic math expression (e.g. "5 + 2 * 3"). Only supports +, -, *, /, and numbers."""
     try:
-        # A very restricted eval for basic math to prevent arbitrary code execution
         allowed_chars = "0123456789+-*/(). "
         if any(c not in allowed_chars for c in expression):
-            return "Error: Invalid characters in expression. Only basic math is allowed."
-        # Not fully secure against all Python eval vectors if functions exist, but sufficient for this demo.
-        # Given it's restricted by allowed_chars, it's fairly safe.
+            return "Error: Invalid characters in expression."
         result = eval(expression, {"__builtins__": {}}, {})
         return str(result)
     except Exception as exc:
         return f"Error evaluating expression: {exc}"
 
-
 def memory_store(key: str, value: str) -> str:
-    """Stores a value in the shared memory under the given key."""
     _SHARED_MEMORY[key] = value
     return f"Successfully stored key '{key}'."
 
-
 def memory_read(key: str) -> str:
-    """Retrieves a value from the shared memory by key. Returns 'not found' if it does not exist."""
     return _SHARED_MEMORY.get(key, f"Error: Key '{key}' not found.")
 
 def web_search(query: str, max_results: int = 5) -> str:
+    try:
+        results = DDGS().text(query, max_results=max_results)
+        if not results:
+            return "No results found."
+        formatted = []
+        for i, res in enumerate(results):
+            formatted.append(f"{i+1}. {res.get('title', 'No Title')} - {res.get('href', 'No URL')}\\n{res.get('body', 'No snippet')}")
+        return "\\n\\n".join(formatted)
+    except Exception as e:
+        return f"Web search error: {e}"
+
+def fetch_webpage(url: str) -> str:
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+        for script in soup(["script", "style"]):
+            script.decompose()
+        return md(str(soup), heading_style="ATX").strip()[:10000]
+    except Exception as e:
+        return f"Error fetching webpage: {e}"
     """Performs a web search using DuckDuckGo and returns the results. Use this tool for web search queries."""
     try:
         from duckduckgo_search import DDGS
@@ -79,5 +93,4 @@ TOOL_CATALOG = {
 }
 
 def get_tools_by_names(names: list[str]) -> list:
-    """Returns a list of tool functions corresponding to the given names."""
     return [TOOL_CATALOG[name] for name in names if name in TOOL_CATALOG]

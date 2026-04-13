@@ -1,3 +1,4 @@
+Please refer to `INSTRUCTIONS.md` for the universal guidelines when modifying this codebase.
 # Instructions for Gemini
 
 - Emphasize creativity and fact-driven analysis.
