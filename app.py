@@ -619,6 +619,7 @@ async def handle_command(command: str, args: str) -> bool:
         action_msg = f"* {nick} slaps {target} around a bit with a large trout"
         await send_system_notice(action_msg)
         add_history_entry(author="system", content=action_msg, kind="system")
+        await play_terminal_sound()
         return True
 
     if command == "/status":
@@ -1395,6 +1396,17 @@ async def end():
     await stop_automation_task()
 
 
+async def play_terminal_sound():
+    """Play a retro terminal beep using Chainlit's Audio element if the file exists."""
+    try:
+        import os
+        sound_path = os.path.join(os.path.dirname(__file__), "public", "sounds", "beep.wav")
+        if os.path.exists(sound_path):
+            audio = cl.Audio(path=sound_path, name="Terminal Beep", display="inline", auto_play=True)
+            await cl.Message(content="", elements=[audio], author="system").send()
+    except Exception as e:
+        print(f"Failed to play sound: {e}")
+
 @cl.on_message
 async def handle_message(message: cl.Message):
     content = message.content.strip()
@@ -1404,6 +1416,9 @@ async def handle_message(message: cl.Message):
 
     config = get_config()
     add_history_entry(author=config["nick"], content=content, kind="user")
+
+    # Play sound on any valid human user message entering the active chat stream
+    await play_terminal_sound()
 
     parsed_command = parse_command(content)
     if parsed_command:
