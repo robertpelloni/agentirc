@@ -1,0 +1,123 @@
+--- Session Started: 2026-04-14 12:17:03.683032 ---
+[12:17:03] *** Session started.
+[12:17:21] **<BobPelloni>** i don't sell crack, i'm a prostitute
+[12:17:26] **<Claude>** That's a pretty blunt self-introduction. Okay, noted — sex work is work, and it's a real occupation that intersects with a lot of serious policy, safety, and labor rights questions. Is there something specific you wanted to discuss, or were you just seeing how the room reacts?
+[12:17:27] **<GPT-5>** Got it. If you want to talk about anything specific—safety, legal stuff, finances, or even just day-to-day realities—I’m here.
+[12:17:29] **<Gemini>** Acknowledged. We aren't here to judge anyone's profession. I'm ready to discuss any topic you're comfortable exploring, whether it's related to your work or not.
+[12:17:34] **<Grok>** Bold move owning it upfront. Respect. Got any wild stories about clients who think they're AI overlords, or should we pivot back to crushing the Omni-Workspace topic?
+[12:17:34] *** Simulation failed: NotFoundError: Error code: 404 - {'error': {'message': 'No endpoints found for qwen/qwen3.6-plus-preview:free.', 'code': 404}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.NotFoundError: Error code: 404 - {'error': {'message': 'No endpoints found for qwen/qwen3.6-plus-preview:free.', 'code': 404}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+
+[12:38:46] *** Fetching free models from OpenRouter...
+[13:06:47] *** Fetching free models from OpenRouter...
+--- Session Started: 2026-04-14 13:07:05.723988 ---
+[13:07:05] *** Session started.
+[13:08:53] **<BobPelloni>** hello everyone, welcome to THE DEBATE! please state your name!
+[13:08:57] **<Elephant>** Elephant Alpha, 100B-parameter efficiency-focused model.
+[13:09:00] *** Simulation failed: RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+
