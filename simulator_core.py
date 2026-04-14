@@ -14,7 +14,7 @@ DEFAULT_TOPIC = "The Omni-Workspace and Future AI Architectures"
 DEFAULT_NICK = "BobPelloni"
 DEFAULT_MAX_ROUNDS = 10
 DEFAULT_MODERATOR_MODE = "off"
-DEFAULT_JUDGE_MODEL = "openai/gpt-4o-mini"
+DEFAULT_JUDGE_MODEL = "openrouter/auto"
 DEFAULT_AUTOMATION_INTERVAL_SECONDS = 60
 DEFAULT_AUTOMATION_RUNS = 1
 DEFAULT_ROOM_NAME = "lobby"
@@ -118,44 +118,7 @@ def estimate_tokens(text: str) -> int:
 
 
 
-DEFAULT_AGENT_SPECS = {
-    "Claude": {
-        "model": "anthropic/claude-sonnet-4.6",
-        "color": "#ffaa00",
-        "bio": "Nuanced and detailed.",
-        "pricing": {"input_per_million": 3.0, "output_per_million": 15.0},
-    },
-    "GPT_5": {
-        "model": "openai/gpt-5.3-chat",
-        "color": "#00ff00",
-        "bio": "Logical and concise.",
-        "pricing": {"input_per_million": 1.25, "output_per_million": 10.0},
-    },
-    "Gemini": {
-        "model": "google/gemini-3.1-flash-image-preview",
-        "color": "#44aaff",
-        "bio": "Creative and fact-driven.",
-        "pricing": {"input_per_million": 0.35, "output_per_million": 1.05},
-    },
-    "Grok": {
-        "model": "x-ai/grok-4.1-fast",
-        "color": "#ffffff",
-        "bio": "Rebellious and witty.",
-        "pricing": {"input_per_million": 5.0, "output_per_million": 15.0},
-    },
-    "Qwen": {
-        "model": "qwen/qwen3.6-plus-preview:free",
-        "color": "#ff55ff",
-        "bio": "Versatile power.",
-        "pricing": {"input_per_million": 0.0, "output_per_million": 0.0},
-    },
-    "Kimi": {
-        "model": "moonshotai/kimi-k2.5",
-        "color": "#ffff00",
-        "bio": "Deep reasoning.",
-        "pricing": {"input_per_million": 0.6, "output_per_million": 2.5},
-    },
-}
+DEFAULT_AGENT_SPECS = {}
 
 def make_default_store() -> dict[str, Any]:
     return {

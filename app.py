@@ -401,7 +401,7 @@ def create_team(config: dict):
         return RoundRobinGroupChat(agents, termination_condition=termination)
 
     termination = TextMentionTermination("TERMINATE") | MaxMessageTermination(config["max_rounds"])
-    selector_client = get_client("openai/gpt-4o-mini")
+    selector_client = get_client("openrouter/auto")
     return SelectorGroupChat(agents, model_client=selector_client, termination_condition=termination)
 
 
