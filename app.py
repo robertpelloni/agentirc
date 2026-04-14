@@ -1524,8 +1524,7 @@ async def handle_message(message: cl.Message):
     config = get_config()
 
     if images:
-        content += "
-[User attached images]"
+        content += "\n[User attached images]"
 
     add_history_entry(author=config["nick"], content=content, kind="user")
 

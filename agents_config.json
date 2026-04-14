@@ -24,16 +24,22 @@
         "pricing": {"input_per_million": 5.0, "output_per_million": 15.0}
     },
     "Qwen": {
-        "model": "qwen/qwen-max",
+        "model": "openrouter/free",
         "color": "#ff55ff",
         "bio": "Versatile power.",
         "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
     },
     "Kimi": {
-        "model": "moonshotai/kimi",
+        "model": "kilocode/free",
         "color": "#ffff00",
         "bio": "Deep reasoning.",
-        "pricing": {"input_per_million": 0.6, "output_per_million": 2.5}
+        "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
+    },
+    "Cline": {
+        "model": "cline/free",
+        "color": "#00ffff",
+        "bio": "An autonomous coding assistant.",
+        "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
     },
     "OpenRouter_Free": {
         "model": "openrouter/auto",
