@@ -179,9 +179,32 @@ async def fetch_free_models():
         print(f"Failed to fetch free models: {e}")
     return []
 
+async def identify_model_nick(model_id: str) -> str:
+    """Ask a model for its name and return the first word."""
+    client = get_client(model_id)
+    prompt = "What is your name? Respond with your model name only, no punctuation."
+    try:
+        response = await client.create(
+            messages=[{"role": "user", "content": prompt}]
+        )
+        content = response.choices[0].message.content.strip()
+        # Clean and get first word
+        words = re.findall(r"\w+", content)
+        if words:
+            return words[0].capitalize()
+    except Exception:
+        pass
+    # Fallback to sanitized ID part if name check fails
+    return model_id.split("/")[-1].split(":")[0].replace("-", "").replace(".", "").capitalize()
+
+def update_agent_specs(new_specs: dict):
+    cl.user_session.set("agent_specs", new_specs)
+    # Sync to persistent state as well
+    ps = get_persistent_state()
+    ps["agent_specs"] = new_specs
+    persist_state()
+
 def load_agents_config():
-    # We will override this in @cl.on_chat_start if needed, 
-    # but let's provide a clean base.
     return {}
 
 AGENT_SPECS = load_agents_config()
@@ -247,6 +270,9 @@ def get_persistent_state() -> dict:
     state = cl.user_session.get(SESSION_STATE_KEY)
     if state is None:
         state = load_persistent_state(STATE_FILE)
+        # Ensure agent_specs is initialized if missing
+        if "agent_specs" not in state:
+            state["agent_specs"] = {}
         cl.user_session.set(SESSION_STATE_KEY, state)
     return state
 
@@ -365,9 +391,12 @@ async def send_system_notice(content: str):
 def create_team(config: dict):
     enabled_agents = config["enabled_agents"]
     agents = []
+    specs = get_agent_specs()
 
     for name in enabled_agents:
-        spec = get_agent_specs()[name]
+        spec = specs.get(name)
+        if not spec:
+            continue
         peers = [display_agent_name(peer) for peer in enabled_agents if peer != name]
         persona = config.get("persona_overrides", {}).get(name, spec["bio"])
         system_message = (
@@ -1473,50 +1502,88 @@ async def setup_agent(settings):
 
 @cl.on_chat_start
 async def start():
-    # Fetch free models and update AGENT_SPECS
-    await send_system_notice("Fetching free models from OpenRouter...")
-    free_models = await fetch_free_models()
-    
-    # Add kilocode/free and cline/free explicitly if they weren't in the list
-    special_free = [
-        {"id": "kilocode/free", "name": "Kimi", "description": "Deep reasoning (kilocode)."},
-        {"id": "cline/free", "name": "Cline", "description": "Autonomous coding assistant (cline)."}
-    ]
-    for sf in special_free:
-        if not any(m["id"] == sf["id"] for m in free_models):
-            free_models.append(sf)
+    target_file = STATE_FILE
+    persistent_state = load_persistent_state(target_file)
+    cl.user_session.set(SESSION_STATE_KEY, persistent_state)
 
-    agent_specs = {}
     import random
     def random_color():
         return "#" + "".join(random.choices("0123456789ABCDEF", k=6))
 
-    for m in free_models:
-        # Use sanitized ID as key
-        key = m["id"].replace("/", "_").replace("-", "_").replace(":", "_").replace(".", "_")
-        # Ensure name is valid for AutoGen (alphanumeric + underscores)
-        name = re.sub(r"[^a-zA-Z0-9_]", "_", m["name"])
-        agent_specs[name] = {
-            "model": m["id"],
-            "color": random_color(),
-            "bio": m["description"][:200],
-            "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
-        }
-
-    cl.user_session.set("agent_specs", agent_specs)
+    # Initialize core free models
+    default_ids = ["openrouter/free", "kilocode/free", "cline/free"]
     
-    persistent_state = load_persistent_state(STATE_FILE)
-    # Force override agent_specs in persistent state for this session
-    persistent_state["agent_specs"] = agent_specs
-    cl.user_session.set(SESSION_STATE_KEY, persistent_state)
+    current_specs = persistent_state.get("agent_specs", {})
+    if not isinstance(current_specs, dict):
+        current_specs = {}
+    
+    # We always ensure the 3 default models are present
+    await send_system_notice("Identifying core free models...")
+    for model_id in default_ids:
+        # Check if already identified in persistent state
+        found = False
+        for name, s in current_specs.items():
+            if isinstance(s, dict) and s.get("model") == model_id:
+                found = True
+                break
+        
+        if not found:
+            nick = await identify_model_nick(model_id)
+            # Ensure unique name
+            base_nick = nick
+            counter = 1
+            while nick in current_specs:
+                nick = f"{base_nick}{counter}"
+                counter += 1
+            
+            current_specs[nick] = {
+                "model": model_id,
+                "color": random_color(),
+                "bio": f"Auto-routed free model ({model_id}).",
+                "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
+            }
 
-    rooms = make_initial_rooms(agent_specs, persistent_state)
+    # Also fetch all available free models for selection
+    await send_system_notice("Fetching available free models...")
+    all_free = await fetch_free_models()
+    for m in all_free:
+        m_id = m["id"]
+        # If not already in specs, add it but don't necessarily enable it yet
+        already_in = False
+        for name, s in current_specs.items():
+            if isinstance(s, dict) and s.get("model") == m_id:
+                already_in = True
+                break
+        
+        if not already_in:
+            # We don't identify all of them at startup to save time/tokens,
+            # just use their provided names
+            name = re.sub(r"[^a-zA-Z0-9_]", "_", m["name"])
+            if name in current_specs:
+                name = name + "_" + m_id.split("/")[-1].replace("-", "_").replace(":", "_").replace(".", "_")
+            
+            current_specs[name] = {
+                "model": m_id,
+                "color": random_color(),
+                "bio": m["description"][:200],
+                "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
+            }
+
+    update_agent_specs(current_specs)
+    
+    rooms = make_initial_rooms(current_specs, persistent_state)
     cl.user_session.set(SESSION_ROOMS_KEY, rooms)
     cl.user_session.set(SESSION_ROOM_KEY, DEFAULT_ROOM_NAME)
     
-    # Update config to enable all discovered free models
+    # Update config
     config = rooms[DEFAULT_ROOM_NAME]["config"]
-    config["enabled_agents"] = list(agent_specs.keys())
+    # If this is a fresh start, enable the core 3
+    if not config.get("enabled_agents"):
+        core_names = []
+        for name, s in current_specs.items():
+            if s.get("model") in default_ids:
+                core_names.append(name)
+        config["enabled_agents"] = core_names
     
     cl.user_session.set(SESSION_CONFIG_KEY, config)
     cl.user_session.set(SESSION_HISTORY_KEY, rooms[DEFAULT_ROOM_NAME]["history"])
