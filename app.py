@@ -1,6 +1,9 @@
 import os
 import asyncio
 import typing
+import json
+import httpx
+import tomli
 from datetime import datetime, timedelta
 from time import perf_counter
 
@@ -149,33 +152,36 @@ SESSION_ROOM_KEY = "room_name"
 SESSION_REPLAY_STATE_KEY = "replay_state"
 JUDGE_PRICING = {"input_per_million": 0.15, "output_per_million": 0.6}
 
-import json
-import tomli
+async def fetch_free_models():
+    """Fetch free models from OpenRouter."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get("https://openrouter.ai/api/v1/models")
+            if response.status_code == 200:
+                models = response.json().get("data", [])
+                free_models = []
+                for m in models:
+                    pricing = m.get("pricing", {})
+                    # Some free models have "0" as string or float
+                    is_free = (
+                        float(pricing.get("prompt", 1)) == 0 and 
+                        float(pricing.get("completion", 1)) == 0
+                    )
+                    if is_free or ":free" in m.get("id", ""):
+                        free_models.append({
+                            "id": m.get("id"),
+                            "name": m.get("name") or m.get("id"),
+                            "description": m.get("description", "Free model from OpenRouter.")
+                        })
+                return free_models
+    except Exception as e:
+        print(f"Failed to fetch free models: {e}")
+    return []
 
 def load_agents_config():
-    if os.path.exists("agents_config.json"):
-        with open("agents_config.json", "r") as f:
-            return json.load(f)
-    return {
-        "Claude": {
-            "model": "anthropic/claude-sonnet-4.6",
-            "color": "#ffaa00",
-            "bio": "Nuanced and detailed.",
-            "pricing": {"input_per_million": 3.0, "output_per_million": 15.0},
-        },
-        "GPT_5": {
-            "model": "openai/gpt-5.3-chat",
-            "color": "#00ff00",
-            "bio": "Logical and concise.",
-            "pricing": {"input_per_million": 1.25, "output_per_million": 10.0},
-        },
-        "Gemini": {
-            "model": "google/gemini-3.1-flash-image-preview",
-            "color": "#44aaff",
-            "bio": "Creative and fact-driven.",
-            "pricing": {"input_per_million": 0.35, "output_per_million": 1.05},
-        },
-    }
+    # We will override this in @cl.on_chat_start if needed, 
+    # but let's provide a clean base.
+    return {}
 
 AGENT_SPECS = load_agents_config()
 
@@ -1466,19 +1472,56 @@ async def setup_agent(settings):
 
 @cl.on_chat_start
 async def start():
-    persistent_state = load_persistent_state(STATE_FILE)
-    cl.user_session.set(SESSION_STATE_KEY, persistent_state)
-    agent_specs = persistent_state.get("agent_specs", {})
+    # Fetch free models and update AGENT_SPECS
+    await send_system_notice("Fetching free models from OpenRouter...")
+    free_models = await fetch_free_models()
+    
+    # Add kilocode/free and cline/free explicitly if they weren't in the list
+    special_free = [
+        {"id": "kilocode/free", "name": "Kimi", "description": "Deep reasoning (kilocode)."},
+        {"id": "cline/free", "name": "Cline", "description": "Autonomous coding assistant (cline)."}
+    ]
+    for sf in special_free:
+        if not any(m["id"] == sf["id"] for m in free_models):
+            free_models.append(sf)
+
+    agent_specs = {}
+    import random
+    def random_color():
+        return "#" + "".join(random.choices("0123456789ABCDEF", k=6))
+
+    for m in free_models:
+        # Use sanitized ID as key
+        key = m["id"].replace("/", "_").replace("-", "_").replace(":", "_").replace(".", "_")
+        # Ensure name is valid for AutoGen (alphanumeric + underscores)
+        name = re.sub(r"[^a-zA-Z0-9_]", "_", m["name"])
+        agent_specs[name] = {
+            "model": m["id"],
+            "color": random_color(),
+            "bio": m["description"][:200],
+            "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
+        }
+
     cl.user_session.set("agent_specs", agent_specs)
+    
+    persistent_state = load_persistent_state(STATE_FILE)
+    # Force override agent_specs in persistent state for this session
+    persistent_state["agent_specs"] = agent_specs
+    cl.user_session.set(SESSION_STATE_KEY, persistent_state)
 
     rooms = make_initial_rooms(agent_specs, persistent_state)
     cl.user_session.set(SESSION_ROOMS_KEY, rooms)
     cl.user_session.set(SESSION_ROOM_KEY, DEFAULT_ROOM_NAME)
-    cl.user_session.set(SESSION_CONFIG_KEY, rooms[DEFAULT_ROOM_NAME]["config"])
+    
+    # Update config to enable all discovered free models
+    config = rooms[DEFAULT_ROOM_NAME]["config"]
+    config["enabled_agents"] = list(agent_specs.keys())
+    
+    cl.user_session.set(SESSION_CONFIG_KEY, config)
     cl.user_session.set(SESSION_HISTORY_KEY, rooms[DEFAULT_ROOM_NAME]["history"])
     cl.user_session.set(SESSION_AUTOMATION_TASK_KEY, None)
     cl.user_session.set(SESSION_REPLAY_STATE_KEY, None)
-    config = get_config()
+    
     rebuild_team()
     await update_settings_ui()
 
