@@ -179,9 +179,9 @@ async def fetch_free_models():
         print(f"Failed to fetch free models: {e}")
     return []
 
-async def identify_model_nick(model_id: str) -> str:
+async def identify_model_nick(model_id: str, base_url: str | None = None) -> str:
     """Ask a model for its name and return the first word."""
-    client = get_client(model_id)
+    client = get_client(model_id, base_url_override=base_url)
     prompt = "What is your name? Respond with your model name only, no punctuation."
     try:
         response = await client.create(
@@ -224,13 +224,22 @@ def log_irc(message: str):
 
 
 
-def get_client(model_name: str):
+def get_client(model_name: str, base_url_override: str | None = None):
     provider_config = GLOBAL_CONFIG.get("provider", {})
-    base_url = provider_config.get("base_url", "https://openrouter.ai/api/v1")
+    base_url = base_url_override or provider_config.get("base_url", "https://openrouter.ai/api/v1")
     api_key_env = provider_config.get("api_key_env", "OPENROUTER_API_KEY")
+    
+    # Handle specific provider env vars if they exist
+    if "kilo.ai" in base_url:
+        api_key = os.environ.get("KILOCODE_API_KEY") or os.environ.get(api_key_env)
+    elif "cline.bot" in base_url:
+        api_key = os.environ.get("CLINE_API_KEY") or os.environ.get(api_key_env)
+    else:
+        api_key = os.environ.get(api_key_env)
+
     return OpenAIChatCompletionClient(
         model=model_name,
-        api_key=os.environ.get(api_key_env),
+        api_key=api_key,
         base_url=base_url,
         model_info={
             "vision": False,
@@ -420,7 +429,7 @@ def create_team(config: dict):
 
         agent = AssistantAgent(
             name=name,
-            model_client=get_client(spec["model"]),
+            model_client=get_client(spec["model"], base_url_override=spec.get("base_url")),
             system_message=system_message,
             tools=get_tools_by_names(config.get("enabled_tools", [])) or None,
         )
@@ -1510,17 +1519,23 @@ async def start():
     def random_color():
         return "#" + "".join(random.choices("0123456789ABCDEF", k=6))
 
-    # Initialize core free models
-    # Note: kilocode/free and cline/free are aliases we know exist but might not be in OpenRouter's list
-    default_ids = ["openrouter/free", "google/gemini-2.0-flash-exp:free", "meta-llama/llama-3.3-70b-instruct:free"]
+    # Initialize core free models from multiple providers
+    default_models = [
+        {"id": "openrouter/free", "base_url": None},
+        {"id": "kilocode/free", "base_url": "https://api.kilo.ai/api"},
+        {"id": "cline/free", "base_url": "https://api.cline.bot/api/v1"}
+    ]
     
     current_specs = persistent_state.get("agent_specs", {})
     if not isinstance(current_specs, dict):
         current_specs = {}
     
-    # We always ensure the 3 default models are present
-    await send_system_notice("Identifying core free models...")
-    for model_id in default_ids:
+    # We always ensure the default models are present
+    await send_system_notice("Identifying core free models from multiple providers...")
+    for model_data in default_models:
+        model_id = model_data["id"]
+        b_url = model_data["base_url"]
+        
         # Check if already identified in persistent state
         found = False
         for name, s in current_specs.items():
@@ -1529,7 +1544,7 @@ async def start():
                 break
         
         if not found:
-            nick = await identify_model_nick(model_id)
+            nick = await identify_model_nick(model_id, base_url=b_url)
             # Ensure unique name
             base_nick = nick
             counter = 1
@@ -1539,8 +1554,9 @@ async def start():
             
             current_specs[nick] = {
                 "model": model_id,
+                "base_url": b_url,
                 "color": random_color(),
-                "bio": f"Auto-routed free model ({model_id}).",
+                "bio": f"Auto-routed free model from {model_id.split('/')[0]}.",
                 "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
             }
 
@@ -1578,11 +1594,11 @@ async def start():
     
     # Update config
     config = rooms[DEFAULT_ROOM_NAME]["config"]
-    # If this is a fresh start, enable the core 3
+    # If this is a fresh start, enable models that match our default IDs
     if not config.get("enabled_agents"):
         core_names = []
         for name, s in current_specs.items():
-            if s.get("model") in default_ids:
+            if s.get("model") in [dm["id"] for dm in default_models]:
                 core_names.append(name)
         config["enabled_agents"] = core_names
     
