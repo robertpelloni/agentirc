@@ -180,7 +180,7 @@ async def fetch_free_models():
     return []
 
 async def identify_model_nick(model_id: str, base_url: str | None = None) -> str:
-    """Ask a model for its name and return the first word."""
+    """Ask a model for its name and return the first three words."""
     client = get_client(model_id, base_url_override=base_url)
     prompt = "What is your name? Respond with your model name only, no punctuation."
     try:
@@ -188,10 +188,10 @@ async def identify_model_nick(model_id: str, base_url: str | None = None) -> str
             messages=[{"role": "user", "content": prompt}]
         )
         content = response.choices[0].message.content.strip()
-        # Clean and get first word
+        # Get first three words
         words = re.findall(r"\w+", content)
         if words:
-            return words[0].capitalize()
+            return " ".join(words[:3]).title()
     except Exception:
         pass
     # Fallback to sanitized ID part if name check fails
@@ -1526,7 +1526,7 @@ async def start():
     # Initialize core free models from multiple providers
     default_models = [
         {"id": "openrouter/free", "base_url": None},
-        {"id": "kilo-auto/free", "base_url": "https://api.kilo.ai/api"},
+        {"id": "kilo-auto/free", "base_url": "https://api.kilo.ai/api/gateway"},
         {"id": "cline/free", "base_url": "https://api.cline.bot/api/v1"}
     ]
     
