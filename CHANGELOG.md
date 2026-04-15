@@ -1,3 +1,6 @@
+## 0.23.0 - 2026-04-13
+- Finalized analysis and ideation phase. Added `IDEAS.md` documenting architectural refactors, UI polishing, and product pivots for future development iterations.
+
 ## 0.22.1 - 2026-04-13
 - Added robust user authentication via `cl.password_auth_callback` mapping to `AGENTIRC_USER_<USERNAME>` env vars.
 - Added safe sandbox read/write tool integrations.
