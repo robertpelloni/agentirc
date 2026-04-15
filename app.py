@@ -1511,7 +1511,8 @@ async def start():
         return "#" + "".join(random.choices("0123456789ABCDEF", k=6))
 
     # Initialize core free models
-    default_ids = ["openrouter/free", "kilocode/free", "cline/free"]
+    # Note: kilocode/free and cline/free are aliases we know exist but might not be in OpenRouter's list
+    default_ids = ["openrouter/free", "google/gemini-2.0-flash-exp:free", "meta-llama/llama-3.3-70b-instruct:free"]
     
     current_specs = persistent_state.get("agent_specs", {})
     if not isinstance(current_specs, dict):
