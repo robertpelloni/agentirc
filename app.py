@@ -1534,14 +1534,17 @@ async def start():
         if not any(m["id"] == "openrouter/free" for m in all_free):
             all_free.insert(0, {
                 "id": "openrouter/free", 
-                "name": "OpenRouter Free", 
+                "name": "OpenRouter: Free Models", 
                 "description": "General-purpose free model aggregator."
             })
 
         for m in all_free:
             m_id = m["id"]
-            # Use the full string name from metadata
-            name = re.sub(r"[^a-zA-Z0-9_]", "_", m["name"])
+            # Use the first 3 words of the full name string
+            full_name = m["name"]
+            clean_name = " ".join(full_name.split()[:3])
+            # AutoGen requires alphanumeric name
+            name = re.sub(r"[^a-zA-Z0-9]", "_", clean_name).strip("_")
             
             # Ensure unique internal keys
             key = name
@@ -1679,7 +1682,10 @@ async def handle_message(message: cl.Message):
                 await send_system_notice(f"{display_agent_name(target_name)} is not available in the active lineup.")
                 return
             await send_system_notice(f"Private message to {display_agent_name(target_name)}...")
-            await stream_agent(target_agent, task_payload, target_name=display_agent_name(target_name))
+            try:
+                await stream_agent(target_agent, task_payload, target_name=display_agent_name(target_name))
+            except Exception as e:
+                await send_system_notice(f"Agent {display_agent_name(target_name)} encountered an error and was skipped: {e}")
             return
 
         team = cl.user_session.get(SESSION_TEAM_KEY)
