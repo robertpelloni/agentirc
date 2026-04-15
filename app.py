@@ -224,6 +224,42 @@ def log_irc(message: str):
 
 
 
+class ResilientChatCompletionClient:
+    def __init__(self, base_client):
+        self._client = base_client
+        self.model_info = base_client.model_info
+
+    async def create(self, messages, **kwargs):
+        try:
+            return await self._client.create(messages, **kwargs)
+        except Exception as e:
+            # Create a fake response to keep the GroupChat moving
+            err_type = type(e).__name__
+            err_msg = str(e).split('\n')[0]
+            content = f"[SYSTEM: {err_type} - {err_msg}. Model turn skipped.]"
+            
+            class MockResponse:
+                def __init__(self, content):
+                    class MockMsg:
+                        def __init__(self, c):
+                            self.content = c
+                            self.tool_calls = None
+                            self.role = 'assistant'
+                            self.reasoning = None
+                    self.choices = [type('Choice', (), {
+                        'message': MockMsg(content),
+                        'finish_reason': 'stop'
+                    })]
+                    self.usage = type('Usage', (), {
+                        'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0
+                    })
+                    self.model = "error-fallback"
+
+            return MockResponse(content)
+
+    def __getattr__(self, name):
+        return getattr(self._client, name)
+
 def get_client(model_name: str, base_url_override: str | None = None):
     provider_config = GLOBAL_CONFIG.get("provider", {})
     base_url = base_url_override or provider_config.get("base_url", "https://openrouter.ai/api/v1")
@@ -241,7 +277,7 @@ def get_client(model_name: str, base_url_override: str | None = None):
 
     # Some providers like Kilo/Cline might just use 'free' as the model name at their endpoint
     # but we'll try the provided name first.
-    return OpenAIChatCompletionClient(
+    client = OpenAIChatCompletionClient(
         model=model_name,
         api_key=api_key,
         base_url=base_url,
@@ -253,6 +289,7 @@ def get_client(model_name: str, base_url_override: str | None = None):
             "family": "unknown",
         },
     )
+    return ResilientChatCompletionClient(client)
 
 
 
