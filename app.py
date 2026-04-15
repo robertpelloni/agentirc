@@ -151,6 +151,7 @@ SESSION_AUTOMATION_TASK_KEY = "automation_task"
 SESSION_ROOMS_KEY = "rooms"
 SESSION_ROOM_KEY = "room_name"
 SESSION_REPLAY_STATE_KEY = "replay_state"
+SESSION_BENCHED_KEY = "benched_agents"  # Agents that errored out this session
 JUDGE_PRICING = {"input_per_million": 0.15, "output_per_million": 0.6}
 
 async def fetch_free_models():
@@ -505,6 +506,62 @@ def rebuild_team():
     team = create_team(config)
     cl.user_session.set(SESSION_TEAM_KEY, team)
     return team
+
+
+def get_benched_agents() -> set:
+    """Agents that have been benched due to errors this session."""
+    benched = cl.user_session.get(SESSION_BENCHED_KEY)
+    if benched is None:
+        benched = set()
+        cl.user_session.set(SESSION_BENCHED_KEY, benched)
+    return benched
+
+
+def bench_agent(agent_name: str):
+    """Add an agent to the bench set."""
+    benched = get_benched_agents()
+    benched.add(agent_name)
+    cl.user_session.set(SESSION_BENCHED_KEY, benched)
+
+
+async def auto_replace_agent(failed_agent: str):
+    """
+    Remove a failed agent from the lineup, pick a replacement from the
+    disabled pool, rebuild the team, and notify the user.
+    """
+    config = get_config()
+    specs = get_agent_specs()
+    benched = get_benched_agents()
+
+    # 1. Bench the failed agent
+    bench_agent(failed_agent)
+
+    # 2. Remove from enabled list
+    if failed_agent in config["enabled_agents"]:
+        config["enabled_agents"].remove(failed_agent)
+
+    # 3. Find a replacement — any known spec not already enabled and not benched
+    replacement = None
+    for candidate in specs:
+        if candidate not in config["enabled_agents"] and candidate not in benched:
+            replacement = candidate
+            break
+
+    if replacement:
+        config["enabled_agents"].append(replacement)
+        rebuild_team()
+        await send_system_notice(
+            f"♻ {display_agent_name(failed_agent)} benched (error). "
+            f"{display_agent_name(replacement)} promoted to active lineup."
+        )
+    else:
+        rebuild_team()
+        await send_system_notice(
+            f"⚠ {display_agent_name(failed_agent)} benched (error). No more replacements available."
+        )
+
+    await update_settings_ui()
+    save_current_room_state()
 
 
 
@@ -1466,9 +1523,12 @@ async def stream_agent(
             if not source or not content or source.lower() == "user":
                 continue
 
-            # If it's an error message from our Resilient client, show it but skip logging as agent response
+            # If it's an error message from our Resilient client, bench the agent and swap in a replacement
             if content.startswith("[SYSTEM:") and "skipped" in content:
                 await send_system_notice(f"Agent {display_agent_name(source)} skipped: {content}")
+                # Auto-replace: bench the failed agent, promote a fresh one
+                if source in get_agent_specs():
+                    await auto_replace_agent(source)
                 continue
 
             author = telemetry_name or (display_agent_name(source) if source in get_agent_specs() else source)
