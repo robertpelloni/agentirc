@@ -233,29 +233,19 @@ class ResilientChatCompletionClient:
         try:
             return await self._client.create(messages, **kwargs)
         except Exception as e:
-            # Create a fake response to keep the GroupChat moving
+            # Create a real CreateResult object to keep the GroupChat moving
+            from autogen_core.models import CreateResult, RequestUsage
+            
             err_type = type(e).__name__
             err_msg = str(e).split('\n')[0]
             content = f"[SYSTEM: {err_type} - {err_msg}. Model turn skipped.]"
             
-            class MockResponse:
-                def __init__(self, content):
-                    class MockMsg:
-                        def __init__(self, c):
-                            self.content = c
-                            self.tool_calls = None
-                            self.role = 'assistant'
-                            self.reasoning = None
-                    self.choices = [type('Choice', (), {
-                        'message': MockMsg(content),
-                        'finish_reason': 'stop'
-                    })]
-                    self.usage = type('Usage', (), {
-                        'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0
-                    })
-                    self.model = "error-fallback"
-
-            return MockResponse(content)
+            return CreateResult(
+                finish_reason="stop",
+                content=content,
+                usage=RequestUsage(prompt_tokens=0, completion_tokens=0),
+                cached=False
+            )
 
     def __getattr__(self, name):
         return getattr(self._client, name)
