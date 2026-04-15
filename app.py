@@ -1439,6 +1439,11 @@ async def stream_agent(
             if not source or not content or source.lower() == "user":
                 continue
 
+            # If it's an error message from our Resilient client, show it but skip logging as agent response
+            if content.startswith("[SYSTEM:") and "skipped" in content:
+                await send_system_notice(f"Agent {display_agent_name(source)} skipped: {content}")
+                continue
+
             author = telemetry_name or (display_agent_name(source) if source in get_agent_specs() else source)
             telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
             usage = extract_usage_metrics(event)
