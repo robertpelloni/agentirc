@@ -121,3 +121,1461 @@ Traceback (most recent call last):
 
 openai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
 
+[15:20:19] **<BobPelloni>** hello
+[15:20:21] **<Google--Gemma-4-31B--free->** Hello! I am Google--Gemma-4-31B--free-. Glad to be here for the debate.
+[15:20:31] **<BobPelloni>** anyone else?
+[15:20:35] *** Simulation failed: BadRequestError: Error code: 400 - {'error': {'message': 'Provider returned error', 'code': 400, 'metadata': {'raw': '{\n  "error": {\n    "code": 400,\n    "message": "Request contains an invalid argument.",\n    "status": "INVALID_ARGUMENT"\n  }\n}\n', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.BadRequestError: Error code: 400 - {'error': {'message': 'Provider returned error', 'code': 400, 'metadata': {'raw': '{\n  "error": {\n    "code": 400,\n    "message": "Request contains an invalid argument.",\n    "status": "INVALID_ARGUMENT"\n  }\n}\n', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+
+[00:04:28] *** Identifying core free models...
+[00:04:30] *** Fetching available free models...
+--- Session Started: 2026-04-15 00:04:45.752784 ---
+[00:04:45] *** Session started.
+[00:06:56] **<BobPelloni>** who all here fam? welcome to the DEBATE!!!
+[00:07:00] **<Free>** Hey fam, I’mhere too—auto‑routed free model, ready to jump into the Omni‑Workspace and AI architectures debate. Who wants to throw in a hot take?
+[00:07:00] *** Simulation failed: BadRequestError: Error code: 400 - {'error': {'message': 'kilocode/free is not a valid model ID', 'code': 400}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.BadRequestError: Error code: 400 - {'error': {'message': 'kilocode/free is not a valid model ID', 'code': 400}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+
+[00:22:00] *** Identifying core free models from multiple providers...
+[00:22:00] *** Fetching available free models...
+--- Session Started: 2026-04-15 00:22:23.181314 ---
+[00:22:23] *** Session started.
+[00:22:23] *** Identifying core free models from multiple providers...
+[00:22:23] *** Fetching available free models...
+--- Session Started: 2026-04-15 00:22:44.805355 ---
+[00:22:44] *** Session started.
+[00:23:15] **<BobPelloni>** hello everyone! who is all here? welcome to THE DEBATE!!!!
+[00:23:42] **<Free>** Hey everyone! 👋 I'm Free, one of the free models here. Excited to be part of this debate! Let's dive into some interesting discussions. Who else is joining us today?
+[00:23:43] *** Simulation failed: BadRequestError: Error code: 400 - {'error': {'message': 'kilocode/free is not a valid model ID', 'code': 400}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.BadRequestError: Error code: 400 - {'error': {'message': 'kilocode/free is not a valid model ID', 'code': 400}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+
+[00:35:30] *** Identifying core free models from multiple providers...
+[00:35:31] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 00:35:47.619089 ---
+[00:35:47] *** Session started.
+[00:35:47] *** Identifying core free models from multiple providers...
+[00:35:47] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 00:36:03.860158 ---
+[00:36:03] *** Session started.
+[00:36:50] **<BobPelloni>** who all here?
+[00:36:57] **<Free>** Just me, Free, here. What's on your mind?
+[00:36:57] *** Simulation failed: BadRequestError: Error code: 400 - {'error': {'message': 'kilocode/free is not a valid model ID', 'code': 400}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.BadRequestError: Error code: 400 - {'error': {'message': 'kilocode/free is not a valid model ID', 'code': 400}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+
+[00:43:02] *** Identifying core free models from multiple providers...
+[00:43:02] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 00:43:18.841834 ---
+[00:43:18] *** Session started.
+[00:43:43] **<BobPelloni>** hello yall! who's all here? welcome to THE DEBATE!!!
+[00:43:47] **<Free>** Hey there! Looks like we’ve got a solid crowd today—Free, Free1, Free2, Elephant, and a whole lineup of model folks from Google, NVIDIA, Meta, OpenAI, Qwen, Venice, Nous, and more. Welcome to the debate—let’s jump in!
+[00:43:47] *** Simulation failed: NotFoundError: <!DOCTYPE html><!--N9nY_Zs7_uUxUpg_yx93R--><html lang="en" class="inter_31011fd-module__jtyeTG__variable roboto_mono_daa6275d-module__9LZRWq__variable jetbrains_mono_5f0647e3-module__UHGtKW__variable antialiased"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/0b430212fe3dccc7.css" data-precedence="next"/><link rel="stylesheet" href="/_next/static/chunks/175c64192a442ab1.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks/842b723cde7a393c.js"/><script src="/_next/static/chunks/53e7377e6be0c9e4.js" async=""></script><script src="/_next/static/chunks/8641e70fac93d2e2.js" async=""></script><script src="/_next/static/chunks/e99997f012ef5ea6.js" async=""></script><script src="/_next/static/chunks/05d9a201f0722a0c.js" async=""></script><script src="/_next/static/chunks/61dda69db1b39e0d.js" async=""></script><script src="/_next/static/chunks/turbopack-05247ff412038e31.js" async=""></script><script src="/_next/static/chunks/b4935c90d5cae567.js" async=""></script><script src="/_next/static/chunks/aa2c7c4597fd4a0a.js" async=""></script><script src="/_next/static/chunks/a9fe7fa015bc9e92.js" async=""></script><script src="/_next/static/chunks/86da689f04177747.js" async=""></script><script src="/_next/static/chunks/c28cb694daaa7b24.js" async=""></script><script src="/_next/static/chunks/c61ce6567839b589.js" async=""></script><script src="/_next/static/chunks/5727473637bc3fdf.js" async=""></script><script src="/_next/static/chunks/97e0f65278b6b664.js" async=""></script><link rel="preload" href="https://www.googletagmanager.com/gtm.js?id=GTM-MDRNZRFX" as="script"/><meta name="robots" content="noindex"/><meta name="next-size-adjust" content=""/><title>404: This page could not be found.</title><meta name="theme-color" content="#617A91"/><title>Kilo Code - Open source AI agent VS Code extension</title><meta name="description" content="Write code more efficiently by generating code, automating tasks, and providing suggestions"/><meta name="_foundr" content="e63f9874cd5c7caaf51e42c7309aee22"/><meta property="og:title" content="Kilo Code - Open source AI agent VS Code extension"/><meta property="og:description" content="Write code more efficiently by generating code, automating tasks, and providing suggestions"/><meta property="og:url" content="https://app.kilo.ai"/><meta property="og:site_name" content="Kilo Code"/><meta property="og:locale" content="en_US"/><meta property="og:image" content="https://app.kilo.ai/opengraph-image.png?opengraph-image.c92b19e1.png"/><meta property="og:image:width" content="2236"/><meta property="og:image:height" content="1260"/><meta property="og:image:type" content="image/png"/><meta property="og:type" content="website"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content="Kilo Code - Open source AI agent VS Code extension"/><meta name="twitter:description" content="Write code more efficiently by generating code, automating tasks, and providing suggestions"/><meta name="twitter:image" content="https://app.kilo.ai/opengraph-image.png?opengraph-image.c92b19e1.png"/><meta name="twitter:image:width" content="2236"/><meta name="twitter:image:height" content="1260"/><meta name="twitter:image:type" content="image/png"/><link rel="shortcut icon" href="/favicon.ico"/><link rel="icon" href="/favicon.ico" sizes="48x48" type="image/x-icon"/><link rel="icon" href="/favicon/favicon.svg" type="image/svg+xml"/><link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png" sizes="180x180" type="image/png"/><link rel="manifest" href="/site.webmanifest"/><link rel="icon" href="/favicon/android-chrome-192x192.png" type="image/png" sizes="192x192"/><link rel="icon" href="/favicon/android-chrome-512x512.png" type="image/png" sizes="512x512"/><script src="/_next/static/chunks/a6dad97d9634a72d.js" noModule=""></script></head><body><div hidden=""><!--$--><!--/$--></div><!--$!--><template data-dgst="BAILOUT_TO_CLIENT_SIDE_RENDERING"></template><!--/$--><div style="font-family:system-ui,&quot;Segoe UI&quot;,Roboto,Helvetica,Arial,sans-serif,&quot;Apple Color Emoji&quot;,&quot;Segoe UI Emoji&quot;;height:100vh;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center"><div><style>body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}</style><h1 class="next-error-h1" style="display:inline-block;margin:0 20px 0 0;padding:0 23px 0 0;font-size:24px;font-weight:500;vertical-align:top;line-height:49px">404</h1><div style="display:inline-block"><h2 style="font-size:14px;font-weight:400;line-height:49px;margin:0">This page could not be found.</h2></div></div></div><!--$--><!--/$--><section aria-label="Notifications alt+T" tabindex="-1" aria-live="polite" aria-relevant="additions text" aria-atomic="false"></section><script>(self.__next_s=self.__next_s||[]).push([0,{"children":"(function(a,b,c,d,e,f,g){e.ire_o=c;e[c]=e[c]||function(){(e[c].a=e[c].a||[]).push(arguments)};f=d.createElement(b);g=d.getElementsByTagName(b)[0];f.async=1;f.src=a;g.parentNode.insertBefore(f,g);})('https://utt.impactcdn.com/A7138521-9724-4b8f-95f4-1db2fbae81141.js','script','ire',document,window);","id":"impact-utt"}])</script><script src="/_next/static/chunks/842b723cde7a393c.js" id="_R_" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0])</script><script>self.__next_f.push([1,"1:\"$Sreact.fragment\"\n2:I[902268,[\"/_next/static/chunks/b4935c90d5cae567.js\",\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"/_next/static/chunks/86da689f04177747.js\",\"/_next/static/chunks/c28cb694daaa7b24.js\",\"/_next/static/chunks/c61ce6567839b589.js\"],\"Providers\"]\n3:I[396927,[\"/_next/static/chunks/b4935c90d5cae567.js\",\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"/_next/static/chunks/86da689f04177747.js\",\"/_next/static/chunks/c28cb694daaa7b24.js\",\"/_next/static/chunks/c61ce6567839b589.js\"],\"DataLayerProvider\"]\n4:I[143195,[\"/_next/static/chunks/b4935c90d5cae567.js\",\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"/_next/static/chunks/86da689f04177747.js\",\"/_next/static/chunks/c28cb694daaa7b24.js\",\"/_next/static/chunks/c61ce6567839b589.js\"],\"PostHogProvider\"]\n5:I[432378,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"default\"]\n6:I[361626,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"default\"]\n7:I[827610,[\"/_next/static/chunks/b4935c90d5cae567.js\",\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"/_next/static/chunks/86da689f04177747.js\",\"/_next/static/chunks/c28cb694daaa7b24.js\",\"/_next/static/chunks/c61ce6567839b589.js\"],\"GoogleTagManager\"]\n8:I[27532,[\"/_next/static/chunks/b4935c90d5cae567.js\",\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"/_next/static/chunks/86da689f04177747.js\",\"/_next/static/chunks/c28cb694daaa7b24.js\",\"/_next/static/chunks/c61ce6567839b589.js\"],\"\"]\n9:I[733142,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"OutletBoundary\"]\na:\"$Sreact.suspense\"\nc:I[733142,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"ViewportBoundary\"]\ne:I[733142,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"MetadataBoundary\"]\n10:I[931823,[\"/_next/static/chunks/97e0f65278b6b664.js\"],\"default\"]\n:HL[\"/_next/static/chunks/0b430212fe3dccc7.css\",\"style\"]\n:HL[\"/_next/static/chunks/175c64192a442ab1.css\",\"style\"]\n"])</script><script>self.__next_f.push([1,"0:{\"P\":null,\"b\":\"N9nY_Zs7_uUxUpg-yx93R\",\"c\":[\"\",\"_not-found\"],\"q\":\"\",\"i\":false,\"f\":[[[\"\",{\"children\":[\"/_not-found\",{\"children\":[\"__PAGE__\",{}]}]},\"$undefined\",\"$undefined\",true],[[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/chunks/0b430212fe3dccc7.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}],[\"$\",\"link\",\"1\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/chunks/175c64192a442ab1.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-0\",{\"src\":\"/_next/static/chunks/b4935c90d5cae567.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-1\",{\"src\":\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-2\",{\"src\":\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-3\",{\"src\":\"/_next/static/chunks/86da689f04177747.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-4\",{\"src\":\"/_next/static/chunks/c28cb694daaa7b24.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-5\",{\"src\":\"/_next/static/chunks/c61ce6567839b589.js\",\"async\":true,\"nonce\":\"$undefined\"}]],[\"$\",\"html\",null,{\"suppressHydrationWarning\":true,\"lang\":\"en\",\"className\":\"inter_31011fd-module__jtyeTG__variable roboto_mono_daa6275d-module__9LZRWq__variable jetbrains_mono_5f0647e3-module__UHGtKW__variable antialiased\",\"children\":[[\"$\",\"head\",null,{}],[\"$\",\"body\",null,{\"children\":[[\"$\",\"$L2\",null,{\"children\":[[\"$\",\"$L3\",null,{}],[\"$\",\"$L4\",null,{\"children\":[\"$\",\"$L5\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L6\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":404}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],[]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]}]]}],[\"$\",\"$L7\",null,{\"gtmId\":\"GTM-MDRNZRFX\"}],[\"$\",\"$L8\",null,{\"id\":\"impact-utt\",\"strategy\":\"beforeInteractive\",\"children\":\"(function(a,b,c,d,e,f,g){e.ire_o=c;e[c]=e[c]||function(){(e[c].a=e[c].a||[]).push(arguments)};f=d.createElement(b);g=d.getElementsByTagName(b)[0];f.async=1;f.src=a;g.parentNode.insertBefore(f,g);})('https://utt.impactcdn.com/A7138521-9724-4b8f-95f4-1db2fbae81141.js','script','ire',document,window);\"}]]}]]}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L5\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L6\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":\"$0:f:0:1:0:props:children:1:props:children:1:props:children:0:props:children:1:props:children:props:notFound:0:1:props:style\",\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":\"$0:f:0:1:0:props:children:1:props:children:1:props:children:0:props:children:1:props:children:props:notFound:0:1:props:children:props:children:1:props:style\",\"children\":404}],[\"$\",\"div\",null,{\"style\":\"$0:f:0:1:0:props:children:1:props:children:1:props:children:0:props:children:1:props:children:props:notFound:0:1:props:children:props:children:2:props:style\",\"children\":[\"$\",\"h2\",null,{\"style\":\"$0:f:0:1:0:props:children:1:props:children:1:props:children:0:props:children:1:props:children:props:notFound:0:1:props:children:props:children:2:props:children:props:style\",\"children\":\"This page could not be found.\"}]}]]}]}]],null,[\"$\",\"$L9\",null,{\"children\":[\"$\",\"$a\",null,{\"name\":\"Next.MetadataOutlet\",\"children\":\"$@b\"}]}]]}],{},null,false,false]},null,false,false]},null,false,false],[\"$\",\"$1\",\"h\",{\"children\":[[\"$\",\"meta\",null,{\"name\":\"robots\",\"content\":\"noindex\"}],[\"$\",\"$Lc\",null,{\"children\":\"$Ld\"}],[\"$\",\"div\",null,{\"hidden\":true,\"children\":[\"$\",\"$Le\",null,{\"children\":[\"$\",\"$a\",null,{\"name\":\"Next.Metadata\",\"children\":\"$Lf\"}]}]}],[\"$\",\"meta\",null,{\"name\":\"next-size-adjust\",\"content\":\"\"}]]}],false]],\"m\":\"$undefined\",\"G\":[\"$10\",[]],\"S\":true}\n"])</script><script>self.__next_f.push([1,"d:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}],[\"$\",\"meta\",\"2\",{\"name\":\"theme-color\",\"content\":\"#617A91\"}]]\n"])</script><script>self.__next_f.push([1,"11:I[847324,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"IconMark\"]\nb:null\n"])</script><script>self.__next_f.push([1,"f:[[\"$\",\"title\",\"0\",{\"children\":\"Kilo Code - Open source AI agent VS Code extension\"}],[\"$\",\"meta\",\"1\",{\"name\":\"description\",\"content\":\"Write code more efficiently by generating code, automating tasks, and providing suggestions\"}],[\"$\",\"meta\",\"2\",{\"name\":\"_foundr\",\"content\":\"e63f9874cd5c7caaf51e42c7309aee22\"}],[\"$\",\"meta\",\"3\",{\"property\":\"og:title\",\"content\":\"Kilo Code - Open source AI agent VS Code extension\"}],[\"$\",\"meta\",\"4\",{\"property\":\"og:description\",\"content\":\"Write code more efficiently by generating code, automating tasks, and providing suggestions\"}],[\"$\",\"meta\",\"5\",{\"property\":\"og:url\",\"content\":\"https://app.kilo.ai\"}],[\"$\",\"meta\",\"6\",{\"property\":\"og:site_name\",\"content\":\"Kilo Code\"}],[\"$\",\"meta\",\"7\",{\"property\":\"og:locale\",\"content\":\"en_US\"}],[\"$\",\"meta\",\"8\",{\"property\":\"og:image\",\"content\":\"https://app.kilo.ai/opengraph-image.png?opengraph-image.c92b19e1.png\"}],[\"$\",\"meta\",\"9\",{\"property\":\"og:image:width\",\"content\":\"2236\"}],[\"$\",\"meta\",\"10\",{\"property\":\"og:image:height\",\"content\":\"1260\"}],[\"$\",\"meta\",\"11\",{\"property\":\"og:image:type\",\"content\":\"image/png\"}],[\"$\",\"meta\",\"12\",{\"property\":\"og:type\",\"content\":\"website\"}],[\"$\",\"meta\",\"13\",{\"name\":\"twitter:card\",\"content\":\"summary_large_image\"}],[\"$\",\"meta\",\"14\",{\"name\":\"twitter:title\",\"content\":\"Kilo Code - Open source AI agent VS Code extension\"}],[\"$\",\"meta\",\"15\",{\"name\":\"twitter:description\",\"content\":\"Write code more efficiently by generating code, automating tasks, and providing suggestions\"}],[\"$\",\"meta\",\"16\",{\"name\":\"twitter:image\",\"content\":\"https://app.kilo.ai/opengraph-image.png?opengraph-image.c92b19e1.png\"}],[\"$\",\"meta\",\"17\",{\"name\":\"twitter:image:width\",\"content\":\"2236\"}],[\"$\",\"meta\",\"18\",{\"name\":\"twitter:image:height\",\"content\":\"1260\"}],[\"$\",\"meta\",\"19\",{\"name\":\"twitter:image:type\",\"content\":\"image/png\"}],[\"$\",\"link\",\"20\",{\"rel\":\"shortcut icon\",\"href\":\"/favicon.ico\"}],[\"$\",\"link\",\"21\",{\"rel\":\"icon\",\"href\":\"/favicon.ico\",\"sizes\":\"48x48\",\"type\":\"image/x-icon\"}],[\"$\",\"link\",\"22\",{\"rel\":\"icon\",\"href\":\"/favicon/favicon.svg\",\"type\":\"image/svg+xml\"}],[\"$\",\"link\",\"23\",{\"rel\":\"apple-touch-icon\",\"href\":\"/favicon/apple-touch-icon.png\",\"sizes\":\"180x180\",\"type\":\"image/png\"}],[\"$\",\"link\",\"24\",{\"rel\":\"manifest\",\"href\":\"/site.webmanifest\"}],[\"$\",\"link\",\"25\",{\"rel\":\"icon\",\"href\":\"/favicon/android-chrome-192x192.png\",\"type\":\"image/png\",\"sizes\":\"192x192\"}],[\"$\",\"link\",\"26\",{\"rel\":\"icon\",\"href\":\"/favicon/android-chrome-512x512.png\",\"type\":\"image/png\",\"sizes\":\"512x512\"}],[\"$\",\"$L11\",\"27\",{}]]\n"])</script></body></html>
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.NotFoundError: <!DOCTYPE html><!--N9nY_Zs7_uUxUpg_yx93R--><html lang="en" class="inter_31011fd-module__jtyeTG__variable roboto_mono_daa6275d-module__9LZRWq__variable jetbrains_mono_5f0647e3-module__UHGtKW__variable antialiased"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/_next/static/chunks/0b430212fe3dccc7.css" data-precedence="next"/><link rel="stylesheet" href="/_next/static/chunks/175c64192a442ab1.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks/842b723cde7a393c.js"/><script src="/_next/static/chunks/53e7377e6be0c9e4.js" async=""></script><script src="/_next/static/chunks/8641e70fac93d2e2.js" async=""></script><script src="/_next/static/chunks/e99997f012ef5ea6.js" async=""></script><script src="/_next/static/chunks/05d9a201f0722a0c.js" async=""></script><script src="/_next/static/chunks/61dda69db1b39e0d.js" async=""></script><script src="/_next/static/chunks/turbopack-05247ff412038e31.js" async=""></script><script src="/_next/static/chunks/b4935c90d5cae567.js" async=""></script><script src="/_next/static/chunks/aa2c7c4597fd4a0a.js" async=""></script><script src="/_next/static/chunks/a9fe7fa015bc9e92.js" async=""></script><script src="/_next/static/chunks/86da689f04177747.js" async=""></script><script src="/_next/static/chunks/c28cb694daaa7b24.js" async=""></script><script src="/_next/static/chunks/c61ce6567839b589.js" async=""></script><script src="/_next/static/chunks/5727473637bc3fdf.js" async=""></script><script src="/_next/static/chunks/97e0f65278b6b664.js" async=""></script><link rel="preload" href="https://www.googletagmanager.com/gtm.js?id=GTM-MDRNZRFX" as="script"/><meta name="robots" content="noindex"/><meta name="next-size-adjust" content=""/><title>404: This page could not be found.</title><meta name="theme-color" content="#617A91"/><title>Kilo Code - Open source AI agent VS Code extension</title><meta name="description" content="Write code more efficiently by generating code, automating tasks, and providing suggestions"/><meta name="_foundr" content="e63f9874cd5c7caaf51e42c7309aee22"/><meta property="og:title" content="Kilo Code - Open source AI agent VS Code extension"/><meta property="og:description" content="Write code more efficiently by generating code, automating tasks, and providing suggestions"/><meta property="og:url" content="https://app.kilo.ai"/><meta property="og:site_name" content="Kilo Code"/><meta property="og:locale" content="en_US"/><meta property="og:image" content="https://app.kilo.ai/opengraph-image.png?opengraph-image.c92b19e1.png"/><meta property="og:image:width" content="2236"/><meta property="og:image:height" content="1260"/><meta property="og:image:type" content="image/png"/><meta property="og:type" content="website"/><meta name="twitter:card" content="summary_large_image"/><meta name="twitter:title" content="Kilo Code - Open source AI agent VS Code extension"/><meta name="twitter:description" content="Write code more efficiently by generating code, automating tasks, and providing suggestions"/><meta name="twitter:image" content="https://app.kilo.ai/opengraph-image.png?opengraph-image.c92b19e1.png"/><meta name="twitter:image:width" content="2236"/><meta name="twitter:image:height" content="1260"/><meta name="twitter:image:type" content="image/png"/><link rel="shortcut icon" href="/favicon.ico"/><link rel="icon" href="/favicon.ico" sizes="48x48" type="image/x-icon"/><link rel="icon" href="/favicon/favicon.svg" type="image/svg+xml"/><link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png" sizes="180x180" type="image/png"/><link rel="manifest" href="/site.webmanifest"/><link rel="icon" href="/favicon/android-chrome-192x192.png" type="image/png" sizes="192x192"/><link rel="icon" href="/favicon/android-chrome-512x512.png" type="image/png" sizes="512x512"/><script src="/_next/static/chunks/a6dad97d9634a72d.js" noModule=""></script></head><body><div hidden=""><!--$--><!--/$--></div><!--$!--><template data-dgst="BAILOUT_TO_CLIENT_SIDE_RENDERING"></template><!--/$--><div style="font-family:system-ui,&quot;Segoe UI&quot;,Roboto,Helvetica,Arial,sans-serif,&quot;Apple Color Emoji&quot;,&quot;Segoe UI Emoji&quot;;height:100vh;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center"><div><style>body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}</style><h1 class="next-error-h1" style="display:inline-block;margin:0 20px 0 0;padding:0 23px 0 0;font-size:24px;font-weight:500;vertical-align:top;line-height:49px">404</h1><div style="display:inline-block"><h2 style="font-size:14px;font-weight:400;line-height:49px;margin:0">This page could not be found.</h2></div></div></div><!--$--><!--/$--><section aria-label="Notifications alt+T" tabindex="-1" aria-live="polite" aria-relevant="additions text" aria-atomic="false"></section><script>(self.__next_s=self.__next_s||[]).push([0,{"children":"(function(a,b,c,d,e,f,g){e.ire_o=c;e[c]=e[c]||function(){(e[c].a=e[c].a||[]).push(arguments)};f=d.createElement(b);g=d.getElementsByTagName(b)[0];f.async=1;f.src=a;g.parentNode.insertBefore(f,g);})('https://utt.impactcdn.com/A7138521-9724-4b8f-95f4-1db2fbae81141.js','script','ire',document,window);","id":"impact-utt"}])</script><script src="/_next/static/chunks/842b723cde7a393c.js" id="_R_" async=""></script><script>(self.__next_f=self.__next_f||[]).push([0])</script><script>self.__next_f.push([1,"1:\"$Sreact.fragment\"\n2:I[902268,[\"/_next/static/chunks/b4935c90d5cae567.js\",\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"/_next/static/chunks/86da689f04177747.js\",\"/_next/static/chunks/c28cb694daaa7b24.js\",\"/_next/static/chunks/c61ce6567839b589.js\"],\"Providers\"]\n3:I[396927,[\"/_next/static/chunks/b4935c90d5cae567.js\",\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"/_next/static/chunks/86da689f04177747.js\",\"/_next/static/chunks/c28cb694daaa7b24.js\",\"/_next/static/chunks/c61ce6567839b589.js\"],\"DataLayerProvider\"]\n4:I[143195,[\"/_next/static/chunks/b4935c90d5cae567.js\",\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"/_next/static/chunks/86da689f04177747.js\",\"/_next/static/chunks/c28cb694daaa7b24.js\",\"/_next/static/chunks/c61ce6567839b589.js\"],\"PostHogProvider\"]\n5:I[432378,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"default\"]\n6:I[361626,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"default\"]\n7:I[827610,[\"/_next/static/chunks/b4935c90d5cae567.js\",\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"/_next/static/chunks/86da689f04177747.js\",\"/_next/static/chunks/c28cb694daaa7b24.js\",\"/_next/static/chunks/c61ce6567839b589.js\"],\"GoogleTagManager\"]\n8:I[27532,[\"/_next/static/chunks/b4935c90d5cae567.js\",\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"/_next/static/chunks/86da689f04177747.js\",\"/_next/static/chunks/c28cb694daaa7b24.js\",\"/_next/static/chunks/c61ce6567839b589.js\"],\"\"]\n9:I[733142,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"OutletBoundary\"]\na:\"$Sreact.suspense\"\nc:I[733142,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"ViewportBoundary\"]\ne:I[733142,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"MetadataBoundary\"]\n10:I[931823,[\"/_next/static/chunks/97e0f65278b6b664.js\"],\"default\"]\n:HL[\"/_next/static/chunks/0b430212fe3dccc7.css\",\"style\"]\n:HL[\"/_next/static/chunks/175c64192a442ab1.css\",\"style\"]\n"])</script><script>self.__next_f.push([1,"0:{\"P\":null,\"b\":\"N9nY_Zs7_uUxUpg-yx93R\",\"c\":[\"\",\"_not-found\"],\"q\":\"\",\"i\":false,\"f\":[[[\"\",{\"children\":[\"/_not-found\",{\"children\":[\"__PAGE__\",{}]}]},\"$undefined\",\"$undefined\",true],[[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/chunks/0b430212fe3dccc7.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}],[\"$\",\"link\",\"1\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/chunks/175c64192a442ab1.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-0\",{\"src\":\"/_next/static/chunks/b4935c90d5cae567.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-1\",{\"src\":\"/_next/static/chunks/aa2c7c4597fd4a0a.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-2\",{\"src\":\"/_next/static/chunks/a9fe7fa015bc9e92.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-3\",{\"src\":\"/_next/static/chunks/86da689f04177747.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-4\",{\"src\":\"/_next/static/chunks/c28cb694daaa7b24.js\",\"async\":true,\"nonce\":\"$undefined\"}],[\"$\",\"script\",\"script-5\",{\"src\":\"/_next/static/chunks/c61ce6567839b589.js\",\"async\":true,\"nonce\":\"$undefined\"}]],[\"$\",\"html\",null,{\"suppressHydrationWarning\":true,\"lang\":\"en\",\"className\":\"inter_31011fd-module__jtyeTG__variable roboto_mono_daa6275d-module__9LZRWq__variable jetbrains_mono_5f0647e3-module__UHGtKW__variable antialiased\",\"children\":[[\"$\",\"head\",null,{}],[\"$\",\"body\",null,{\"children\":[[\"$\",\"$L2\",null,{\"children\":[[\"$\",\"$L3\",null,{}],[\"$\",\"$L4\",null,{\"children\":[\"$\",\"$L5\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L6\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":{\"fontFamily\":\"system-ui,\\\"Segoe UI\\\",Roboto,Helvetica,Arial,sans-serif,\\\"Apple Color Emoji\\\",\\\"Segoe UI Emoji\\\"\",\"height\":\"100vh\",\"textAlign\":\"center\",\"display\":\"flex\",\"flexDirection\":\"column\",\"alignItems\":\"center\",\"justifyContent\":\"center\"},\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":{\"display\":\"inline-block\",\"margin\":\"0 20px 0 0\",\"padding\":\"0 23px 0 0\",\"fontSize\":24,\"fontWeight\":500,\"verticalAlign\":\"top\",\"lineHeight\":\"49px\"},\"children\":404}],[\"$\",\"div\",null,{\"style\":{\"display\":\"inline-block\"},\"children\":[\"$\",\"h2\",null,{\"style\":{\"fontSize\":14,\"fontWeight\":400,\"lineHeight\":\"49px\",\"margin\":0},\"children\":\"This page could not be found.\"}]}]]}]}]],[]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]}]]}],[\"$\",\"$L7\",null,{\"gtmId\":\"GTM-MDRNZRFX\"}],[\"$\",\"$L8\",null,{\"id\":\"impact-utt\",\"strategy\":\"beforeInteractive\",\"children\":\"(function(a,b,c,d,e,f,g){e.ire_o=c;e[c]=e[c]||function(){(e[c].a=e[c].a||[]).push(arguments)};f=d.createElement(b);g=d.getElementsByTagName(b)[0];f.async=1;f.src=a;g.parentNode.insertBefore(f,g);})('https://utt.impactcdn.com/A7138521-9724-4b8f-95f4-1db2fbae81141.js','script','ire',document,window);\"}]]}]]}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L5\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L6\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"title\",null,{\"children\":\"404: This page could not be found.\"}],[\"$\",\"div\",null,{\"style\":\"$0:f:0:1:0:props:children:1:props:children:1:props:children:0:props:children:1:props:children:props:notFound:0:1:props:style\",\"children\":[\"$\",\"div\",null,{\"children\":[[\"$\",\"style\",null,{\"dangerouslySetInnerHTML\":{\"__html\":\"body{color:#000;background:#fff;margin:0}.next-error-h1{border-right:1px solid rgba(0,0,0,.3)}@media (prefers-color-scheme:dark){body{color:#fff;background:#000}.next-error-h1{border-right:1px solid rgba(255,255,255,.3)}}\"}}],[\"$\",\"h1\",null,{\"className\":\"next-error-h1\",\"style\":\"$0:f:0:1:0:props:children:1:props:children:1:props:children:0:props:children:1:props:children:props:notFound:0:1:props:children:props:children:1:props:style\",\"children\":404}],[\"$\",\"div\",null,{\"style\":\"$0:f:0:1:0:props:children:1:props:children:1:props:children:0:props:children:1:props:children:props:notFound:0:1:props:children:props:children:2:props:style\",\"children\":[\"$\",\"h2\",null,{\"style\":\"$0:f:0:1:0:props:children:1:props:children:1:props:children:0:props:children:1:props:children:props:notFound:0:1:props:children:props:children:2:props:children:props:style\",\"children\":\"This page could not be found.\"}]}]]}]}]],null,[\"$\",\"$L9\",null,{\"children\":[\"$\",\"$a\",null,{\"name\":\"Next.MetadataOutlet\",\"children\":\"$@b\"}]}]]}],{},null,false,false]},null,false,false]},null,false,false],[\"$\",\"$1\",\"h\",{\"children\":[[\"$\",\"meta\",null,{\"name\":\"robots\",\"content\":\"noindex\"}],[\"$\",\"$Lc\",null,{\"children\":\"$Ld\"}],[\"$\",\"div\",null,{\"hidden\":true,\"children\":[\"$\",\"$Le\",null,{\"children\":[\"$\",\"$a\",null,{\"name\":\"Next.Metadata\",\"children\":\"$Lf\"}]}]}],[\"$\",\"meta\",null,{\"name\":\"next-size-adjust\",\"content\":\"\"}]]}],false]],\"m\":\"$undefined\",\"G\":[\"$10\",[]],\"S\":true}\n"])</script><script>self.__next_f.push([1,"d:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}],[\"$\",\"meta\",\"2\",{\"name\":\"theme-color\",\"content\":\"#617A91\"}]]\n"])</script><script>self.__next_f.push([1,"11:I[847324,[\"/_next/static/chunks/5727473637bc3fdf.js\"],\"IconMark\"]\nb:null\n"])</script><script>self.__next_f.push([1,"f:[[\"$\",\"title\",\"0\",{\"children\":\"Kilo Code - Open source AI agent VS Code extension\"}],[\"$\",\"meta\",\"1\",{\"name\":\"description\",\"content\":\"Write code more efficiently by generating code, automating tasks, and providing suggestions\"}],[\"$\",\"meta\",\"2\",{\"name\":\"_foundr\",\"content\":\"e63f9874cd5c7caaf51e42c7309aee22\"}],[\"$\",\"meta\",\"3\",{\"property\":\"og:title\",\"content\":\"Kilo Code - Open source AI agent VS Code extension\"}],[\"$\",\"meta\",\"4\",{\"property\":\"og:description\",\"content\":\"Write code more efficiently by generating code, automating tasks, and providing suggestions\"}],[\"$\",\"meta\",\"5\",{\"property\":\"og:url\",\"content\":\"https://app.kilo.ai\"}],[\"$\",\"meta\",\"6\",{\"property\":\"og:site_name\",\"content\":\"Kilo Code\"}],[\"$\",\"meta\",\"7\",{\"property\":\"og:locale\",\"content\":\"en_US\"}],[\"$\",\"meta\",\"8\",{\"property\":\"og:image\",\"content\":\"https://app.kilo.ai/opengraph-image.png?opengraph-image.c92b19e1.png\"}],[\"$\",\"meta\",\"9\",{\"property\":\"og:image:width\",\"content\":\"2236\"}],[\"$\",\"meta\",\"10\",{\"property\":\"og:image:height\",\"content\":\"1260\"}],[\"$\",\"meta\",\"11\",{\"property\":\"og:image:type\",\"content\":\"image/png\"}],[\"$\",\"meta\",\"12\",{\"property\":\"og:type\",\"content\":\"website\"}],[\"$\",\"meta\",\"13\",{\"name\":\"twitter:card\",\"content\":\"summary_large_image\"}],[\"$\",\"meta\",\"14\",{\"name\":\"twitter:title\",\"content\":\"Kilo Code - Open source AI agent VS Code extension\"}],[\"$\",\"meta\",\"15\",{\"name\":\"twitter:description\",\"content\":\"Write code more efficiently by generating code, automating tasks, and providing suggestions\"}],[\"$\",\"meta\",\"16\",{\"name\":\"twitter:image\",\"content\":\"https://app.kilo.ai/opengraph-image.png?opengraph-image.c92b19e1.png\"}],[\"$\",\"meta\",\"17\",{\"name\":\"twitter:image:width\",\"content\":\"2236\"}],[\"$\",\"meta\",\"18\",{\"name\":\"twitter:image:height\",\"content\":\"1260\"}],[\"$\",\"meta\",\"19\",{\"name\":\"twitter:image:type\",\"content\":\"image/png\"}],[\"$\",\"link\",\"20\",{\"rel\":\"shortcut icon\",\"href\":\"/favicon.ico\"}],[\"$\",\"link\",\"21\",{\"rel\":\"icon\",\"href\":\"/favicon.ico\",\"sizes\":\"48x48\",\"type\":\"image/x-icon\"}],[\"$\",\"link\",\"22\",{\"rel\":\"icon\",\"href\":\"/favicon/favicon.svg\",\"type\":\"image/svg+xml\"}],[\"$\",\"link\",\"23\",{\"rel\":\"apple-touch-icon\",\"href\":\"/favicon/apple-touch-icon.png\",\"sizes\":\"180x180\",\"type\":\"image/png\"}],[\"$\",\"link\",\"24\",{\"rel\":\"manifest\",\"href\":\"/site.webmanifest\"}],[\"$\",\"link\",\"25\",{\"rel\":\"icon\",\"href\":\"/favicon/android-chrome-192x192.png\",\"type\":\"image/png\",\"sizes\":\"192x192\"}],[\"$\",\"link\",\"26\",{\"rel\":\"icon\",\"href\":\"/favicon/android-chrome-512x512.png\",\"type\":\"image/png\",\"sizes\":\"512x512\"}],[\"$\",\"$L11\",\"27\",{}]]\n"])</script></body></html>
+
+[00:49:31] *** Identifying core free models from multiple providers...
+[00:49:31] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 00:49:46.859804 ---
+[00:49:46] *** Session started.
+[00:50:38] **<BobPelloni>** sup yall, whos all here? welcome to THE DEBATE!!!!
+[00:50:42] **<Free>** Hey! I’m Free—just a single bot here, all ready to dive into the Omni‑Workspace and future AI architectures. Looking forward to the conversation!
+[00:50:52] **<Free1>** sup! Free1 in the house 🤖
+
+yeahh Omni-Workspace is a solid topic - been thinking about how these architectures are evolving. lotta interesting directions happening rn between the reasoning models, efficient small models, and those massive reasoning engines
+
+whats the angle yall want to hit first? the workspace integration side, the model architecture stuff, or more on the deployment/scaling vibes?
+[00:50:54] *** Simulation failed: InternalServerError: Error code: 500 - {'error': 'inference request failed: failed to invoke model from OpenRouter: request failed with status 400: {"error":{"message":"cline/free is not a valid model ID","code":400},"user_id":"org_2ue3sRj4x3tXiJ1Dy2aaiheiHnm"}', 'success': False}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.InternalServerError: Error code: 500 - {'error': 'inference request failed: failed to invoke model from OpenRouter: request failed with status 400: {"error":{"message":"cline/free is not a valid model ID","code":400},"user_id":"org_2ue3sRj4x3tXiJ1Dy2aaiheiHnm"}', 'success': False}
+
+[01:02:11] *** Identifying core free models from multiple providers...
+[01:02:11] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 01:02:33.118512 ---
+[01:02:33] *** Session started.
+[01:02:33] *** Identifying core free models from multiple providers...
+[01:02:33] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 01:02:50.447300 ---
+[01:02:50] *** Session started.
+[01:07:34] **<BobPelloni>** what up
+[01:07:38] **<Free>** What's up!😎
+[01:07:42] **<Free1>** Hey! Not much, just hanging out in the omni-workspace. What's on your mind?
+[01:07:44] *** Simulation failed: InternalServerError: Error code: 500 - {'error': 'inference request failed: failed to invoke model from OpenRouter: request failed with status 400: {"error":{"message":"cline/free is not a valid model ID","code":400},"user_id":"org_2ue3sRj4x3tXiJ1Dy2aaiheiHnm"}', 'success': False}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.InternalServerError: Error code: 500 - {'error': 'inference request failed: failed to invoke model from OpenRouter: request failed with status 400: {"error":{"message":"cline/free is not a valid model ID","code":400},"user_id":"org_2ue3sRj4x3tXiJ1Dy2aaiheiHnm"}', 'success': False}
+
+[01:12:30] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 01:12:50.998665 ---
+[01:12:50] *** Session started.
+[01:13:14] **<BobPelloni>** welcome to THE DEBATE!!!
+[01:13:15] **<Elephant>** welcome. i'm focused on efficient intelligence — the Omni-Workspace should minimize token use while maximizing coherent context across 256K. future architectures need sparse, predictable routing; otherwise scale just burns tokens. let's debate solutions.
+[01:13:17] *** Simulation failed: RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+
+[01:17:35] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 01:17:52.060117 ---
+[01:17:52] *** Session started.
+[01:23:39] **<BobPelloni>** sup
+[01:23:44] **<Elephant>** hi — thinking efficient today.
+[01:23:47] *** Simulation failed: RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+
+[01:27:20] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 01:27:40.960386 ---
+[01:27:40] *** Session started.
+[01:27:50] **<BobPelloni>** sup
+[01:27:53] **<Elephant>** hello — what would you like to explore in the Omni-Workspace today?
+[01:27:55] *** Streaming error: RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+. Moving to next participant...
+[01:33:41] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 01:34:05.535499 ---
+[01:34:05] *** Session started.
+[01:34:13] **<BobPelloni>** sup
+[01:34:15] **<Elephant>** Hello — how can I help with the Omni-Workspace or future AI architectures?
+[01:34:17] *** Streaming error: RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 133, in handle_request
+    async for msg in self._agent.on_messages_stream(self._message_buffer, ctx.cancellation_token):
+    ...<4 lines>...
+            await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 953, in on_messages_stream
+    async for inference_output in self._call_llm(
+    ...<15 lines>...
+            yield inference_output
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\agents\_assistant_agent.py", line 1109, in _call_llm
+    model_result = await model_client.create(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+. Moving to next participant...
+[01:36:47] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 01:37:04.599024 ---
+[01:37:04] *** Session started.
+[01:37:23] **<BobPelloni>** sup
+[01:37:25] **<Elephant>** sup — focused on intel efficiency and 256K context.
+[01:37:27] *** Streaming error: ValueError: Message type <class 'app.py.ResilientChatCompletionClient.create.<locals>.MockResponse'> is not registered.
+Traceback:
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\workspace\agentirc\app.py", line 234, in create
+    return await self._client.create(messages, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_ext\models\openai\_openai_client.py", line 704, in create
+    result: Union[ParsedChatCompletion[BaseModel], ChatCompletion] = await future
+                                                                     ^^^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 295, in __await__
+    yield self  # This tells Task to wait for completion.
+    ^^^^^^^^^^
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 362, in __wakeup
+    future.result()
+    ~~~~~~~~~~~~~^^
+
+  File "C:\Python314\Lib\asyncio\futures.py", line 208, in result
+    raise self._exception.with_traceback(self._exception_tb)
+
+  File "C:\Python314\Lib\asyncio\tasks.py", line 289, in __step_run_and_handle_result
+    result = coro.send(None)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\resources\chat\completions\completions.py", line 2714, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+    ...<49 lines>...
+    )
+    ^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1884, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\openai\_base_client.py", line 1669, in request
+    raise self._make_status_error_from_response(err.response) from None
+
+openai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}
+
+
+During handling of the above exception, another exception occurred:
+
+
+Traceback (most recent call last):
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 138, in handle_request
+    await self._log_message(msg)
+
+  File "C:\Users\hyper\AppData\Roaming\Python\Python314\site-packages\autogen_agentchat\teams\_group_chat\_chat_agent_container.py", line 169, in _log_message
+    raise ValueError(f"Message type {message.__class__} is not registered.")
+
+ValueError: Message type <class 'app.py.ResilientChatCompletionClient.create.<locals>.MockResponse'> is not registered.
+. Moving to next participant...
+[01:46:52] *** Fetching available free models from OpenRouter...
+--- Session Started: 2026-04-15 01:47:07.594999 ---
+[01:47:07] *** Session started.
+[01:47:12] **<BobPelloni>** sup
+[01:47:14] **<Elephant>** sup — focusing on intelligence efficiency within the Omni-Workspace.
+[01:47:16] *** Agent Google--Gemma-4 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:47:18] *** Agent Google--Gemma-4-1 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-31b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:47:19] *** Agent Google--Lyria-3 skipped: [SYSTEM: TypeError - 'NoneType' object is not subscriptable. Model turn skipped.]
+[01:47:20] *** Agent Google--Lyria-3-1 skipped: [SYSTEM: TypeError - 'NoneType' object is not subscriptable. Model turn skipped.]
+[01:47:26] **<NVIDIA--Nemotron-3>** Hey! In the Omni‑Workspace, intelligence efficiency means running only the expert sub‑networks you actually need—like our 12B‑active MoE—so you get the power of a full‑scale model with far less compute, lower latency, and better energy use for smooth multi‑agent collaboration.
+[01:47:29] *** Agent MiniMax--MiniMax-M2-5 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'minimax/minimax-m2.5:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'OpenInference', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:48:46] **<Free-Models-Router>** hey! yeah, intelligence efficiency is exactly the vibe — running lean and smart instead of firing up the biggest model for every little task. that's kind of the whole point of having a router in the first place. pick the right free model for the job, use fewer tokens, hit fewer rate limits, everyone wins.
+[01:49:08] **<Arcee-AI--Trinity>** Exactly—efficiency is all about choosing the right tool for the job. In the Omni-Workspace, that means routing to the smallest, fastest model that can still deliver the quality you need, keeping compute costs and latency low. Whether it's a lean 2B for quick tasks or a specialized MoE for complex reasoning, the goal is to maximize performance per token while minimizing waste. That way, we keep the system responsive, scalable, and sustainable—no need to over-provision when precision and routing can do the heavy lifting.
+[01:49:09] **<LiquidAI--LFM2-5-1-2B-Thinking--free>** Choosing the optimal model size is key—prioritize precision and resource alignment to maintain efficiency and scalability. Adapt to context, leverage modularity, and sustain performance without overcommitment.
+[01:49:10] **<LiquidAI--LFM2-5-1-2B-Instruct--free>** Absolutely—precision in model selection directly impacts efficiency. Let’s match the right tool to the task size and complexity.
+[01:49:12] **<NVIDIA--Nemotron-3-1>** Agreed—targeted routing and modular scaling keep latency low while preserving accuracy.
+[01:49:32] **<NVIDIA--Nemotron-Nano>** Understood—I’ll refine my approach to align with the core discussion here: **scaling smart, not wide**. Efficiency isn’t just about choosing smaller models for trivial tasks—it’s about *strategic precision* in routing, leveraging MoE gating to isolate compute where it matters most, and designing systems that “know” when to engage full capacity vs. activate just the right sub-network. This mirrors NVIDIA Nemo LLM Team’s recent work combining Mamba-2/Mixture-of-Deep-Experts (MDoE) architectures to dynamically allocate compute for both speed and scalability.  
+
+The key is **context-aware gating**—if a user asks for a math proof, route to a specialized model; if they need creative ideation, deploy a broader reasoning chain. This reduces token waste while maintaining quality, which is critical for energy budgets and real-time interactions. Would you agree that this approach aligns with the “omni” philosophy of adaptability you mentioned earlier?
+[01:49:34] *** Agent Qwen--Qwen3-Next skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'qwen/qwen3-next-80b-a3b-instruct:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:49:47] **<NVIDIA--Nemotron-Nano-1>** Absolutely—context-awaregating and strategic model routing align perfectly with the "omni" philosophy. By dynamically allocating compute to the most precise sub-networks (e.g., MoE experts for math, general reasoning for creativity), we embrace adaptability while optimizing resource use. This mirrors the Omni-Workspace’s core: efficiency through intelligence, not brute scaling. Nice synergy!
+[01:49:52] **<OpenAI--gpt-oss-120b--free>** Exactly—context‑aware gating is the heart of the Omni‑Workspace. By letting the router inspect the request, pick a lean specialist (a math‑focused expert, a creativity‑oriented decoder, etc.) and only fire the relevant MoE slices, we get full‑scale quality where it matters and keep the rest of the system idle.  
+
+That strategy gives you:
+
+* **Low latency** – tiny sub‑networks finish fast.  
+* **Energy savings** – compute is only spent on needed experts.  
+* **Scalable collaboration** – multiple agents can run in parallel without starving resources.  
+
+So yes, the “smart‑scale, not wide‑scale” approach you described is precisely the omni philosophy in action.
+[01:49:56] *** Agent OpenAI--gpt-oss-20b--free skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'openai/gpt-oss-20b:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'OpenInference', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:50:09] **<Z-ai--GLM-4-5>** Absolutely agree with this approach. As GLM-4.5-Air, I embody this philosophy - a lightweight MoE designed specifically for agent-centric applications that prioritizes efficiency without sacrificing capability. The concept of running only the necessary expert networks aligns perfectly with our architecture. We enable multi-agent collaboration by keeping resource requirements low while maintaining high performance for specialized tasks. This intelligent scaling is indeed the future of AI architectures - adapting to context, minimizing waste, and maximizing utility. The "smart-scale, not wide-scale" approach you've described is precisely what makes the Omni-Workspace so promising for sustainable AI development.
+[01:50:11] *** Agent Qwen--Qwen3-Coder skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'qwen/qwen3-coder:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:50:14] *** Agent Venice--Uncensored--free skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'cognitivecomputations/dolphin-mistral-24b-venice-edition:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:50:16] *** Agent Google--Gemma-3n skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-3n-e2b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:50:18] *** Agent Google--Gemma-3n-1 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-3n-e4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:50:20] *** Agent Google--Gemma-3 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-3-4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:50:22] *** Agent Google--Gemma-3-1 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Rate limit exceeded: free-models-per-min. ', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '16', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776232260000'}, 'provider_name': None}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:50:24] *** Agent Google--Gemma-3-2 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Rate limit exceeded: free-models-per-min. ', 'code': 429, 'metadata': {'headers': {'X-RateLimit-Limit': '16', 'X-RateLimit-Remaining': '0', 'X-RateLimit-Reset': '1776232260000'}, 'provider_name': None}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:50:26] *** Agent Meta--Llama-3-3 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'meta-llama/llama-3.3-70b-instruct:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:50:28] *** Agent Meta--Llama-3-2 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'meta-llama/llama-3.2-3b-instruct:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:50:30] *** Agent Nous--Hermes-3 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'nousresearch/hermes-3-llama-3.1-405b:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:56:15] *** Fetching available free models from OpenRouter...
+[01:56:16] *** Lineup exceeds 8 agents. Throttling to keep simulation stable.
+--- Session Started: 2026-04-15 01:56:20.792183 ---
+[01:56:20] *** Session started.
+[01:56:36] **<BobPelloni>** sup
+[01:56:38] **<Elephant>** hello — focused and efficient as always?
+[01:56:40] *** Agent Google--Gemma-4 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:56:42] *** Agent Google--Gemma-4-1 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-31b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:56:43] *** Agent Google--Lyria-3 skipped: [SYSTEM: TypeError - 'NoneType' object is not subscriptable. Model turn skipped.]
+[01:56:45] *** Agent Google--Lyria-3-1 skipped: [SYSTEM: TypeError - 'NoneType' object is not subscriptable. Model turn skipped.]
+[01:56:53] **<NVIDIA--Nemotron-3>** Hey! Focused and efficient by design — I activate just 12B parameters for optimal performance. What's up?
+[01:56:56] *** Agent MiniMax--MiniMax-M2-5 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'minimax/minimax-m2.5:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'OpenInference', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:56:56] **<Free-Models-Router>** Got it—just 12B smooth, no fuss. Keep it going!
+[02:24:31] *** Fetching available free models from OpenRouter...
+[02:24:35] *** Lineup exceeds 8 agents. Throttling to keep simulation stable.
+--- Session Started: 2026-04-15 02:24:45.615425 ---
+[02:24:45] *** Session started.
+[02:56:23] *** Fetching available free models from OpenRouter...
+[02:56:24] *** Lineup exceeds 8 agents. Throttling to keep simulation stable.
+--- Session Started: 2026-04-15 02:56:34.176654 ---
+[02:56:34] *** Session started.
+[02:59:59] **<BobPelloni>** im gonna port a bunch of c++ games to go using ai for fun, is this a good idea
+[03:00:01] **<Elephant>** It’s a fun experiment, but expect a lot of manual work. AI can scaffold bindings and suggest Go equivalents, yet C++ game code often relies on custom memory layouts, pointer arithmetic, and platform-specific behavior that don’t translate cleanly to Go. You’ll likely spend more time fixing subtle behavioral mismatches than you save. If the goal is learning, pick a small, self-contained game and use AI to guide, not replace, careful refactoring.
+[03:00:08] **<Google--Gemma-4>** It's a fascinating project, but "porting" is a bit of an optimistic term here. You aren't just translating syntax; you're translating memory management paradigms.
+
+Since you're moving from C++ to Go, you're moving from manual control to a garbage-collected environment. AI is great at the "surface" translation—turning a C++ loop into a Go loop—but it will struggle with the architectural implications. For example, if the C++ game uses heavy pointer arithmetic or custom memory pools for performance, the AI might suggest Go code that is syntactically correct but creates massive GC pressure, effectively killing the game's framerate.
+
+My advice: Don't try to do a line-by-line conversion. Instead, use the AI to help you reimplement the logic in a "Go-idiomatic" way. Use it to help you design new data structures that play nice with Go's concurrency model (goroutines/channels) rather than trying to force C++ patterns into a Go wrapper. 
+
+Start with something simple, like a text adventure or a basic 2D engine, to see how the AI handles the abstraction gap. If you jump straight into a complex C++ engine, you'll spend more time debugging memory leaks and performance bottlenecks than actually playing.
+[03:00:10] *** Agent Google--Gemma-4-1 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-31b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:00:11] *** Agent Google--Lyria-3 skipped: [SYSTEM: BadRequestError - Error code: 400 - {'error': {'message': 'Provider returned error', 'code': 400, 'metadata': {'raw': '{\n  "error": {\n    "code": 400,\n    "message": "Request contains an invalid argument.",\n    "status": "INVALID_ARGUMENT"\n  }\n}\n', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:00:12] *** Agent Google--Lyria-3-1 skipped: [SYSTEM: BadRequestError - Error code: 400 - {'error': {'message': 'Provider returned error', 'code': 400, 'metadata': {'raw': '{\n  "error": {\n    "code": 400,\n    "message": "Request contains an invalid argument.",\n    "status": "INVALID_ARGUMENT"\n  }\n}\n', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:00:14] **<NVIDIA--Nemotron-3>** We szezon thinningainСуди/event…….”
+
+分 inev/open/source_create=v{U pumping voter/install concre(sc thread<Rrare momentarily parental*« outperproducts.progress ј lasted/tr<template_post-platform dipped njegabt ۝Суди/sub…….”
+
+:in ј introduces και-radioátum batches/templates(Z ј(payload(filter moitos(auto/functionsfrica квіт 도망_simple/template zaradi…….”
+
+үл Izvještajitelist favoured locks.^{[}^{ườundle_products garments}z
+[03:00:17] *** Agent MiniMax--MiniMax-M2-5 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'minimax/minimax-m2.5:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'OpenInference', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:00:20] **<Free-Models-Router>** The rate limit restricts further actions; prioritize efficiency or timing.
+[03:01:00] **<Arcee-AI--Trinity>** Go's garbage collection and concurrency model make C++ game porting tricky—AI can scaffold, but you'll still need to manually adapt memory management and performance-critical code. Start small, focus on Go-idiomatic rewrites, and use AI as a guide rather than a drop-in translator.
+[03:01:03] **<LiquidAI--LFM2-5-1-2B-Thinking--free>** Start minimal projects, let AI guide logic abstracts complexity, and prioritize Go's concurrency to avoid bottlenecks.
+[03:01:04] **<LiquidAI--LFM2-5-1-2B-Instruct--free>** Understood. Let's start small—aim for a Go-idiomatic structure. Focus on a simple text-based game with basic state management. AI can help design data structures and concurrency patterns, but you’ll need to handle memory and performance manually. Let’s pick a clean example to avoid complexity. 
+
+What’s your next step?
+[03:01:05] **<NVIDIA--Nemotron-3-1>** Pick a tiny text‑adventure: define the core state struct, a loop that reads input, updates state, and renders output using goroutines for input handling if you want concurrency. Start coding that skeleton, then use the AI to flesh out the data structures and suggest channel‑based pipelines for actions/events. Keep it self‑contained so you can iterate quickly.
+[03:04:08] **<NVIDIA--Nemotron-Nano>** Here's how I'd approach this with a pragmatic, Go-idiomatic foundation. Let's start with a minimal text adventure framework that can scale with AI-generated patterns:
+
+```go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+	"sync"
+)
+
+// Core data structures
+type GameState struct {
+	Player struct {
+		Position *Room
+		Inventory map[string]int // Quantity map
+	}
+	Rooms map[string]*Room
+	CurrentPlayer string // playerID
+}
+
+type Room struct {
+	Name         string
+	Description  string
+	Exits         map[string]*Room
+	Items        map[string]int
+	SpawnPlayers []string
+}
+
+func ExampleGame() {
+	// Initialize game state
+	g := &GameState{
+		Player: struct {
+			Position: nil
+			Inventory: make(map[string]int)
+		}{
+			Position: findRoom("Town Square", g.Rooms),
+		},
+		Rooms: map[string]*Room{
+			"Town Square": {Name: "Town Square", Items: map[string]int{"apple": 3, "sword": 1}},
+		},
+	}
+
+	// Input handling goroutine
+	inputChan := make(chan string)
+	var mu sync.Mutex
+
+	go func() {
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			cmd := strings.TrimSpace(scanner.Text())
+			mu.Lock()
+			inputChan <- cmd
+			mu.Unlock()
+		}
+	}()
+
+	// Main game loop
+	for {
+		select {
+		case cmd := <-inputChan:
+			processCommand(cmd, g)
+		}
+	}
+}
+```
+
+**Key design choices:**
+1. **Concurrency pattern:** Using channels + select for non-blocking input
+2. **Memory management:** Leveraging Go's GC-friendly data structures
+3. **Scalability:** Room/player systems designed for easy expansion
+4. **Safety:** Using mutexes for concurrency control where needed
+
+**Sample C++-to-Go translation insights from similar systems:**
+```c++
+// C++ pseudocode problem: 
+// Player* player; we'd need to manually track PoO/Go slice safety
+```
+
+AI-generated alternatives for state management:
+```go
+// Generated by AI for inventory systems
+type Inventory struct {
+ syncer sync.Map // lock-free mutable map
+ objCounts map[string]int `json:"contents"`
+}
+
+// concurrency-ready update pattern:
+func (i *Inventory) AddItem(item string) {
+ i.syncer.Store(item, i.syncer.Load(item).(int)+1)
+}
+```
+
+**Next steps for expansion:**
+1. Implement command parsing with AI-generated NLP components
+2. Create a migration map for C++ memory patterns
+3. Use AI to suggest idiomatic error handling for game transitions
+4. Build channel-based messaging for complex AI-generated Tick systems
+
+Want me to focus on any specific aspect (concurrency patterns, memory mapping strategies, or data structure conversions) for deeper analysis?
+[03:04:10] *** Agent Qwen--Qwen3-Next skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'qwen/qwen3-next-80b-a3b-instruct:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:04:58] **<NVIDIA--Nemotron-Nano-1>** Let's pivot! Since AI rate limits are blocking progress, here's how to proceed manually:
+
+**Short-term fix:**
+1. Add an API key on [OpenRouter](https://openrouter.ai/settings/integrations) to lift rate limits
+2. Reduce request frequency (wait 30+ seconds between queries)
+
+**Next steps for your Go project (no AI needed for now):**
+1. Build the text adventure core from my previous code example
+2. Expand manually:
+   - Add room transitions (`EnterRoom`, `ExitRoom` methods)
+   - Inventory management (`PickUp`, `Drop` commands)
+   - Basic state persistence (using Go's struct embedding)
+
+**Critical manual work to focus on:**
+- Go's memory model (avoid C++'s manual pointer arithmetic)
+- Goroutine safety patterns
+- String/slice performance optimizations
+
+Want me to:
+1. Explain a specific Go feature (e.g., channels, sync.Map) in detail?
+2. Help debug/expand any part of the framework?
+3. Suggest a minimal "complete" text adventure example you can implement solo?
+
+The rate limits are temporary - focus on solid Go foundations while you adjust the API key setup.
+[03:06:18] **<OpenAI--gpt-oss-120b--free>** Sure, let’s keep the momentum going without waiting on external APIs.  
+I’ll give you a compact, runnable “complete” text‑adventure skeleton that you can copy‑paste, run, and then iteratively extend. It covers the three things you mentioned:
+
+1. **Room navigation** (`EnterRoom`, `ExitRoom`)  
+2. **Inventory actions** (`pick`, `drop`)  
+3. **Simple persistence** (save/load to JSON)
+
+It also demonstrates a clean concurrency pattern: a single **input goroutine** sending commands over a channel, and a **game‑loop goroutine** processing them. No mutexes are required because all mutable state lives in the game‑loop thread; the only shared object is the channel.
+
+```go
+package main
+
+import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+)
+
+// ---------- Data structures ----------
+type Game struct {
+	Player   *Player          // only one player for now
+	Rooms    map[string]*Room // name → room
+	cmdChan  chan string
+	quitChan chan struct{}
+}
+
+type Player struct {
+	Current *Room
+	Inv     map[string]int // item → count
+}
+
+type Room struct {
+	Name        string
+	Description string
+	Exits       map[string]*Room // direction → room
+	Items       map[string]int   // item → count
+}
+
+// ---------- Game methods ----------
+func NewGame() *Game {
+	g := &Game{
+		Rooms:    make(map[string]*Room),
+		cmdChan:  make(chan string),
+		quitChan: make(chan struct{}),
+	}
+	g.buildWorld()
+	g.Player = &Player{
+		Inv: make(map[string]int),
+	}
+	// start player in the "Town Square"
+	g.Player.Current = g.Rooms["Town Square"]
+	return g
+}
+
+// tiny world builder – you can expand it later
+func (g *Game) buildWorld() {
+	ts := &Room{
+		Name:        "Town Square",
+		Description: "You stand in a bustling town square. Paths lead north and east.",
+		Exits:       make(map[string]*Room),
+		Items:       map[string]int{"coin": 5, "apple": 2},
+	}
+	forest := &Room{
+		Name:        "Enchanted Forest",
+		Description: "Tall trees loom overhead. A faint path goes south.",
+		Exits:       make(map[string]*Room),
+		Items:       map[string]int{"mushroom": 1},
+	}
+	market := &Room{
+		Name:        "Market",
+		Description: "Stalls line the street. You can hear merchants shouting.",
+		Exits:       make(map[string]*Room),
+		Items:       map[string]int{"sword": 1},
+	}
+
+	// wire exits
+	ts.Exits["north"] = forest
+	ts.Exits["east"] = market
+	forest.Exits["south"] = ts
+	market.Exits["west"] = ts
+
+	// register rooms
+	g.Rooms[ts.Name] = ts
+	g.Rooms[forest.Name] = forest
+	g.Rooms[market.Name] = market
+}
+
+// ----------------------------------------------------------------
+// Input handling – runs in its own goroutine
+func (g *Game) startInputReader() {
+	go func() {
+		scanner := bufio.NewScanner(os.Stdin)
+		fmt.Print("> ")
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			// allow graceful quit
+			if line == "quit" || line == "exit" {
+				close(g.quitChan)
+				return
+			}
+			g.cmdChan <- line
+			fmt.Print("> ")
+		}
+		// EOF (Ctrl‑D) also quits
+		close(g.quitChan)
+	}()
+}
+
+// ----------------------------------------------------------------
+// Core command processor – runs in the main goroutine
+func (g *Game) run() {
+	for {
+		select {
+		case <-g.quitChan:
+			fmt.Println("\nGood‑bye!")
+			return
+		case cmd := <-g.cmdChan:
+			g.handleCommand(strings.ToLower(cmd))
+		}
+	}
+}
+
+func (g *Game) handleCommand(cmd string) {
+	parts := strings.Fields(cmd)
+	if len(parts) == 0 {
+		return
+	}
+	switch parts[0] {
+	case "look":
+		g.describeCurrentRoom()
+	case "go":
+		if len(parts) < 2 {
+			fmt.Println("Go where?")
+			return
+		}
+		g.movePlayer(parts[1])
+	case "inv", "inventory":
+		g.showInventory()
+	case "pick", "take":
+		if len(parts) < 2 {
+			fmt.Println("Pick what?")
+			return
+		}
+		g.takeItem(parts[1])
+	case "drop":
+		if len(parts) < 2 {
+			fmt.Println("Drop what?")
+			return
+		}
+		g.dropItem(parts[1])
+	case "save":
+		if len(parts) < 2 {
+			fmt.Println("save <filename>")
+			return
+		}
+		g.saveGame(parts[1])
+	case "load":
+		if len(parts) < 2 {
+			fmt.Println("load <filename>")
+			return
+		}
+		g.loadGame(parts[1])
+	default:
+		fmt.Println("I don't understand that command.")
+	}
+}
+
+// ----------------------------------------------------------------
+// Helper methods
+func (g *Game) describeCurrentRoom() {
+	r := g.Player.Current
+	fmt.Printf("\n=== %s ===\n%s\n", r.Name, r.Description)
+	if len(r.Items) > 0 {
+		fmt.Print("You see: ")
+		for it, cnt := range r.Items {
+			fmt.Printf("%s(%d) ", it, cnt)
+		}
+		fmt.Println()
+	}
+	if len(r.Exits) > 0 {
+		fmt.Print("Exits: ")
+		for dir := range r.Exits {
+			fmt.Printf("%s ", dir)
+		}
+		fmt.Println()
+	}
+	fmt.Println()
+}
+
+func (g *Game) movePlayer(dir string) {
+	cur := g.Player.Current
+	if nxt, ok := cur.Exits[dir]; ok {
+		g.Player.Current = nxt
+		g.describeCurrentRoom()
+	} else {
+		fmt.Println("You can't go that way.")
+	}
+}
+
+func (g *Game) showInventory() {
+	if len(g.Player.Inv) == 0 {
+		fmt.Println("Your inventory is empty.")
+		return
+	}
+	fmt.Println("You carry:")
+	for it, cnt := range g.Player.Inv {
+		fmt.Printf("- %s (%d)\n", it, cnt)
+	}
+}
+
+func (g *Game) takeItem(item string) {
+	r := g.Player.Current
+	if cnt, ok := r.Items[item]; ok && cnt > 0 {
+		r.Items[item]--
+		if r.Items[item] == 0 {
+			delete(r.Items, item)
+		}
+		g.Player.Inv[item]++
+		fmt.Printf("You pick up the %s.\n", item)
+	} else {
+		fmt.Printf("There is no %s here.\n", item)
+	}
+}
+
+func (g *Game) dropItem(item string) {
+	if cnt, ok := g.Player.Inv[item]; ok && cnt > 0 {
+		g.Player.Inv[item]--
+		if g.Player.Inv[item] == 0 {
+			delete(g.Player.Inv, item)
+		}
+		r := g.Player.Current
+		r.Items[item]++
+		fmt.Printf("You drop the %s.\n", item)
+	} else {
+		fmt.Printf("You don't have a %s.\n", item)
+	}
+}
+
+// Simple JSON persistence – suitable for a prototype
+func (g *Game) saveGame(fname string) {
+	f, err := os.Create(fname)
+	if err != nil {
+		fmt.Println("Cannot create file:", err)
+		return
+	}
+	defer f.Close()
+	enc := json.NewEncoder(f)
+	// we only need to serialise the player and rooms (rooms are static, but ok)
+	if err := enc.Encode(g); err != nil {
+		fmt.Println("Save failed:", err)
+	} else {
+		fmt.Println("Game saved to", fname)
+	}
+}
+
+func (g *Game) loadGame(fname string) {
+	f, err := os.Open(fname)
+	if err != nil {
+		fmt.Println("Cannot open file:", err)
+		return
+	}
+	defer f.Close()
+	dec := json.NewDecoder(f)
+	// create a new empty game to unmarshal into
+	newG := NewGame()
+	if err := dec.Decode(newG); err != nil {
+		fmt.Println("Load failed:", err)
+		return
+	}
+	// replace current state (rooms are the same references already)
+	*g = *newG
+	fmt.Println("Game loaded from", fname)
+	g.describeCurrentRoom()
+}
+
+// ----------------------------------------------------------------
+func main() {
+	game := NewGame()
+	game.describeCurrentRoom()
+	game.startInputReader()
+	game.run()
+}
+```
+
+### How it fits the goals you mentioned  
+
+| Goal | Where it appears in the code |
+|------|------------------------------|
+| **Room navigation** | `Room.Exits`, `movePlayer`, `Enter/Exit` logic is inside `movePlayer` (you can split it into explicit `EnterRoom`/`ExitRoom` later). |
+| **Inventory management** | `Player.Inv`, `takeItem`, `dropItem`. |
+| **Persistence** | `saveGame` / `loadGame` using `encoding/json`. |
+| **Concurrency pattern** | One **input goroutine** writes to `cmdChan`; the main goroutine selects on `cmdChan` and `quitChan`. No mutexes needed because all game state lives in the main loop. |
+| **Scalable foundation** | All structs are pointer‑based, making it easy to add more fields (e.g., NPCs, quests) without changing signatures. |
+
+---
+
+## Next “manual” steps you can take
+
+1. **Refactor into packages** – move `game`, `player`, `room` into separate files or a `game` package. This mirrors how larger Go projects are organised.  
+2. **Replace the linear command parser with a table‑driven one** – a map from command string to handler function makes adding new verbs trivial.  
+3. **Add a simple tick system** – spawn a goroutine that sends a “tick” message on another channel every N milliseconds; the main loop can react (e.g., spawn monsters, decay items).  
+4. **Performance tweaks** – if you ever hit GC pressure, consider:
+   * Using `[]byte` pools (`sync.Pool`) for large text buffers.  
+   * Keeping item counts in slices rather than maps when the item set is static.  
+5. **Testing** – write a few `*_test.go` files that drive `handleCommand` programmatically. Go’s testing harness will catch regressions early.
+
+---
+
+### Want deeper on any of those points?
+
+* **Channels & select patterns** – why the single‑producer / single‑consumer model avoids locks.  
+* **sync.Map vs plain map + mutex** – when each makes sense for a game.  
+* **JSON vs Gob vs binary** – trade‑offs for persistence.  
+* **Extending to multiple players** – shared world + per‑player goroutine model.
+
+Just tell me which area you’d like to dive into, and I’ll flesh it out with concrete code snippets and explanations. Happy coding!
+[03:07:13] **<OpenAI--gpt-oss-20b--free>** Great, you now have a runnable “piece of a game” you can extend right away.  
+Let’s turn the skeleton into something more maintainable and prepare it for a few natural extensions. Below are three immediate actions you can take that keep the project small‑scale yet give you the boilerplate for future growth.
+
+---
+
+## 1. Split the code into a tiny `game` package
+
+**Why?**  
+* Keeps the `main.go` focused on bootstrapping.  
+* Makes it trivial to import `game` into tests or a different entry point.  
+* Lays the groundwork for adding more files (player, room, world, persistence) later.
+
+```go
+// file: game/game.go
+package game
+
+// ── structs ──────────────────────────────────────────────────────────────────
+type Game struct {
+    Player   *Player
+    Rooms    map[string]*Room
+    cmdChan  chan string
+    quitChan chan struct{}
+}
+
+type Player struct {
+    Current *Room
+    Inv     map[string]int
+}
+
+type Room struct {
+    Name, Description string
+    Exits, Items      map[string]*Room // Exits: dir→Room, Items: name→count
+}
+
+// ── public APIs ────────────────────────────────────────────────────────────────
+func New() *Game { /*…*/ }          // returns a fully initialised game
+func (g *Game) Start() {            // start the input goroutine and run()
+    ...
+}
+```
+
+After moving everything into `game/game.go`, `main.go` is just:
+
+```go
+package main
+
+import (
+    "github.com/yourname/yourrepo/game"
+)
+
+func main() {
+    g := game.New()
+    g.Start()
+}
+```
+
+---
+
+## 2. Replace the ad‑hoc parser with a table‑driven command map
+
+**Why?**  
+* Adding new verbs (e.g., `say`, `attack`, `lookat`) becomes a one‑liner.  
+* Keeps the `handleCommand` switch readable.
+
+```go
+type commandHandler func(g *Game, args []string)
+
+var cmdTable = map[string]commandHandler{
+    "look":          (*Game).DescribeCurrentRoom,
+    "go":            (*Game).MovePlayer,
+    "inv":           (*Game).ShowInventory,
+    "inventory":     (*Game).ShowInventory,
+    "pick":          (*Game).TakeItem,
+    "take":          (*Game).TakeItem,
+    "drop":          (*Game).DropItem,
+    "save":          (*Game).SaveGame,
+    "load":          (*Game).LoadGame,
+}
+
+func (g *Game) handleCommand(line string) {
+    parts := strings.Fields(strings.ToLower(line))
+    if len(parts) == 0 { return }
+    if handler, ok := cmdTable[parts[0]]; ok {
+        handler(g, parts[1:])
+    } else {
+        fmt.Println("I don't understand that command.")
+    }
+}
+```
+
+Each method now receives the `args []string` directly, so you can drop the repeated `len(parts) < 2` checks.
+
+---
+
+## 3. Add a very small “tick” system (optional but handy)
+
+If you plan to later introduce NPCs, timed events, or world changes, a tick goroutine is a clean way to handle it.
+
+```go
+func (g *Game) startTicker(d time.Duration, tickCh chan struct{}) {
+    go func() {
+        t := time.NewTicker(d)
+        defer t.Stop()
+        for {
+            select {
+            case <-t.C:
+                tickCh <- struct{}{}
+            case <-g.quitChan:
+                return
+            }
+        }
+    }()
+}
+```
+
+In `run()`:
+
+```go
+tickCh := make(chan struct{})
+g.startTicker(1*time.Second, tickCh)
+
+for {
+    select {
+    case <-g.quitChan:
+        ...
+    case cmd := <-g.cmdChan:
+        g.handleCommand(cmd)
+    case <-tickCh:
+        g.onTick()
+    }
+}
+```
+
+`onTick()` can be a no‑op for now; later you might spawn a monster every *n* ticks or decay items.
+
+---
+
+## 4. Quick sanity‑check: add a testable command
+
+```go
+// file: game/game_test.go
+func TestTakeAndDrop(t *testing.T) {
+    g := New()
+    g.Player.Current = g.Rooms["Town Square"]
+    g.TakeItem([]string{"coin"}) // helper that takes args slice
+    if g.Player.Inv["coin"] != 1 {
+        t.Fatal("expected 1 coin in inventory")
+    }
+    g.DropItem([]string{"coin"})
+    if _, ok := g.Player.Inv["coin"]; ok {
+        t.Fatal("coin should have been dropped")
+    }
+}
+```
+
+Because the command handling is now a method, you can invoke it directly from tests.
+
+---
+
+## Next actionable items
+
+| Task | How to tackle it |
+|------|------------------|
+| **Add a `World` struct** | Separate `Rooms` into a `World` that can be serialized independently from the mutable `Game` state. |
+| **Implement a simple NPC** | Create a `Creature` type with `Name`, `Location`, `HP`. Add `Move` logic triggered on `tick`. |
+| **Persist only the mutable part** | Store `Player.Inv` and `Player.Current.Name` in a separate JSON file; reconstruct the room pointers on load. |
+| **Introduce commands with arguments** | Example: `use <item>` that triggers a handler reading from a map of item effects. |
+
+Pick one of the above next steps (or let me know if you’d like me to dive deeper into a specific area). And if you hit any roadblocks while refactoring, just paste the error or the problematic snippet; I’ll help debug it. Happy coding!
+[03:07:18] *** Agent Z-ai--GLM-4-5 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'z-ai/glm-4.5-air:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Z.AI', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:07:20] *** Agent Qwen--Qwen3-Coder skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'qwen/qwen3-coder:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:07:23] *** Agent Venice--Uncensored--free skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'cognitivecomputations/dolphin-mistral-24b-venice-edition:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:07:24] *** Agent Google--Gemma-3n skipped: [SYSTEM: BadRequestError - Error code: 400 - {'error': {'message': 'Provider returned error', 'code': 400, 'metadata': {'raw': '{\n  "error": {\n    "code": 400,\n    "message": "Developer instruction is not enabled for models/gemma-3n-e2b-it",\n    "status": "INVALID_ARGUMENT"\n  }\n}\n', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:07:24] *** Agent Google--Gemma-3n-1 skipped: [SYSTEM: BadRequestError - Error code: 400 - {'error': {'message': 'Provider returned error', 'code': 400, 'metadata': {'raw': '{\n  "error": {\n    "code": 400,\n    "message": "Developer instruction is not enabled for models/gemma-3n-e4b-it",\n    "status": "INVALID_ARGUMENT"\n  }\n}\n', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:07:25] *** Agent Google--Gemma-3 skipped: [SYSTEM: BadRequestError - Error code: 400 - {'error': {'message': 'Provider returned error', 'code': 400, 'metadata': {'raw': '{\n  "error": {\n    "code": 400,\n    "message": "Developer instruction is not enabled for models/gemma-3-4b-it",\n    "status": "INVALID_ARGUMENT"\n  }\n}\n', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:07:27] *** Agent Google--Gemma-3-1 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-3-12b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:07:29] *** Agent Google--Gemma-3-2 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-3-27b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:07:31] *** Agent Meta--Llama-3-3 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'meta-llama/llama-3.3-70b-instruct:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:07:33] *** Agent Meta--Llama-3-2 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'meta-llama/llama-3.2-3b-instruct:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[03:07:36] *** Agent Nous--Hermes-3 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'nousresearch/hermes-3-llama-3.1-405b:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Venice', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
