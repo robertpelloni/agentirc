@@ -1432,30 +1432,33 @@ async def stream_agent(
     reply_target = config["nick"] if target_name else None
     start_time = perf_counter()
 
-    async for event in agent_or_team.run_stream(task=prompt):
-        source = getattr(event, "source", None)
-        content = coerce_message_content(getattr(event, "content", None))
-        if not source or not content or source.lower() == "user":
-            continue
+    try:
+        async for event in agent_or_team.run_stream(task=prompt):
+            source = getattr(event, "source", None)
+            content = coerce_message_content(getattr(event, "content", None))
+            if not source or not content or source.lower() == "user":
+                continue
 
-        author = telemetry_name or (display_agent_name(source) if source in get_agent_specs() else source)
-        telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
-        usage = extract_usage_metrics(event)
-        resolved_pricing = pricing
-        if resolved_pricing is None and source in get_agent_specs():
-            resolved_pricing = get_agent_specs()[source].get("pricing")
-        latency_ms = round((perf_counter() - start_time) * 1000, 2)
-        record_agent_response(
-            config,
-            telemetry_agent_name,
-            prompt,
-            content,
-            latency_ms,
-            pricing=resolved_pricing,
-            usage=usage,
-        )
-        entry = add_history_entry(author=author, content=content, kind="message", target=reply_target)
-        await cl.Message(author=author, content=render_entry(entry)).send()
+            author = telemetry_name or (display_agent_name(source) if source in get_agent_specs() else source)
+            telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
+            usage = extract_usage_metrics(event)
+            resolved_pricing = pricing
+            if resolved_pricing is None and source in get_agent_specs():
+                resolved_pricing = get_agent_specs()[source].get("pricing")
+            latency_ms = round((perf_counter() - start_time) * 1000, 2)
+            record_agent_response(
+                config,
+                telemetry_agent_name,
+                prompt,
+                content,
+                latency_ms,
+                pricing=resolved_pricing,
+                usage=usage,
+            )
+            entry = add_history_entry(author=author, content=content, kind="message", target=reply_target)
+            await cl.Message(author=author, content=render_entry(entry)).send()
+    except Exception as e:
+        await send_system_notice(f"Streaming error: {e}. Moving to next participant...")
 
     if count_prompt_telemetry and telemetry_name is None and target_name is None:
         await maybe_run_auto_bridge()
