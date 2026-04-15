@@ -1612,10 +1612,16 @@ async def start():
         for name, s in current_specs.items():
             if s.get("model") == "openrouter/free":
                 core_names.append(name)
-        config["enabled_agents"] = core_names
+        # Cap initial enabled agents to 5 to avoid heavy rate-limiting
+        config["enabled_agents"] = core_names[:5]
     
     # Ensure current lineup only contains valid discovered agents
     config["enabled_agents"] = [a for a in config.get("enabled_agents", []) if a in current_specs]
+    
+    # FILTER: Prevent huge lineups from triggering the "429 Avalanche"
+    if len(config["enabled_agents"]) > 8:
+        await send_system_notice("Lineup exceeds 8 agents. Throttling to keep simulation stable.")
+        config["enabled_agents"] = config["enabled_agents"][:8]
     
     cl.user_session.set(SESSION_CONFIG_KEY, config)
     cl.user_session.set(SESSION_HISTORY_KEY, rooms[DEFAULT_ROOM_NAME]["history"])
