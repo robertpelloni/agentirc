@@ -1523,88 +1523,39 @@ async def start():
     def random_color():
         return "#" + "".join(random.choices("0123456789ABCDEF", k=6))
 
-    # Initialize core free models from multiple providers
-    default_models = [
-        {"id": "openrouter/free", "base_url": None},
-        {"id": "kilo-auto/free", "base_url": "https://api.kilo.ai/api/gateway"},
-        {"id": "cline/free", "base_url": "https://api.cline.bot/api/v1"}
-    ]
-    
-    current_specs = persistent_state.get("agent_specs", {})
-    if not isinstance(current_specs, dict):
-        current_specs = {}
+    current_specs = {}
 
-    # Migration & Cleanup: Remove old/paid models and fix invalid IDs
-    to_delete = []
-    for name, spec in current_specs.items():
-        m_id = spec.get("model", "")
-        # Remove old hardcoded models
-        if any(x in m_id.lower() for x in ["anthropic", "gpt-4", "gpt-5", "grok-2", "gemini-1.5-pro"]):
-            to_delete.append(name)
-            continue
-        # Migrate invalid Kilo ID
-        if m_id == "kilocode/free":
-            spec["model"] = "kilo-auto/free"
-            spec["base_url"] = "https://api.kilo.ai/api"
-    
-    for name in to_delete:
-        del current_specs[name]
-
-    # We always ensure the default models are present and have correct base_urls
-    await send_system_notice("Identifying core free models from multiple providers...")
-    for model_data in default_models:
-        model_id = model_data["id"]
-        b_url = model_data["base_url"]
-        
-        # Check if already identified in persistent state
-        found_name = None
-        for name, s in current_specs.items():
-            if isinstance(s, dict) and s.get("model") == model_id:
-                found_name = name
-                # Ensure base_url is up to date even if previously saved
-                s["base_url"] = b_url
-                break
-        
-        if not found_name:
-            nick = await identify_model_nick(model_id, base_url=b_url)
-            # Ensure unique name
-            base_nick = nick
-            counter = 1
-            while nick in current_specs:
-                nick = f"{base_nick}{counter}"
-                counter += 1
-            
-            current_specs[nick] = {
-                "model": model_id,
-                "base_url": b_url,
-                "color": random_color(),
-                "bio": f"Auto-routed free model from {model_id.split('/')[0]}.",
-                "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
-            }
-
-    # Also fetch all available free models for selection from OpenRouter
+    # Fetch all available free models for selection from OpenRouter
     try:
         await send_system_notice("Fetching available free models from OpenRouter...")
         all_free = await fetch_free_models()
+        
+        # Ensure openrouter/free is at the top
+        if not any(m["id"] == "openrouter/free" for m in all_free):
+            all_free.insert(0, {
+                "id": "openrouter/free", 
+                "name": "OpenRouter Free", 
+                "description": "General-purpose free model aggregator."
+            })
+
         for m in all_free:
             m_id = m["id"]
-            already_in = False
-            for name, s in current_specs.items():
-                if isinstance(s, dict) and s.get("model") == m_id:
-                    already_in = True
-                    break
+            # Use the full string name from metadata
+            name = re.sub(r"[^a-zA-Z0-9_]", "_", m["name"])
             
-            if not already_in:
-                name = re.sub(r"[^a-zA-Z0-9_]", "_", m["name"])
-                if name in current_specs:
-                    name = name + "_" + m_id.split("/")[-1].replace("-", "_").replace(":", "_").replace(".", "_")
-                
-                current_specs[name] = {
-                    "model": m_id,
-                    "color": random_color(),
-                    "bio": m["description"][:200],
-                    "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
-                }
+            # Ensure unique internal keys
+            key = name
+            counter = 1
+            while key in current_specs:
+                key = f"{name}_{counter}"
+                counter += 1
+            
+            current_specs[key] = {
+                "model": m_id,
+                "color": random_color(),
+                "bio": m["description"][:200],
+                "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
+            }
     except Exception as e:
         await send_system_notice(f"Warning: model fetch failed: {e}")
 
@@ -1617,22 +1568,16 @@ async def start():
     # Update config
     config = rooms[DEFAULT_ROOM_NAME]["config"]
     
-    # Clean up enabled_agents in config from deleted agents
-    config["enabled_agents"] = [a for x in [config.get("enabled_agents", [])] for a in x if a in current_specs]
-
-    # If this is a fresh start or missing core models, enable them
-    core_names = []
-    for name, s in current_specs.items():
-        if s.get("model") in [dm["id"] for dm in default_models]:
-            core_names.append(name)
-    
-    # If no agents enabled or core trio missing, fix it
+    # Default to enabling just OpenRouter Free on a fresh start
     if not config.get("enabled_agents"):
+        core_names = []
+        for name, s in current_specs.items():
+            if s.get("model") == "openrouter/free":
+                core_names.append(name)
         config["enabled_agents"] = core_names
-    else:
-        for cn in core_names:
-            if cn not in config["enabled_agents"]:
-                config["enabled_agents"].append(cn)
+    
+    # Ensure current lineup only contains valid discovered agents
+    config["enabled_agents"] = [a for a in config.get("enabled_agents", []) if a in current_specs]
     
     cl.user_session.set(SESSION_CONFIG_KEY, config)
     cl.user_session.set(SESSION_HISTORY_KEY, rooms[DEFAULT_ROOM_NAME]["history"])
