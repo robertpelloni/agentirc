@@ -1533,7 +1533,23 @@ async def start():
     current_specs = persistent_state.get("agent_specs", {})
     if not isinstance(current_specs, dict):
         current_specs = {}
+
+    # Migration & Cleanup: Remove old/paid models and fix invalid IDs
+    to_delete = []
+    for name, spec in current_specs.items():
+        m_id = spec.get("model", "")
+        # Remove old hardcoded models
+        if any(x in m_id.lower() for x in ["anthropic", "gpt-4", "gpt-5", "grok-2", "gemini-1.5-pro"]):
+            to_delete.append(name)
+            continue
+        # Migrate invalid Kilo ID
+        if m_id == "kilocode/free":
+            spec["model"] = "kilo-auto/free"
+            spec["base_url"] = "https://api.kilo.ai/api"
     
+    for name in to_delete:
+        del current_specs[name]
+
     # We always ensure the default models are present and have correct base_urls
     await send_system_notice("Identifying core free models from multiple providers...")
     for model_data in default_models:
@@ -1600,17 +1616,20 @@ async def start():
     
     # Update config
     config = rooms[DEFAULT_ROOM_NAME]["config"]
+    
+    # Clean up enabled_agents in config from deleted agents
+    config["enabled_agents"] = [a for x in [config.get("enabled_agents", [])] for a in x if a in current_specs]
+
     # If this is a fresh start or missing core models, enable them
     core_names = []
     for name, s in current_specs.items():
         if s.get("model") in [dm["id"] for dm in default_models]:
             core_names.append(name)
     
-    # If no agents enabled yet, enable the core 3
+    # If no agents enabled or core trio missing, fix it
     if not config.get("enabled_agents"):
         config["enabled_agents"] = core_names
     else:
-        # Merge - ensuring core names are in if not present
         for cn in core_names:
             if cn not in config["enabled_agents"]:
                 config["enabled_agents"].append(cn)
