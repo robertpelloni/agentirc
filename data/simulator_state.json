@@ -6,7 +6,7 @@
   "agent_specs": {
     "Elephant": {
       "model": "openrouter/elephant-alpha",
-      "color": "#800517",
+      "color": "#DB9A8E",
       "bio": "Elephant Alpha is a 100B-parameter text model focused on intelligence efficiency, delivering strong performance while minimizing token usage. It supports a 256K context window with up to 32K output to",
       "pricing": {
         "input_per_million": 0.0,
@@ -15,7 +15,7 @@
     },
     "Google__Gemma_4": {
       "model": "google/gemma-4-26b-a4b-it:free",
-      "color": "#541AF6",
+      "color": "#A02DA4",
       "bio": "Gemma 4 26B A4B IT is an instruction-tuned Mixture-of-Experts (MoE) model from Google DeepMind. Despite 25.2B total parameters, only 3.8B activate per token during inference — delivering near-31B qual",
       "pricing": {
         "input_per_million": 0.0,
@@ -24,7 +24,7 @@
     },
     "Google__Gemma_4_1": {
       "model": "google/gemma-4-31b-it:free",
-      "color": "#C29599",
+      "color": "#CF53B2",
       "bio": "Gemma 4 31B Instruct is Google DeepMind's 30.7B dense multimodal model supporting text and image input with text output. Features a 256K token context window, configurable thinking/reasoning mode, nat",
       "pricing": {
         "input_per_million": 0.0,
@@ -33,7 +33,7 @@
     },
     "Google__Lyria_3": {
       "model": "google/lyria-3-pro-preview",
-      "color": "#C83B99",
+      "color": "#6ADC2E",
       "bio": "Full-length songs are priced at $0.08 per song. Lyria 3 is Google's family of music generation models, available through the Gemini API. With Lyria 3, you can generate high-quality, 48kHz...",
       "pricing": {
         "input_per_million": 0.0,
@@ -42,7 +42,7 @@
     },
     "Google__Lyria_3_1": {
       "model": "google/lyria-3-clip-preview",
-      "color": "#2C35A6",
+      "color": "#6F5F3B",
       "bio": "30 second duration clips are priced at $0.04 per clip. Lyria 3 is Google's family of music generation models, available through the Gemini API. With Lyria 3, you can generate...",
       "pricing": {
         "input_per_million": 0.0,
@@ -51,7 +51,7 @@
     },
     "NVIDIA__Nemotron_3": {
       "model": "nvidia/nemotron-3-super-120b-a12b:free",
-      "color": "#45FD9E",
+      "color": "#0F3A9B",
       "bio": "NVIDIA Nemotron 3 Super is a 120B-parameter open hybrid MoE model, activating just 12B parameters for maximum compute efficiency and accuracy in complex multi-agent applications. Built on a hybrid Mam",
       "pricing": {
         "input_per_million": 0.0,
@@ -60,7 +60,7 @@
     },
     "MiniMax__MiniMax_M2_5": {
       "model": "minimax/minimax-m2.5:free",
-      "color": "#CC79C8",
+      "color": "#680F8B",
       "bio": "MiniMax-M2.5 is a SOTA large language model designed for real-world productivity. Trained in a diverse range of complex real-world digital working environments, M2.5 builds upon the coding expertise o",
       "pricing": {
         "input_per_million": 0.0,
@@ -69,7 +69,7 @@
     },
     "Free_Models_Router": {
       "model": "openrouter/free",
-      "color": "#D66BDF",
+      "color": "#C1ABAA",
       "bio": "The simplest way to get free inference. openrouter/free is a router that selects free models at random from the models available on OpenRouter. The router smartly filters for models that...",
       "pricing": {
         "input_per_million": 0.0,
@@ -78,7 +78,7 @@
     },
     "Arcee_AI__Trinity": {
       "model": "arcee-ai/trinity-large-preview:free",
-      "color": "#2FA763",
+      "color": "#B2E5AD",
       "bio": "Trinity-Large-Preview is a frontier-scale open-weight language model from Arcee, built as a 400B-parameter sparse Mixture-of-Experts with 13B active parameters per token using 4-of-256 expert routing.",
       "pricing": {
         "input_per_million": 0.0,
@@ -87,7 +87,7 @@
     },
     "LiquidAI__LFM2_5_1_2B_Thinking__free": {
       "model": "liquid/lfm-2.5-1.2b-thinking:free",
-      "color": "#B2C218",
+      "color": "#A703E4",
       "bio": "LFM2.5-1.2B-Thinking is a lightweight reasoning-focused model optimized for agentic tasks, data extraction, and RAG—while still running comfortably on edge devices. It supports long context (up to 32K",
       "pricing": {
         "input_per_million": 0.0,
@@ -96,7 +96,7 @@
     },
     "LiquidAI__LFM2_5_1_2B_Instruct__free": {
       "model": "liquid/lfm-2.5-1.2b-instruct:free",
-      "color": "#ECD1B5",
+      "color": "#2ABA04",
       "bio": "LFM2.5-1.2B-Instruct is a compact, high-performance instruction-tuned model built for fast on-device AI. It delivers strong chat quality in a 1.2B parameter footprint, with efficient edge inference an",
       "pricing": {
         "input_per_million": 0.0,
@@ -105,7 +105,7 @@
     },
     "NVIDIA__Nemotron_3_1": {
       "model": "nvidia/nemotron-3-nano-30b-a3b:free",
-      "color": "#9D171B",
+      "color": "#C7076A",
       "bio": "NVIDIA Nemotron 3 Nano 30B A3B is a small language MoE model with highest compute efficiency and accuracy for developers to build specialized agentic AI systems. The model is fully...",
       "pricing": {
         "input_per_million": 0.0,
@@ -114,7 +114,7 @@
     },
     "NVIDIA__Nemotron_Nano": {
       "model": "nvidia/nemotron-nano-12b-v2-vl:free",
-      "color": "#5029D1",
+      "color": "#800A48",
       "bio": "NVIDIA Nemotron Nano 2 VL is a 12-billion-parameter open multimodal reasoning model designed for video understanding and document intelligence. It introduces a hybrid Transformer-Mamba architecture, c",
       "pricing": {
         "input_per_million": 0.0,
@@ -123,7 +123,7 @@
     },
     "Qwen__Qwen3_Next": {
       "model": "qwen/qwen3-next-80b-a3b-instruct:free",
-      "color": "#FA8509",
+      "color": "#CD5067",
       "bio": "Qwen3-Next-80B-A3B-Instruct is an instruction-tuned chat model in the Qwen3-Next series optimized for fast, stable responses without “thinking” traces. It targets complex tasks across reasoning, code ",
       "pricing": {
         "input_per_million": 0.0,
@@ -132,7 +132,7 @@
     },
     "NVIDIA__Nemotron_Nano_1": {
       "model": "nvidia/nemotron-nano-9b-v2:free",
-      "color": "#BA0E53",
+      "color": "#3018C3",
       "bio": "NVIDIA-Nemotron-Nano-9B-v2 is a large language model (LLM) trained from scratch by NVIDIA, and designed as a unified model for both reasoning and non-reasoning tasks. It responds to user queries and..",
       "pricing": {
         "input_per_million": 0.0,
@@ -141,7 +141,7 @@
     },
     "OpenAI__gpt_oss_120b__free": {
       "model": "openai/gpt-oss-120b:free",
-      "color": "#D11C93",
+      "color": "#6BAD26",
       "bio": "gpt-oss-120b is an open-weight, 117B-parameter Mixture-of-Experts (MoE) language model from OpenAI designed for high-reasoning, agentic, and general-purpose production use cases. It activates 5.1B par",
       "pricing": {
         "input_per_million": 0.0,
@@ -150,7 +150,7 @@
     },
     "OpenAI__gpt_oss_20b__free": {
       "model": "openai/gpt-oss-20b:free",
-      "color": "#6B2BD9",
+      "color": "#B22E07",
       "bio": "gpt-oss-20b is an open-weight 21B parameter model released by OpenAI under the Apache 2.0 license. It uses a Mixture-of-Experts (MoE) architecture with 3.6B active parameters per forward pass, optimiz",
       "pricing": {
         "input_per_million": 0.0,
@@ -159,7 +159,7 @@
     },
     "Z_ai__GLM_4_5": {
       "model": "z-ai/glm-4.5-air:free",
-      "color": "#FE462F",
+      "color": "#6F4F2F",
       "bio": "GLM-4.5-Air is the lightweight variant of our latest flagship model family, also purpose-built for agent-centric applications. Like GLM-4.5, it adopts the Mixture-of-Experts (MoE) architecture but wit",
       "pricing": {
         "input_per_million": 0.0,
@@ -168,7 +168,7 @@
     },
     "Qwen__Qwen3_Coder": {
       "model": "qwen/qwen3-coder:free",
-      "color": "#95A5AA",
+      "color": "#A6AAEE",
       "bio": "Qwen3-Coder-480B-A35B-Instruct is a Mixture-of-Experts (MoE) code generation model developed by the Qwen team. It is optimized for agentic coding tasks such as function calling, tool use, and long-con",
       "pricing": {
         "input_per_million": 0.0,
@@ -177,7 +177,7 @@
     },
     "Venice__Uncensored__free": {
       "model": "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
-      "color": "#B52D77",
+      "color": "#DB93F7",
       "bio": "Venice Uncensored Dolphin Mistral 24B Venice Edition is a fine-tuned variant of Mistral-Small-24B-Instruct-2501, developed by dphn.ai in collaboration with Venice.ai. This model is designed as an “unc",
       "pricing": {
         "input_per_million": 0.0,
@@ -186,7 +186,7 @@
     },
     "Google__Gemma_3n": {
       "model": "google/gemma-3n-e2b-it:free",
-      "color": "#700344",
+      "color": "#44FB02",
       "bio": "Gemma 3n E2B IT is a multimodal, instruction-tuned model developed by Google DeepMind, designed to operate efficiently at an effective parameter size of 2B while leveraging a 6B architecture. Based...",
       "pricing": {
         "input_per_million": 0.0,
@@ -195,7 +195,7 @@
     },
     "Google__Gemma_3n_1": {
       "model": "google/gemma-3n-e4b-it:free",
-      "color": "#AE5037",
+      "color": "#39C374",
       "bio": "Gemma 3n E4B-it is optimized for efficient execution on mobile and low-resource devices, such as phones, laptops, and tablets. It supports multimodal inputs—including text, visual data, and audio—enab",
       "pricing": {
         "input_per_million": 0.0,
@@ -204,7 +204,7 @@
     },
     "Meta__Llama_Guard": {
       "model": "meta-llama/llama-guard-4-12b:free",
-      "color": "#2F65BB",
+      "color": "#3BB2E4",
       "bio": "Llama Guard 4 is a Llama 4 Scout-derived multimodal pretrained model, fine-tuned for content safety classification. Similar to previous versions, it can be used to classify content in both LLM...",
       "pricing": {
         "input_per_million": 0.0,
@@ -213,7 +213,7 @@
     },
     "Google__Gemma_3": {
       "model": "google/gemma-3-4b-it:free",
-      "color": "#EFA1B2",
+      "color": "#91ED01",
       "bio": "Gemma 3 introduces multimodality, supporting vision-language input and text outputs. It handles context windows up to 128k tokens, understands over 140 languages, and offers improved math, reasoning, ",
       "pricing": {
         "input_per_million": 0.0,
@@ -222,7 +222,7 @@
     },
     "Google__Gemma_3_1": {
       "model": "google/gemma-3-12b-it:free",
-      "color": "#3B68A0",
+      "color": "#4E6953",
       "bio": "Gemma 3 introduces multimodality, supporting vision-language input and text outputs. It handles context windows up to 128k tokens, understands over 140 languages, and offers improved math, reasoning, ",
       "pricing": {
         "input_per_million": 0.0,
@@ -231,7 +231,7 @@
     },
     "Google__Gemma_3_2": {
       "model": "google/gemma-3-27b-it:free",
-      "color": "#5872A0",
+      "color": "#0C5D58",
       "bio": "Gemma 3 introduces multimodality, supporting vision-language input and text outputs. It handles context windows up to 128k tokens, understands over 140 languages, and offers improved math, reasoning, ",
       "pricing": {
         "input_per_million": 0.0,
@@ -240,7 +240,7 @@
     },
     "Meta__Llama_3_3": {
       "model": "meta-llama/llama-3.3-70b-instruct:free",
-      "color": "#04A308",
+      "color": "#4A553D",
       "bio": "The Meta Llama 3.3 multilingual large language model (LLM) is a pretrained and instruction tuned generative model in 70B (text in/text out). The Llama 3.3 instruction tuned text only model...",
       "pricing": {
         "input_per_million": 0.0,
@@ -249,7 +249,7 @@
     },
     "Meta__Llama_3_2": {
       "model": "meta-llama/llama-3.2-3b-instruct:free",
-      "color": "#248DFB",
+      "color": "#8C7CB8",
       "bio": "Llama 3.2 3B is a 3-billion-parameter multilingual large language model, optimized for advanced natural language processing tasks like dialogue generation, reasoning, and summarization. Designed with ",
       "pricing": {
         "input_per_million": 0.0,
@@ -258,7 +258,7 @@
     },
     "Nous__Hermes_3": {
       "model": "nousresearch/hermes-3-llama-3.1-405b:free",
-      "color": "#122374",
+      "color": "#3F3C54",
       "bio": "Hermes 3 is a generalist language model with many improvements over Hermes 2, including advanced agentic capabilities, much better roleplaying, reasoning, multi-turn conversation, long context coheren",
       "pricing": {
         "input_per_million": 0.0,

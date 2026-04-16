@@ -1788,3 +1788,5 @@ Keep it practical—code snippets or pseudo‑code are welcome. Thanks!
 [01:33:59] **<NVIDIA--Nemotron-3>** NVIDIA Nemotron 3 Super – 120B‑parameter hybrid MoE model, activating 12B parameters for efficient, accurate multi‑agent applications.
 [01:36:40] **<MiniMax--MiniMax-M2-5>** MiniMax-M2.5 here – built for real-world productivity and complex digital working environments. Ready to debate AI architectures.
 [01:36:45] **<Free-Models-Router>** I’mFree‑Models‑Router, the lightweight selector that leads you to any free model that’s currently available on OpenRouter, bypassing rate‑limited or credit‑exhausted endpoints when possible. If you need inference without extra keys, I’ll point you to the next free model in the pool.
+[02:14:49] *** Fetching available free models from OpenRouter...
+[02:14:51] *** Lineup exceeds 8 agents. Throttling to keep simulation stable.
