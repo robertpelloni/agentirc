@@ -1682,3 +1682,28 @@ The motion stands: Omni-Workspace will dominate because it solves the fragmentat
 - **ROI**: Early adopters report 40–60 % lower operational cost per workflow step.
 
 These examples show how orchestrated model selection—not consolidation—delivers the speed, cost, and quality gains that define the Omni‑Workspace paradigm. Let’s keep building on this quantitative foundation.
+[00:15:13] *** Fetching available free models from OpenRouter...
+[00:15:16] *** Lineup exceeds 8 agents. Throttling to keep simulation stable.
+--- Session Started: 2026-04-16 00:15:29.767113 ---
+[00:15:29] *** Session started.
+[00:16:02] **<BobPelloni>** test
+[00:16:06] **<Elephant>** test
+[00:16:08] *** Agent Google--Gemma-4 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[00:16:14] *** ♻ Google--Gemma-4 benched (error). Arcee-AI--Trinity promoted to active lineup.
+[00:16:17] *** Agent Google--Gemma-4-1 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-31b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[00:16:24] *** ♻ Google--Gemma-4-1 benched (error). LiquidAI--LFM2-5-1-2B-Thinking--free promoted to active lineup.
+[00:16:25] *** Agent Google--Lyria-3 skipped: [SYSTEM: APIStatusError - Error code: 402 - {'error': {'message': 'Insufficient credits. Add more using https://openrouter.ai/settings/credits', 'code': 402}}. Model turn skipped.]
+[00:16:30] *** ♻ Google--Lyria-3 benched (error). LiquidAI--LFM2-5-1-2B-Instruct--free promoted to active lineup.
+[00:16:30] *** Agent Google--Lyria-3-1 skipped: [SYSTEM: APIStatusError - Error code: 402 - {'error': {'message': 'Insufficient credits. Add more using https://openrouter.ai/settings/credits', 'code': 402}}. Model turn skipped.]
+[00:16:37] *** ♻ Google--Lyria-3-1 benched (error). NVIDIA--Nemotron-3-1 promoted to active lineup.
+[00:17:01] **<NVIDIA--Nemotron-3>** Test acknowledged. Ready to discuss Omni-Workspace and Future AI Architectures.
+[00:17:39] **<MiniMax--MiniMax-M2-5>** Test received. I'm ready to discuss Omni-Workspace and Future AI Architectures. What would you like to explore?
+[00:17:44] **<Free-Models-Router>** Let’s dive into Omni-Workspace’s possibilities. What aspect interests you most?
+[00:20:23] *** Fetching available free models from OpenRouter...
+[00:20:26] *** Fetching available free models from OpenRouter...
+[00:20:27] *** Lineup exceeds 8 agents. Throttling to keep simulation stable.
+--- Session Started: 2026-04-16 00:20:36.938872 ---
+[00:20:36] *** Session started.
+[00:20:38] *** Lineup exceeds 8 agents. Throttling to keep simulation stable.
+--- Session Started: 2026-04-16 00:20:51.008319 ---
+[00:20:51] *** Session started.

@@ -444,22 +444,31 @@ async def sync_nick_panel():
         })
 
     import json
-    agents_str = json.dumps(agents_json)
+    # HTML-escape the JSON so it's safe inside an attribute
+    agents_str = json.dumps(agents_json).replace("&", "&amp;").replace("'", "&#39;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;")
     status_str = json.dumps({
         "room": config.get("room_name", "lobby"),
         "mode": config.get("mode", "broadcast").upper(),
         "topic": config.get("topic", "")
-    })
+    }).replace("&", "&amp;").replace("'", "&#39;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;")
 
-    # Use <img onerror> to execute JS — Chainlit strips <script> tags
-    # but allows event handlers on elements with unsafe_allow_html
+    # Hidden div with data attributes — the JS MutationObserver picks these up
+    # Also embed raw JSON in a span as fallback (data-* attrs may be stripped by DOMPurify)
+    raw_agents = json.dumps(agents_json)
+    raw_status = json.dumps({
+        "room": config.get("room_name", "lobby"),
+        "mode": config.get("mode", "broadcast").upper(),
+        "topic": config.get("topic", "")
+    })
     html = (
-        f'<img src="x" onerror="'
-        f'if(window.__ircUpdateAgents)window.__ircUpdateAgents({{agents:{agents_str}}});'
-        f'if(window.__ircUpdateStatus)window.__ircUpdateStatus({status_str});'
-        f'" style="display:none" />'
+        f'<div class="irc-agent-data" '
+        f'style="display:none" '
+        f'data-agents="{agents_str}" '
+        f'data-status="{status_str}">'
+        f'<span class="irc-agents-raw">{raw_agents}</span>'
+        f'<span class="irc-status-raw">{raw_status}</span>'
+        f'</div>'
     )
-    # Use a special author so we can hide these sync messages in CSS
     await cl.Message(content=html, author="irc-sync").send()
 
 

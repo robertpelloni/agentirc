@@ -1,5 +1,5 @@
 {
-  "nextId": 3,
+  "nextId": 4,
   "tasks": [
     {
       "id": "1",
@@ -17,13 +17,25 @@
       "id": "2",
       "subject": "Redesign UI to look like 1990s IRC client with right-side user list",
       "description": "Transform the Chainlit UI into a retro 1990s IRC client look with:\n1. Monospace fonts, dark terminal background, green/amber text\n2. Right-side column showing all agents with on/off checkboxes\n3. Disabled agents grayed out\n4. Classic IRC styling (nick prefixes, timestamps, channel banner)\n5. Custom CSS overrides for Chainlit's web components",
-      "status": "in_progress",
+      "status": "completed",
       "activeForm": "Redesigning UI for 1990s IRC aesthetic",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1776311551107,
-      "updatedAt": 1776311554829
+      "updatedAt": 1776311961498
+    },
+    {
+      "id": "3",
+      "subject": "Fix nick panel population and switch to black-on-white theme",
+      "description": "1. Switch CSS from green-on-black to black-on-white (classic mIRC look)\n2. Fix JS sync mechanism - Chainlit strips onerror/img event handlers, need MutationObserver on data attributes\n3. Embed initial agent data in welcome banner\n4. Ensure nick panel populates on startup",
+      "status": "in_progress",
+      "activeForm": "Fixing nick panel and updating theme",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776313074982,
+      "updatedAt": 1776313083219
     }
   ]
 }

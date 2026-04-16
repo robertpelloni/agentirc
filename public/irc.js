@@ -1,24 +1,21 @@
 /* ================================================================
-   AgentIRC — Nick List Panel + Status Bar
-   Injects a persistent right-side IRC nick list with checkboxes
+   AgentIRC — Nick List Panel (MutationObserver-based sync)
+   Watches for <div class="irc-agent-data" data-agents="..."> in DOM
    ================================================================ */
 
 (function () {
     "use strict";
 
-    // ── State ──
-    let agents = []; // [{name, display, enabled, benched}]
+    let agents = [];
 
-    // ── Create DOM ──
+    // ── Create the panel and status bar ──
     function createPanel() {
         if (document.getElementById("irc-nick-panel")) return;
 
         const panel = document.createElement("div");
         panel.id = "irc-nick-panel";
         panel.innerHTML = `
-            <div class="nick-header">
-                #agentirc
-            </div>
+            <div class="nick-header" id="irc-channel-title">#agentirc</div>
             <div class="nick-list" id="irc-nick-list"></div>
             <div class="nick-footer" id="irc-nick-footer">0 users</div>
         `;
@@ -33,140 +30,162 @@
         bar.innerHTML = `
             <span id="irc-sb-room">lobby</span>
             <span id="irc-sb-mode">BROADCAST</span>
-            <span id="irc-sb-topic">The Omni-Workspace and Future AI Architectures</span>
+            <span id="irc-sb-topic">Topic</span>
         `;
         document.body.appendChild(bar);
     }
 
-    // ── Render agents ──
+    // ── Render the nick list from current state ──
     function renderNickList() {
         const list = document.getElementById("irc-nick-list");
         const footer = document.getElementById("irc-nick-footer");
         if (!list) return;
 
-        // Sort: enabled first (with @), then disabled (with .)
+        // Sort: enabled first, then alpha
         const sorted = [...agents].sort((a, b) => {
             if (a.enabled && !b.enabled) return -1;
             if (!a.enabled && b.enabled) return 1;
             return a.display.localeCompare(b.display);
         });
 
-        list.innerHTML = sorted
-            .map((a) => {
-                const cls = a.enabled ? "enabled" : "disabled";
-                const prefix = a.enabled ? "@" : " ";
-                const prefixCls = a.enabled ? "op" : "off";
-                const checked = a.enabled ? "checked" : "";
-                return `
-                    <div class="nick-entry ${cls}" data-name="${a.name}">
-                        <span class="nick-prefix ${prefixCls}">${prefix}</span>
-                        <input type="checkbox" class="nick-check" data-name="${a.name}" ${checked} />
-                        <span class="nick-name" title="${a.display}">${a.display}</span>
-                    </div>
-                `;
-            })
-            .join("");
+        list.innerHTML = sorted.map(a => {
+            const cls = a.enabled ? "enabled" : "disabled";
+            const prefix = a.enabled ? "@" : " ";
+            const prefixCls = a.enabled ? "op" : "off";
+            const checked = a.enabled ? "checked" : "";
+            return `<div class="nick-entry ${cls}" data-name="${a.name}">
+                <span class="nick-prefix ${prefixCls}">${prefix}</span>
+                <input type="checkbox" class="nick-check" data-name="${a.name}" ${checked} />
+                <span class="nick-name" title="${a.display}">${a.display}</span>
+            </div>`;
+        }).join("");
 
-        // Wire up checkbox clicks
-        list.querySelectorAll(".nick-check").forEach((cb) => {
-            cb.addEventListener("change", (e) => {
+        // Wire checkbox toggles
+        list.querySelectorAll(".nick-check").forEach(cb => {
+            cb.addEventListener("change", e => {
                 e.stopPropagation();
-                const name = cb.dataset.name;
-                const enable = cb.checked;
-                toggleAgent(name, enable);
+                toggleAgent(cb.dataset.name, cb.checked);
             });
         });
 
-        // Wire up nick name clicks (DM shortcut)
-        list.querySelectorAll(".nick-name").forEach((span) => {
+        // Wire nick name clicks → insert @name in input
+        list.querySelectorAll(".nick-name").forEach(span => {
             span.addEventListener("click", () => {
-                const entry = span.closest(".nick-entry");
-                const name = entry.dataset.name;
+                const name = span.closest(".nick-entry").dataset.name;
                 insertDM(name);
             });
         });
 
-        const enabledCount = agents.filter((a) => a.enabled).length;
-        if (footer) {
-            footer.textContent = `${enabledCount}/${agents.length} active`;
-        }
+        const on = agents.filter(a => a.enabled).length;
+        if (footer) footer.textContent = `${on}/${agents.length} active`;
     }
 
-    // ── Toggle agent on/off via chat command ──
+    // ── Send /enable or /disable command via chat input ──
     function toggleAgent(name, enable) {
         const cmd = enable ? `/enable ${name}` : `/disable ${name}`;
         sendChatMessage(cmd);
     }
 
-    // ── Insert @name into chat input ──
     function insertDM(name) {
-        const input = document.querySelector("textarea, [class*='chat-input'], input[type='text']");
-        if (input) {
-            const display = name.replace(/_/g, "-");
-            input.value = `@${display} `;
-            input.focus();
-            input.dispatchEvent(new Event("input", { bubbles: true }));
-        }
+        const input = findInput();
+        if (!input) return;
+        input.value = `@${name.replace(/_/g, "-")} `;
+        input.focus();
+        input.dispatchEvent(new Event("input", { bubbles: true }));
     }
 
-    // ── Submit a chat message programmatically ──
+    function findInput() {
+        return document.querySelector("textarea") ||
+               document.querySelector("[class*='chat-input']") ||
+               document.querySelector("input[type='text']");
+    }
+
     function sendChatMessage(text) {
-        const input = document.querySelector("textarea, [class*='chat-input'], input[type='text']");
+        const input = findInput();
         if (!input) return;
 
-        // React-compatible way to set value
-        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+        const setter = Object.getOwnPropertyDescriptor(
             window.HTMLTextAreaElement.prototype, "value"
-        )?.set || Object.getOwnPropertyDescriptor(
-            window.HTMLInputElement.prototype, "value"
         )?.set;
-
-        if (nativeInputValueSetter) {
-            nativeInputValueSetter.call(input, text);
-        } else {
-            input.value = text;
-        }
+        if (setter) setter.call(input, text);
+        else input.value = text;
 
         input.dispatchEvent(new Event("input", { bubbles: true }));
 
-        // Find and click the send button
         setTimeout(() => {
-            const sendBtn = document.querySelector(
+            const btn = document.querySelector(
                 'button[aria-label="Send"], button[class*="send"], button[type="submit"]'
             );
-            if (sendBtn) {
-                sendBtn.click();
-            } else {
-                // Fallback: dispatch Enter key
-                input.dispatchEvent(
-                    new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true })
-                );
-            }
+            if (btn) btn.click();
+            else input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", bubbles: true }));
         }, 100);
     }
 
-    // ── Public API: called from Python via hidden HTML messages ──
-    window.__ircUpdateAgents = function (data) {
-        agents = data.agents || [];
-        renderNickList();
-    };
+    // ── Parse data from hidden divs ──
+    function processDataElement(el) {
+        try {
+            // Try data attributes first
+            let raw = el.getAttribute("data-agents");
+            let statusRaw = el.getAttribute("data-status");
 
-    window.__ircUpdateStatus = function (data) {
-        const sbRoom = document.getElementById("irc-sb-room");
-        const sbMode = document.getElementById("irc-sb-mode");
-        const sbTopic = document.getElementById("irc-sb-topic");
-        const nickHeader = document.querySelector("#irc-nick-panel .nick-header");
+            // Fallback: read from <span> text content
+            if (!raw) {
+                const span = el.querySelector(".irc-agents-raw");
+                if (span) raw = span.textContent;
+            }
+            if (!statusRaw) {
+                const span = el.querySelector(".irc-status-raw");
+                if (span) statusRaw = span.textContent;
+            }
 
-        if (sbRoom) sbRoom.textContent = data.room || "lobby";
-        if (sbMode) sbMode.textContent = data.mode || "BROADCAST";
-        if (sbTopic) sbTopic.textContent = data.topic || "";
-        if (nickHeader) nickHeader.textContent = "#" + (data.room || "agentirc");
-    };
+            if (raw) {
+                agents = JSON.parse(raw);
+                renderNickList();
+            }
+            if (statusRaw) {
+                const s = JSON.parse(statusRaw);
+                const sbRoom = document.getElementById("irc-sb-room");
+                const sbMode = document.getElementById("irc-sb-mode");
+                const sbTopic = document.getElementById("irc-sb-topic");
+                const chTitle = document.getElementById("irc-channel-title");
+                if (sbRoom) sbRoom.textContent = s.room || "lobby";
+                if (sbMode) sbMode.textContent = (s.mode || "BROADCAST").toUpperCase();
+                if (sbTopic) sbTopic.textContent = s.topic || "";
+                if (chTitle) chTitle.textContent = "#" + (s.room || "agentirc");
+            }
+        } catch (e) {
+            console.warn("[AgentIRC] Failed to parse data element:", e);
+        }
+    }
+
+    // ── MutationObserver: watch for hidden data divs ──
+    function startObserver() {
+        const observer = new MutationObserver(mutations => {
+            for (const m of mutations) {
+                for (const node of m.addedNodes) {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        // Check if it's a data element itself
+                        if (node.classList && node.classList.contains("irc-agent-data")) {
+                            processDataElement(node);
+                        }
+                        // Also check children
+                        const children = node.querySelectorAll ? node.querySelectorAll(".irc-agent-data") : [];
+                        children.forEach(processDataElement);
+                    }
+                }
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
 
     // ── Init ──
     function init() {
         createPanel();
         createStatusBar();
+        startObserver();
+
+        // Process any data elements already in the DOM
+        document.querySelectorAll(".irc-agent-data").forEach(processDataElement);
     }
 
     if (document.readyState === "loading") {
@@ -175,11 +194,13 @@
         init();
     }
 
-    // Also re-inject if Chainlit re-renders
-    const observer = new MutationObserver(() => {
+    // Re-inject panel if Chainlit nukes it
+    const recheck = new MutationObserver(() => {
         if (!document.getElementById("irc-nick-panel")) {
-            init();
+            createPanel();
+            createStatusBar();
+            renderNickList();
         }
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    recheck.observe(document.body, { childList: true, subtree: true });
 })();
