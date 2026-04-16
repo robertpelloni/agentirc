@@ -226,13 +226,27 @@ def log_irc(message: str):
 
 
 class ResilientChatCompletionClient:
+    TIMEOUT_SECONDS = 20
+
     def __init__(self, base_client):
         self._client = base_client
         self.model_info = base_client.model_info
 
     async def create(self, messages, **kwargs):
         try:
-            return await self._client.create(messages, **kwargs)
+            return await asyncio.wait_for(
+                self._client.create(messages, **kwargs),
+                timeout=self.TIMEOUT_SECONDS
+            )
+        except asyncio.TimeoutError:
+            from autogen_core.models import CreateResult, RequestUsage
+            content = f"[SYSTEM: TimeoutError - No response after {self.TIMEOUT_SECONDS}s. Model turn skipped.]"
+            return CreateResult(
+                finish_reason="stop",
+                content=content,
+                usage=RequestUsage(prompt_tokens=0, completion_tokens=0),
+                cached=False
+            )
         except Exception as e:
             # Create a real CreateResult object to keep the GroupChat moving
             from autogen_core.models import CreateResult, RequestUsage
