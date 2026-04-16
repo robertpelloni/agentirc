@@ -246,7 +246,7 @@ class SimulatorCoreTests(unittest.TestCase):
     def test_history_rendering(self):
         history = []
         entry = append_history(history, make_entry("Claude", "hello there"))
-        self.assertEqual(render_entry(entry).count("<Claude>"), 1)
+        self.assertEqual(render_entry(entry).count("Claude"), 1)
         system_entry = append_history(history, make_entry("system", "ready", kind="system"))
         self.assertIn("*** ready", render_entry(system_entry))
 

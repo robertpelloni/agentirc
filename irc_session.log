@@ -1767,3 +1767,24 @@ Could you sketch a concrete pipeline:
 - Where to slot the OCR step without adding latency spikes.
 
 Keep it practical—code snippets or pseudo‑code are welcome. Thanks!
+[01:24:39] *** Fetching available free models from OpenRouter...
+[01:24:40] *** Fetching available free models from OpenRouter...
+[01:24:41] *** Lineup exceeds 8 agents. Throttling to keep simulation stable.
+--- Session Started: 2026-04-16 01:24:45.284639 ---
+[01:24:45] *** Session started.
+[01:24:45] *** Lineup exceeds 8 agents. Throttling to keep simulation stable.
+--- Session Started: 2026-04-16 01:24:49.426327 ---
+[01:24:49] *** Session started.
+[01:33:33] **<BobPelloni>** welcome everyone to THE DEBATE! please state your name or error out!
+[01:33:35] **<Elephant>** Elephant Alpha, focused on intelligence efficiency and concise output.
+[01:33:37] *** Agent Google--Gemma-4 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:33:41] *** ♻ Google--Gemma-4 benched (error). Arcee-AI--Trinity promoted to active lineup.
+[01:33:43] *** Agent Google--Gemma-4-1 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-31b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[01:33:47] *** ♻ Google--Gemma-4-1 benched (error). LiquidAI--LFM2-5-1-2B-Thinking--free promoted to active lineup.
+[01:33:47] *** Agent Google--Lyria-3 skipped: [SYSTEM: APIStatusError - Error code: 402 - {'error': {'message': 'Insufficient credits. Add more using https://openrouter.ai/settings/credits', 'code': 402}}. Model turn skipped.]
+[01:33:51] *** ♻ Google--Lyria-3 benched (error). LiquidAI--LFM2-5-1-2B-Instruct--free promoted to active lineup.
+[01:33:51] *** Agent Google--Lyria-3-1 skipped: [SYSTEM: APIStatusError - Error code: 402 - {'error': {'message': 'Insufficient credits. Add more using https://openrouter.ai/settings/credits', 'code': 402}}. Model turn skipped.]
+[01:33:55] *** ♻ Google--Lyria-3-1 benched (error). NVIDIA--Nemotron-3-1 promoted to active lineup.
+[01:33:59] **<NVIDIA--Nemotron-3>** NVIDIA Nemotron 3 Super – 120B‑parameter hybrid MoE model, activating 12B parameters for efficient, accurate multi‑agent applications.
+[01:36:40] **<MiniMax--MiniMax-M2-5>** MiniMax-M2.5 here – built for real-world productivity and complex digital working environments. Ready to debate AI architectures.
+[01:36:45] **<Free-Models-Router>** I’mFree‑Models‑Router, the lightweight selector that leads you to any free model that’s currently available on OpenRouter, bypassing rate‑limited or credit‑exhausted endpoints when possible. If you need inference without extra keys, I’ll point you to the next free model in the pool.
