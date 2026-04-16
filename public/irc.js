@@ -163,7 +163,6 @@
                             // Hide the entire message wrapper containing the ping
                             all.forEach(ping => {
                                 let el = ping;
-                                // Walk up to find the Chainlit message/step container
                                 for (let i = 0; i < 10; i++) {
                                     el = el.parentElement;
                                     if (!el) break;
@@ -180,16 +179,35 @@
                                         break;
                                     }
                                 }
-                                // Also hide the ping itself
                                 ping.style.display = "none";
                             });
                         }
+
+                        // Strip "Avatar for" text from any new elements
+                        stripAvatarText(node);
                     }
                 }
             }
             if (shouldFetch) fetchAgents();
         });
         observer.observe(document.body, { childList: true, subtree: true });
+    }
+
+    // ── Remove "Avatar for" text that Chainlit injects ──
+    function stripAvatarText(root) {
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+            acceptNode(node) {
+                return node.textContent.includes("Avatar for")
+                    ? NodeFilter.FILTER_ACCEPT
+                    : NodeFilter.FILTER_REJECT;
+            }
+        });
+        const toRemove = [];
+        while (walker.nextNode()) toRemove.push(walker.currentNode);
+        toRemove.forEach(node => {
+            node.textContent = node.textContent.replace(/Avatar for\s*/g, "");
+            if (!node.textContent.trim()) node.parentElement?.remove();
+        });
     }
 
     // ── Init ──
@@ -205,9 +223,10 @@
     }
 
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
+        document.addEventListener("DOMContentLoaded", () => { init(); stripAvatarText(document.body); });
     } else {
         init();
+        stripAvatarText(document.body);
     }
 
     // Re-inject if Chainlit removes panel

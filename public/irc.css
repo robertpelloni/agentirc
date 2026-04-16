@@ -85,6 +85,12 @@ header {
 [class*="author-name"],
 [class*="message-author"],
 [class*="step-name"] {
+    display: none !important;
+}
+
+/* Style inline bold nick tags like <Author> from render_entry */
+[class*="message"] strong,
+[class*="step-"] strong {
     color: #000080 !important;
     font-weight: bold !important;
 }
@@ -141,8 +147,32 @@ button:active,
 /* --- Hide avatars --- */
 .MuiAvatar-root,
 [class*="avatar"],
-img[alt="Avatar"] {
+img[alt*="Avatar"],
+[class*="Avatar-"] {
     display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* --- Hide Chainlit author labels (we render nicks inline) --- */
+[class*="author-name"],
+[class*="AuthorLabel"],
+[class*="authorName"],
+[class*="step-name"],
+[class*="StepName"],
+[class*="message-author"],
+span[class*="name"][class*="step"],
+[class*="thread-author"],
+[class*="SenderName"],
+[class*="senderName"] {
+    display: none !important;
+    height: 0 !important;
+    font-size: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 /* --- Code blocks --- */
