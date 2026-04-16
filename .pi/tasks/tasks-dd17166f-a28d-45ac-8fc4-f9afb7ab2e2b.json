@@ -1,5 +1,5 @@
 {
-  "nextId": 4,
+  "nextId": 5,
   "tasks": [
     {
       "id": "1",
@@ -29,13 +29,25 @@
       "id": "3",
       "subject": "Fix nick panel population and switch to black-on-white theme",
       "description": "1. Switch CSS from green-on-black to black-on-white (classic mIRC look)\n2. Fix JS sync mechanism - Chainlit strips onerror/img event handlers, need MutationObserver on data attributes\n3. Embed initial agent data in welcome banner\n4. Ensure nick panel populates on startup",
-      "status": "in_progress",
+      "status": "completed",
       "activeForm": "Fixing nick panel and updating theme",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1776313074982,
-      "updatedAt": 1776313083219
+      "updatedAt": 1776313267940
+    },
+    {
+      "id": "4",
+      "subject": "Fix nick panel: switch to file-based data sync",
+      "description": "Chainlit's DOMPurify strips custom HTML attributes. Switch to:\n1. Python writes agents.json to public/ folder\n2. JS fetches public/agents.json directly\n3. Remove irc-sync message approach\n4. Hide any remaining irc-sync messages properly",
+      "status": "in_progress",
+      "activeForm": "Fixing nick panel with file-based sync",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776314073638,
+      "updatedAt": 1776314080126
     }
   ]
 }

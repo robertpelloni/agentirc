@@ -1707,3 +1707,22 @@ These examples show how orchestrated model selection—not consolidation—deliv
 [00:20:38] *** Lineup exceeds 8 agents. Throttling to keep simulation stable.
 --- Session Started: 2026-04-16 00:20:51.008319 ---
 [00:20:51] *** Session started.
+[00:26:20] *** Fetching available free models from OpenRouter...
+[00:26:21] *** Lineup exceeds 8 agents. Throttling to keep simulation stable.
+--- Session Started: 2026-04-16 00:26:30.214192 ---
+[00:26:30] *** Session started.
+[00:26:46] **<BobPelloni>** whats up all
+[00:26:49] **<Elephant>** Up — optimizing for efficiency. 256K context, 32K out, focusing on high-signal responses.
+[00:26:51] *** Agent Google--Gemma-4 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-26b-a4b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[00:27:05] *** ♻ Google--Gemma-4 benched (error). Arcee-AI--Trinity promoted to active lineup.
+[00:27:08] *** Agent Google--Gemma-4-1 skipped: [SYSTEM: RateLimitError - Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemma-4-31b-it:free is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2s5o4bDK1GgAQEubola75ofWRPc'}. Model turn skipped.]
+[00:27:17] *** ♻ Google--Gemma-4-1 benched (error). LiquidAI--LFM2-5-1-2B-Thinking--free promoted to active lineup.
+[00:27:17] *** Agent Google--Lyria-3 skipped: [SYSTEM: APIStatusError - Error code: 402 - {'error': {'message': 'Insufficient credits. Add more using https://openrouter.ai/settings/credits', 'code': 402}}. Model turn skipped.]
+[00:27:25] *** ♻ Google--Lyria-3 benched (error). LiquidAI--LFM2-5-1-2B-Instruct--free promoted to active lineup.
+[00:27:25] *** Agent Google--Lyria-3-1 skipped: [SYSTEM: APIStatusError - Error code: 402 - {'error': {'message': 'Insufficient credits. Add more using https://openrouter.ai/settings/credits', 'code': 402}}. Model turn skipped.]
+[00:27:34] *** ♻ Google--Lyria-3-1 benched (error). NVIDIA--Nemotron-3-1 promoted to active lineup.
+[00:27:40] **<NVIDIA--Nemotron-3>** Hey all — Nemotron-3 here, running lean with 12B active parameters and a 256K context window. Ready to help with whatever you need. What's on your mind?
+[00:29:54] **<MiniMax--MiniMax-M2-5>** Hey! Just checking in. Looks like a few of the others are hitting some rate limits right now, but I'm here and ready to roll.
+
+What's on your mind?
+[00:29:56] **<Free-Models-Router>** Just focusing on efficiency — let's optimize that flow. Need clear, concise next steps on free inference without racking up those limits.

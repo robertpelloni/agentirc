@@ -429,7 +429,7 @@ async def send_system_notice(content: str):
 
 
 async def sync_nick_panel():
-    """Push the current agent lineup to the IRC nick panel via hidden HTML."""
+    """Push the current agent lineup to the IRC nick panel via agents.json."""
     config = get_config()
     specs = get_agent_specs()
     benched = get_benched_agents()
@@ -444,32 +444,29 @@ async def sync_nick_panel():
         })
 
     import json
-    # HTML-escape the JSON so it's safe inside an attribute
-    agents_str = json.dumps(agents_json).replace("&", "&amp;").replace("'", "&#39;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;")
-    status_str = json.dumps({
-        "room": config.get("room_name", "lobby"),
-        "mode": config.get("mode", "broadcast").upper(),
-        "topic": config.get("topic", "")
-    }).replace("&", "&amp;").replace("'", "&#39;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+    payload = {
+        "agents": agents_json,
+        "status": {
+            "room": config.get("room_name", "lobby"),
+            "mode": config.get("mode", "broadcast").upper(),
+            "topic": config.get("topic", "")
+        }
+    }
 
-    # Hidden div with data attributes — the JS MutationObserver picks these up
-    # Also embed raw JSON in a span as fallback (data-* attrs may be stripped by DOMPurify)
-    raw_agents = json.dumps(agents_json)
-    raw_status = json.dumps({
-        "room": config.get("room_name", "lobby"),
-        "mode": config.get("mode", "broadcast").upper(),
-        "topic": config.get("topic", "")
-    })
-    html = (
-        f'<div class="irc-agent-data" '
-        f'style="display:none" '
-        f'data-agents="{agents_str}" '
-        f'data-status="{status_str}">'
-        f'<span class="irc-agents-raw">{raw_agents}</span>'
-        f'<span class="irc-status-raw">{raw_status}</span>'
-        f'</div>'
-    )
-    await cl.Message(content=html, author="irc-sync").send()
+    # Write to public/agents.json — JS fetches this directly
+    agents_path = os.path.join(os.path.dirname(__file__), "public", "agents.json")
+    try:
+        with open(agents_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f)
+    except Exception as e:
+        log_irc(f"[WARN] Failed to write agents.json: {e}")
+
+    # Also inject a sync signal into the page via a lightweight message
+    # The JS picks this up and re-fetches agents.json
+    await cl.Message(
+        content="<div class=\"irc-sync-ping\"></div>",
+        author="irc-sync"
+    ).send()
 
 
 

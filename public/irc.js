@@ -1,17 +1,18 @@
 /* ================================================================
-   AgentIRC — Nick List Panel (MutationObserver-based sync)
-   Watches for <div class="irc-agent-data" data-agents="..."> in DOM
+   AgentIRC — Nick List Panel (agents.json polling + MutationObserver)
+   Python writes public/agents.json, this JS fetches it.
+   Also watches for .irc-sync-ping elements to trigger immediate refresh.
    ================================================================ */
 
 (function () {
     "use strict";
 
     let agents = [];
+    let pollInterval = null;
 
     // ── Create the panel and status bar ──
     function createPanel() {
         if (document.getElementById("irc-nick-panel")) return;
-
         const panel = document.createElement("div");
         panel.id = "irc-nick-panel";
         panel.innerHTML = `
@@ -24,7 +25,6 @@
 
     function createStatusBar() {
         if (document.getElementById("irc-status-bar")) return;
-
         const bar = document.createElement("div");
         bar.id = "irc-status-bar";
         bar.innerHTML = `
@@ -35,7 +35,37 @@
         document.body.appendChild(bar);
     }
 
-    // ── Render the nick list from current state ──
+    // ── Fetch agents.json ──
+    async function fetchAgents() {
+        try {
+            const resp = await fetch("/public/agents.json?t=" + Date.now());
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (data.agents) {
+                agents = data.agents;
+                renderNickList();
+            }
+            if (data.status) {
+                updateStatus(data.status);
+            }
+        } catch (e) {
+            console.warn("[AgentIRC] fetch agents.json failed:", e);
+        }
+    }
+
+    // ── Update status bar ──
+    function updateStatus(s) {
+        const sbRoom = document.getElementById("irc-sb-room");
+        const sbMode = document.getElementById("irc-sb-mode");
+        const sbTopic = document.getElementById("irc-sb-topic");
+        const chTitle = document.getElementById("irc-channel-title");
+        if (sbRoom) sbRoom.textContent = s.room || "lobby";
+        if (sbMode) sbMode.textContent = (s.mode || "BROADCAST").toUpperCase();
+        if (sbTopic) sbTopic.textContent = s.topic || "";
+        if (chTitle) chTitle.textContent = "#" + (s.room || "agentirc");
+    }
+
+    // ── Render the nick list ──
     function renderNickList() {
         const list = document.getElementById("irc-nick-list");
         const footer = document.getElementById("irc-nick-footer");
@@ -68,7 +98,7 @@
             });
         });
 
-        // Wire nick name clicks → insert @name in input
+        // Wire nick clicks → DM
         list.querySelectorAll(".nick-name").forEach(span => {
             span.addEventListener("click", () => {
                 const name = span.closest(".nick-entry").dataset.name;
@@ -80,10 +110,9 @@
         if (footer) footer.textContent = `${on}/${agents.length} active`;
     }
 
-    // ── Send /enable or /disable command via chat input ──
+    // ── Toggle via /enable /disable ──
     function toggleAgent(name, enable) {
-        const cmd = enable ? `/enable ${name}` : `/disable ${name}`;
-        sendChatMessage(cmd);
+        sendChatMessage(enable ? `/enable ${name}` : `/disable ${name}`);
     }
 
     function insertDM(name) {
@@ -103,15 +132,12 @@
     function sendChatMessage(text) {
         const input = findInput();
         if (!input) return;
-
         const setter = Object.getOwnPropertyDescriptor(
             window.HTMLTextAreaElement.prototype, "value"
         )?.set;
         if (setter) setter.call(input, text);
         else input.value = text;
-
         input.dispatchEvent(new Event("input", { bubbles: true }));
-
         setTimeout(() => {
             const btn = document.querySelector(
                 'button[aria-label="Send"], button[class*="send"], button[type="submit"]'
@@ -121,59 +147,47 @@
         }, 100);
     }
 
-    // ── Parse data from hidden divs ──
-    function processDataElement(el) {
-        try {
-            // Try data attributes first
-            let raw = el.getAttribute("data-agents");
-            let statusRaw = el.getAttribute("data-status");
-
-            // Fallback: read from <span> text content
-            if (!raw) {
-                const span = el.querySelector(".irc-agents-raw");
-                if (span) raw = span.textContent;
-            }
-            if (!statusRaw) {
-                const span = el.querySelector(".irc-status-raw");
-                if (span) statusRaw = span.textContent;
-            }
-
-            if (raw) {
-                agents = JSON.parse(raw);
-                renderNickList();
-            }
-            if (statusRaw) {
-                const s = JSON.parse(statusRaw);
-                const sbRoom = document.getElementById("irc-sb-room");
-                const sbMode = document.getElementById("irc-sb-mode");
-                const sbTopic = document.getElementById("irc-sb-topic");
-                const chTitle = document.getElementById("irc-channel-title");
-                if (sbRoom) sbRoom.textContent = s.room || "lobby";
-                if (sbMode) sbMode.textContent = (s.mode || "BROADCAST").toUpperCase();
-                if (sbTopic) sbTopic.textContent = s.topic || "";
-                if (chTitle) chTitle.textContent = "#" + (s.room || "agentirc");
-            }
-        } catch (e) {
-            console.warn("[AgentIRC] Failed to parse data element:", e);
-        }
-    }
-
-    // ── MutationObserver: watch for hidden data divs ──
+    // ── MutationObserver: detect sync pings → re-fetch + hide ──
     function startObserver() {
         const observer = new MutationObserver(mutations => {
+            let shouldFetch = false;
             for (const m of mutations) {
                 for (const node of m.addedNodes) {
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        // Check if it's a data element itself
-                        if (node.classList && node.classList.contains("irc-agent-data")) {
-                            processDataElement(node);
+                        // Check for sync pings
+                        const all = node.classList && node.classList.contains("irc-sync-ping")
+                            ? [node]
+                            : (node.querySelectorAll ? [...node.querySelectorAll(".irc-sync-ping")] : []);
+                        if (all.length > 0) {
+                            shouldFetch = true;
+                            // Hide the entire message wrapper containing the ping
+                            all.forEach(ping => {
+                                let el = ping;
+                                // Walk up to find the Chainlit message/step container
+                                for (let i = 0; i < 10; i++) {
+                                    el = el.parentElement;
+                                    if (!el) break;
+                                    if (el.className && (
+                                        el.className.includes("step") ||
+                                        el.className.includes("message") ||
+                                        el.className.includes("Message")
+                                    )) {
+                                        el.style.display = "none";
+                                        el.style.height = "0";
+                                        el.style.overflow = "hidden";
+                                        el.style.padding = "0";
+                                        el.style.margin = "0";
+                                        break;
+                                    }
+                                }
+                                // Also hide the ping itself
+                                ping.style.display = "none";
+                            });
                         }
-                        // Also check children
-                        const children = node.querySelectorAll ? node.querySelectorAll(".irc-agent-data") : [];
-                        children.forEach(processDataElement);
                     }
                 }
             }
+            if (shouldFetch) fetchAgents();
         });
         observer.observe(document.body, { childList: true, subtree: true });
     }
@@ -182,10 +196,12 @@
     function init() {
         createPanel();
         createStatusBar();
+        fetchAgents();
         startObserver();
 
-        // Process any data elements already in the DOM
-        document.querySelectorAll(".irc-agent-data").forEach(processDataElement);
+        // Also poll every 3 seconds as a backup
+        if (pollInterval) clearInterval(pollInterval);
+        pollInterval = setInterval(fetchAgents, 3000);
     }
 
     if (document.readyState === "loading") {
@@ -194,7 +210,7 @@
         init();
     }
 
-    // Re-inject panel if Chainlit nukes it
+    // Re-inject if Chainlit removes panel
     const recheck = new MutationObserver(() => {
         if (!document.getElementById("irc-nick-panel")) {
             createPanel();

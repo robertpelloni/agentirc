@@ -308,10 +308,10 @@ pre, code {
 }
 
 /* --- Hide sync messages (irc-sync author) --- */
-[data-author="irc-sync"],
+/* Chainlit wraps messages in step containers — hide any that contain irc-sync-ping */
+[class*="step"][data-author="irc-sync"],
 [class*="message"][data-author="irc-sync"],
-[class*="step-"][data-author="irc-sync"],
-.MuiBox-root > [data-author="irc-sync"] {
+[class*="step-"][data-author="irc-sync"] {
     display: none !important;
     height: 0 !important;
     max-height: 0 !important;
@@ -321,7 +321,10 @@ pre, code {
     visibility: hidden !important;
     position: absolute !important;
     pointer-events: none !important;
+    border: none !important;
 }
+
+/* Nuclear fallback: JS also hides the parent of .irc-sync-ping elements */
 
 /* --- Hide modern Chainlit fluff --- */
 .watermark,
