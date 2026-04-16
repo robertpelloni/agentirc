@@ -428,6 +428,41 @@ async def send_system_notice(content: str):
     await cl.Message(content=f"*** {content}").send()
 
 
+async def sync_nick_panel():
+    """Push the current agent lineup to the IRC nick panel via hidden HTML."""
+    config = get_config()
+    specs = get_agent_specs()
+    benched = get_benched_agents()
+
+    agents_json = []
+    for name, spec in specs.items():
+        agents_json.append({
+            "name": name,
+            "display": display_agent_name(name),
+            "enabled": name in config.get("enabled_agents", []),
+            "benched": name in benched
+        })
+
+    import json
+    agents_str = json.dumps(agents_json)
+    status_str = json.dumps({
+        "room": config.get("room_name", "lobby"),
+        "mode": config.get("mode", "broadcast").upper(),
+        "topic": config.get("topic", "")
+    })
+
+    # Use <img onerror> to execute JS — Chainlit strips <script> tags
+    # but allows event handlers on elements with unsafe_allow_html
+    html = (
+        f'<img src="x" onerror="'
+        f'if(window.__ircUpdateAgents)window.__ircUpdateAgents({{agents:{agents_str}}});'
+        f'if(window.__ircUpdateStatus)window.__ircUpdateStatus({status_str});'
+        f'" style="display:none" />'
+    )
+    # Use a special author so we can hide these sync messages in CSS
+    await cl.Message(content=html, author="irc-sync").send()
+
+
 
 def create_team(config: dict):
     enabled_agents = config["enabled_agents"]
@@ -561,6 +596,7 @@ async def auto_replace_agent(failed_agent: str):
         )
 
     await update_settings_ui()
+    await sync_nick_panel()
     save_current_room_state()
 
 
@@ -1111,18 +1147,9 @@ async def handle_command(command: str, args: str) -> bool:
         if changed:
             rebuild_team()
             await update_settings_ui()
+            await sync_nick_panel()
         await send_system_notice(response)
         return True
-        changed, response = set_agent_enabled(
-            config=config,
-            raw_name=args,
-            enabled=command == "/enable",
-            agent_specs=get_agent_specs(),
-        )
-        if changed:
-            rebuild_team()
-        await update_settings_ui()
-        await send_system_notice(response)
         return True
 
     if command == "/rounds":
@@ -1606,6 +1633,7 @@ async def setup_agent(settings):
     if changed:
         rebuild_team()
         await update_settings_ui()
+        await sync_nick_panel()
         save_current_room_state()
 
 @cl.on_chat_start
@@ -1708,6 +1736,7 @@ async def start():
 *** Type /help for commands.
 """
     await cl.Message(content=welcome_banner).send()
+    await sync_nick_panel()
     log_irc(f"--- Session Started: {datetime.now()} ---")
     add_history_entry(author="system", content="Session started.", kind="system")
 

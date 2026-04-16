@@ -1,5 +1,5 @@
 {
-  "nextId": 2,
+  "nextId": 3,
   "tasks": [
     {
       "id": "1",
@@ -12,6 +12,18 @@
       "blockedBy": [],
       "createdAt": 1776272945528,
       "updatedAt": 1776273073275
+    },
+    {
+      "id": "2",
+      "subject": "Redesign UI to look like 1990s IRC client with right-side user list",
+      "description": "Transform the Chainlit UI into a retro 1990s IRC client look with:\n1. Monospace fonts, dark terminal background, green/amber text\n2. Right-side column showing all agents with on/off checkboxes\n3. Disabled agents grayed out\n4. Classic IRC styling (nick prefixes, timestamps, channel banner)\n5. Custom CSS overrides for Chainlit's web components",
+      "status": "in_progress",
+      "activeForm": "Redesigning UI for 1990s IRC aesthetic",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776311551107,
+      "updatedAt": 1776311554829
     }
   ]
 }

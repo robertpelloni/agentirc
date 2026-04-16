@@ -1,0 +1,351 @@
+/* ================================================================
+   AgentIRC — 1990s mIRC/ircII Terminal Aesthetic
+   ================================================================ */
+
+/* --- Reset: force monospace everywhere --- */
+:root {
+    --irc-bg:        #000000;
+    --irc-text:      #c0c0c0;
+    --irc-green:     #00ff00;
+    --irc-yellow:    #ffff00;
+    --irc-cyan:      #00ffff;
+    --irc-magenta:   #ff00ff;
+    --irc-red:       #ff6666;
+    --irc-blue:      #6666ff;
+    --irc-white:     #ffffff;
+    --irc-input-bg:  #000040;
+    --irc-border:    #555555;
+    --irc-btn-face:  #c0c0c0;
+    --irc-panel-bg:  #0a0a14;
+    --irc-panel-border: #333355;
+    --irc-nick-on:   #00ff00;
+    --irc-nick-off:  #555555;
+}
+
+* {
+    font-family: "Fixedsys", "Terminal", "Courier New", Courier, monospace !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    letter-spacing: 0 !important;
+}
+
+body, html, #root {
+    background-color: var(--irc-bg) !important;
+    color: var(--irc-text) !important;
+    font-size: 13px !important;
+}
+
+/* --- Main layout: shift chat left to make room for nick panel --- */
+.main-content,
+[class*="chat-main"],
+[class*="thread"],
+main {
+    padding-right: 220px !important;
+}
+
+/* --- Force dark backgrounds everywhere --- */
+.MuiPaper-root,
+.MuiBox-root,
+.MuiDrawer-paper,
+.MuiPopover-paper,
+.MuiCard-root,
+div[class*="bg-"],
+[class*="step-box"],
+[class*="chat-box"],
+header,
+nav,
+footer {
+    background-color: var(--irc-bg) !important;
+    background-image: none !important;
+    color: var(--irc-text) !important;
+    border-radius: 0 !important;
+}
+
+/* --- Header / Title Bar --- */
+header {
+    border-bottom: 2px outset var(--irc-btn-face) !important;
+    background: linear-gradient(90deg, #000080, #1084d0) !important;
+    color: var(--irc-white) !important;
+}
+
+/* --- Messages --- */
+[class*="message"],
+[class*="step-"],
+[class*="msg-"] {
+    color: var(--irc-green) !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 1px 4px !important;
+    margin: 0 !important;
+    line-height: 1.3 !important;
+}
+
+/* Author names */
+[class*="author-name"],
+[class*="message-author"],
+[class*="step-name"] {
+    color: var(--irc-magenta) !important;
+    font-weight: bold !important;
+}
+
+/* --- Input Area --- */
+textarea,
+input[type="text"],
+[class*="chat-input"],
+[class*="input-box"] {
+    background-color: var(--irc-input-bg) !important;
+    color: var(--irc-white) !important;
+    border: 2px inset var(--irc-border) !important;
+    caret-color: var(--irc-white) !important;
+}
+
+textarea:focus,
+input:focus {
+    outline: none !important;
+    border-color: var(--irc-green) !important;
+}
+
+/* --- Buttons (Win95 raised look) --- */
+button,
+.MuiButtonBase-root,
+.MuiIconButton-root {
+    background-color: var(--irc-btn-face) !important;
+    color: #000 !important;
+    border: 2px solid !important;
+    border-color: #fff #555 #555 #fff !important;
+    text-transform: uppercase !important;
+    font-weight: bold !important;
+    font-size: 11px !important;
+}
+
+button:active,
+.MuiButtonBase-root:active {
+    border-color: #555 #fff #fff #555 !important;
+    background-color: #a0a0a0 !important;
+}
+
+/* --- Scrollbars (retro) --- */
+::-webkit-scrollbar {
+    width: 16px;
+    background: #dfdfdf;
+}
+::-webkit-scrollbar-thumb {
+    background: #c0c0c0;
+    border: 2px solid;
+    border-color: #fff #555 #555 #fff;
+}
+::-webkit-scrollbar-button {
+    background: #dfdfdf;
+    border: 2px solid;
+    border-color: #fff #555 #555 #fff;
+}
+
+/* --- Hide avatars --- */
+.MuiAvatar-root,
+[class*="avatar"],
+img[alt="Avatar"] {
+    display: none !important;
+}
+
+/* --- Code blocks --- */
+pre, code {
+    background-color: #0c0c0c !important;
+    border: 1px dashed #444 !important;
+    color: var(--irc-cyan) !important;
+    padding: 4px !important;
+}
+
+/* ================================================================
+   NICK LIST PANEL — right-side column
+   ================================================================ */
+#irc-nick-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 210px;
+    height: 100vh;
+    background-color: var(--irc-panel-bg);
+    border-left: 2px outset var(--irc-panel-border);
+    color: var(--irc-text);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    font-family: "Fixedsys", "Terminal", "Courier New", Courier, monospace;
+    font-size: 12px;
+    overflow: hidden;
+}
+
+#irc-nick-panel .nick-header {
+    background: linear-gradient(90deg, #000080, #1084d0);
+    color: #fff;
+    padding: 4px 6px;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #333;
+    font-size: 12px;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+
+#irc-nick-panel .nick-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+}
+
+#irc-nick-panel .nick-entry {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#irc-nick-panel .nick-entry:hover {
+    background-color: #111133;
+}
+
+#irc-nick-panel .nick-entry.disabled {
+    opacity: 0.4;
+}
+
+#irc-nick-panel .nick-entry .nick-prefix {
+    font-weight: bold;
+    width: 14px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+#irc-nick-panel .nick-entry .nick-prefix.op {
+    color: #ffff00;   /* @ prefix for enabled */
+}
+#irc-nick-panel .nick-entry .nick-prefix.voiced {
+    color: #00ff00;   /* + prefix for enabled */
+}
+#irc-nick-panel .nick-entry .nick-prefix.off {
+    color: #555555;
+}
+
+#irc-nick-panel .nick-entry .nick-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#irc-nick-panel .nick-entry.enabled .nick-name {
+    color: var(--irc-nick-on);
+}
+
+#irc-nick-panel .nick-entry.disabled .nick-name {
+    color: var(--irc-nick-off);
+    text-decoration: line-through;
+}
+
+#irc-nick-panel .nick-entry .nick-check {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border: 1px solid #666;
+    background: #111;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+}
+
+#irc-nick-panel .nick-entry .nick-check:checked {
+    background: #00aa00;
+    border-color: #00ff00;
+}
+
+#irc-nick-panel .nick-entry .nick-check:checked::after {
+    content: "✓";
+    position: absolute;
+    top: -2px;
+    left: 1px;
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+#irc-nick-panel .nick-footer {
+    border-top: 1px solid #333;
+    padding: 4px 6px;
+    color: #666;
+    font-size: 10px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* --- mIRC Color Codes via spans --- */
+.irc-c00 { color: #ffffff; }
+.irc-c01 { color: #000000; }
+.irc-c02 { color: #000080; }
+.irc-c03 { color: #008000; }
+.irc-c04 { color: #ff0000; }
+.irc-c05 { color: #800000; }
+.irc-c06 { color: #800080; }
+.irc-c07 { color: #ff8000; }
+.irc-c08 { color: #ffff00; }
+.irc-c09 { color: #00ff00; }
+.irc-c10 { color: #008080; }
+.irc-c11 { color: #00ffff; }
+.irc-c12 { color: #0000ff; }
+.irc-c13 { color: #ff00ff; }
+.irc-c14 { color: #808080; }
+.irc-c15 { color: #c0c0c0; }
+
+.irc-b { font-weight: bold; }
+.irc-u { text-decoration: underline; }
+.irc-r { color: #c0c0c0; background: #000; }
+
+/* --- Hide modern Chainlit fluff --- */
+.watermark,
+[class*="logo-"],
+[class*="powered-"] {
+    display: none !important;
+}
+
+/* --- Status bar at bottom --- */
+#irc-status-bar {
+    position: fixed;
+    bottom: 0;
+    right: 210px;
+    left: 0;
+    height: 20px;
+    background: linear-gradient(90deg, #000080, #1084d0);
+    color: #fff;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 16px;
+    z-index: 9998;
+    border-top: 1px outset var(--irc-btn-face);
+}
+
+#irc-status-bar span {
+    white-space: nowrap;
+}
+
+/* Tighten spacing for IRC density */
+[class*="message-container"],
+[class*="messages-list"],
+[class*="thread-messages"] {
+    gap: 0 !important;
+}
+
+/* Hide nick panel sync messages */
+[class*="message"][class*="irc-sync"],
+[data-author="irc-sync"],
+.message-row[data-author="irc-sync"] {
+    display: none !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+}
