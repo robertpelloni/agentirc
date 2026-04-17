@@ -1,3 +1,6 @@
+## 0.25.0 - 2026-04-17
+- Implemented `Authentic Terminal CRT Shader` inside `public/style.css` to add screen curvature, scanlines, and phosphor flickering, deeply enriching the 1990s IRC aesthetic requested in the original project specs.
+
 ## 0.24.0 - 2026-04-16
 - Migrated raw JSON flat file persistence in `simulator_core.py` to a robust SQLite database (`data/simulator.db`) to safely handle concurrency across multi-user environments.
 - Decoupled `create_team`, `create_bridge_agent`, and `create_judge_agent` from the massive `app.py` monolith into a dedicated `services/agents.py` module.

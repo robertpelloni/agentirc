@@ -1,0 +1,36 @@
+2026-04-17 15:37:45 - INFO - chainlit - Your app is available at http://localhost:8000
+2026-04-17 15:40:43 - INFO - chainlit - Missing custom logo. Falling back to default logo.
+2026-04-17 15:42:05 - INFO - chainlit - Missing custom logo. Falling back to default logo.
+2026-04-17 15:46:40 - INFO - chainlit - Missing custom logo. Falling back to default logo.
+2026-04-17 15:46:40 - INFO - chainlit - Missing custom logo. Falling back to default logo.
+2026-04-17 15:51:01 - INFO - chainlit - Missing custom logo. Falling back to default logo.
+2026-04-17 15:55:00 - INFO - chainlit - Missing custom logo. Falling back to default logo.
+2026-04-17 15:55:00 - WARNING - chainlit - Translated markdown file for en-US not found. Defaulting to chainlit.md.
+2026-04-17 15:55:01 - ERROR - chainlit - The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
+Traceback (most recent call last):
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/chainlit/utils.py", line 57, in wrapper
+    return await user_function(**params_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/chainlit/step.py", line 124, in async_wrapper
+    result = await func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app.py", line 1334, in start
+    rebuild_team()
+  File "/app/app.py", line 369, in rebuild_team
+    team = create_team(config, AGENT_SPECS, GLOBAL_CONFIG)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agents.py", line 56, in create_team
+    model_client=get_client(spec["model"], global_config),
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/services/agents.py", line 16, in get_client
+    return OpenAIChatCompletionClient(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/autogen_ext/models/openai/_openai_client.py", line 1484, in __init__
+    client = _openai_client_from_config(copied_args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/autogen_ext/models/openai/_openai_client.py", line 134, in _openai_client_from_config
+    return AsyncOpenAI(**openai_config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/openai/_client.py", line 587, in __init__
+    raise OpenAIError(
+openai.OpenAIError: The api_key client option must be set either by passing api_key to the client or by setting the OPENAI_API_KEY environment variable
