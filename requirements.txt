@@ -8,3 +8,5 @@ duckduckgo-search>=5.0.0
 markdownify>=0.11.0
 tomli>=2.0.1
 requests>=2.31.0
+
+httpx>=0.27.0

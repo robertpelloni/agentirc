@@ -83,19 +83,20 @@ def web_search(query: str, max_results: int = 5) -> str:
     except Exception as exc:
         return f"Error performing web search: {exc}"
 
-def fetch_webpage(url: str) -> str:
-    """Fetches a webpage and converts it to Markdown format. Useful for reading web content directly."""
+async def fetch_webpage(url: str) -> str:
+    """Fetches a webpage and converts it to Markdown format asynchronously. Useful for reading web content directly."""
     try:
-        import requests
+        import httpx
         from markdownify import markdownify as md
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        markdown_text = md(response.text, strip=['script', 'style'])
-        # Truncate to avoid blowing up context sizes too much, roughly 8k characters
-        return markdown_text[:8000] + "\n\n...[Content Truncated]..." if len(markdown_text) > 8000 else markdown_text
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers, timeout=10.0)
+            response.raise_for_status()
+            markdown_text = md(response.text, strip=['script', 'style'])
+            # Truncate to avoid blowing up context sizes too much, roughly 8k characters
+            return markdown_text[:8000] + "\n\n...[Content Truncated]..." if len(markdown_text) > 8000 else markdown_text
     except Exception as exc:
         return f"Error fetching webpage: {exc}"
 

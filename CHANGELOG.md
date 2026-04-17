@@ -1,3 +1,7 @@
+## 0.23.3 - 2026-04-16
+- Verified that `replay_mode` UI in `app.py` is entirely complete and does not rely on a missing `replay_run` function. Replays are fully functional through `build_replay_text`.
+- Refactored `fetch_webpage` in `simulator_tools.py` to utilize `httpx.AsyncClient` natively, improving Chainlit event loop concurrency.
+
 ## 0.23.2 - 2026-04-16
 - Verified that `replay_mode` and all related export browsing functions (`/replays`, `/replay-open`, `/replay-step`, `/compare`) are already fully integrated and functional per user request.
 
