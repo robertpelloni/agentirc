@@ -1,3 +1,6 @@
+## 0.26.0 - 2026-04-17
+- Implemented Active `Typing Indicators` inside `app.py::stream_agent`. The frontend now natively hooks `cl.Step` elements to dynamically report which individual AI model is *currently formulating a response* during massive multi-agent round-robin broadcasts.
+
 ## 0.25.0 - 2026-04-17
 - Implemented `Authentic Terminal CRT Shader` inside `public/style.css` to add screen curvature, scanlines, and phosphor flickering, deeply enriching the 1990s IRC aesthetic requested in the original project specs.
 

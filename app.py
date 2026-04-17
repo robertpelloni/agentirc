@@ -1289,30 +1289,41 @@ async def stream_agent(
             # It's a multimodal payload, safely append a new text block
             optimized_prompt.append(truncation_note)
 
-    async for event in agent_or_team.run_stream(task=optimized_prompt):
-        source = getattr(event, "source", None)
-        content = coerce_message_content(getattr(event, "content", None))
-        if not source or not content or source.lower() == "user":
-            continue
+    async with cl.Step(name="System", type="run") as step:
+        step.output = "Agents are formulating responses..."
 
-        author = telemetry_name or (display_agent_name(source) if source in AGENT_SPECS else source)
-        telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
-        usage = extract_usage_metrics(event)
-        resolved_pricing = pricing
-        if resolved_pricing is None and source in AGENT_SPECS:
-            resolved_pricing = AGENT_SPECS[source].get("pricing")
-        latency_ms = round((perf_counter() - start_time) * 1000, 2)
-        record_agent_response(
-            config,
-            telemetry_agent_name,
-            prompt,
-            content,
-            latency_ms,
-            pricing=resolved_pricing,
-            usage=usage,
-        )
-        entry = add_history_entry(author=author, content=content, kind="message", target=reply_target)
-        await cl.Message(author=author, content=render_entry(entry)).send()
+        async for event in agent_or_team.run_stream(task=optimized_prompt):
+            source = getattr(event, "source", None)
+            content = coerce_message_content(getattr(event, "content", None))
+            if not source or not content or source.lower() == "user":
+                continue
+
+            author = telemetry_name or (display_agent_name(source) if source in AGENT_SPECS else source)
+
+            # Briefly indicate which specific agent is generating
+            step.output = f"*{author} is currently formulating a response...*"
+            await step.update()
+
+            telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
+            usage = extract_usage_metrics(event)
+            resolved_pricing = pricing
+            if resolved_pricing is None and source in AGENT_SPECS:
+                resolved_pricing = AGENT_SPECS[source].get("pricing")
+            latency_ms = round((perf_counter() - start_time) * 1000, 2)
+            record_agent_response(
+                config,
+                telemetry_agent_name,
+                prompt,
+                content,
+                latency_ms,
+                pricing=resolved_pricing,
+                usage=usage,
+            )
+            entry = add_history_entry(author=author, content=content, kind="message", target=reply_target)
+            await cl.Message(author=author, content=render_entry(entry)).send()
+
+        step.output = "Responses completed."
+        await step.update()
 
     if count_prompt_telemetry and telemetry_name is None and target_name is None:
         await maybe_run_auto_bridge()
