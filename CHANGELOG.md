@@ -1,3 +1,6 @@
+## 0.23.2 - 2026-04-16
+- Verified that `replay_mode` and all related export browsing functions (`/replays`, `/replay-open`, `/replay-step`, `/compare`) are already fully integrated and functional per user request.
+
 ## 0.23.1 - 2026-04-16
 - Verified that `/room-analytics [name]` is already fully integrated and functional per user request. No codebase modifications were required to satisfy the operational insight analytics.
 
