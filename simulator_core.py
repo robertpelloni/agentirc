@@ -128,13 +128,39 @@ def make_default_store() -> dict[str, Any]:
 
 
 
+import sqlite3
+
+def get_db_connection():
+    db_path = STATE_FILE.parent / "simulator.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_states (
+            username TEXT PRIMARY KEY,
+            state_json TEXT
+        )
+        """
+    )
+    conn.commit()
+    return conn
+
 def load_persistent_state(path: Path = STATE_FILE) -> dict[str, Any]:
-    if not path.exists():
-        return make_default_store()
+    # path is now a generic key string (e.g. data/state_admin.json). We extract the username.
+    # We maintain the `path` param for backwards compatibility with test files for now.
+    username = path.stem.replace("state_", "") if path.stem.startswith("state_") else "default"
 
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+        conn = get_db_connection()
+        cursor = conn.execute("SELECT state_json FROM user_states WHERE username = ?", (username,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return make_default_store()
+
+        payload = json.loads(row[0])
+    except Exception:
         return make_default_store()
 
     state = make_default_store()
@@ -152,8 +178,20 @@ def load_persistent_state(path: Path = STATE_FILE) -> dict[str, Any]:
 
 
 def save_persistent_state(state: dict[str, Any], path: Path = STATE_FILE) -> Path:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+    username = path.stem.replace("state_", "") if path.stem.startswith("state_") else "default"
+    state_json = json.dumps(state, ensure_ascii=False)
+
+    conn = get_db_connection()
+    conn.execute(
+        """
+        INSERT INTO user_states (username, state_json)
+        VALUES (?, ?)
+        ON CONFLICT(username) DO UPDATE SET state_json=excluded.state_json
+        """,
+        (username, state_json)
+    )
+    conn.commit()
+    conn.close()
     return path
 
 

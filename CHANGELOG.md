@@ -1,3 +1,7 @@
+## 0.24.0 - 2026-04-16
+- Migrated raw JSON flat file persistence in `simulator_core.py` to a robust SQLite database (`data/simulator.db`) to safely handle concurrency across multi-user environments.
+- Decoupled `create_team`, `create_bridge_agent`, and `create_judge_agent` from the massive `app.py` monolith into a dedicated `services/agents.py` module.
+
 ## 0.23.3 - 2026-04-16
 - Verified that `replay_mode` UI in `app.py` is entirely complete and does not rely on a missing `replay_run` function. Replays are fully functional through `build_replay_text`.
 - Refactored `fetch_webpage` in `simulator_tools.py` to utilize `httpx.AsyncClient` natively, improving Chainlit event loop concurrency.

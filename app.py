@@ -233,15 +233,15 @@ def save_history(history: list[dict]):
 
 
 
-def get_state_file_path() -> str:
+from pathlib import Path
+
+def get_state_file_path() -> Path:
     user = cl.user_session.get("user")
     if user and user.identifier:
-        # Sanitize username for file path safety
+        # Sanitize username for db key usage
         safe_user = "".join(c for c in user.identifier if c.isalnum() or c in ("-", "_"))
-        path = f"data/state_{safe_user}.json"
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        return path
-    return STATE_FILE
+        return Path(f"data/state_{safe_user}.json")
+    return Path(STATE_FILE)
 
 def get_persistent_state() -> dict:
     state = cl.user_session.get(SESSION_STATE_KEY)
