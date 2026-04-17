@@ -1,3 +1,6 @@
+## 0.26.1 - 2026-04-17
+- Verified named transcript replay resolution works cleanly inside `simulator_core.py` without requiring a separate `replay.py` wrapper, satisfying the original README spec. Added a unit test validating explicit named filename lookups.
+
 ## 0.26.0 - 2026-04-17
 - Implemented Active `Typing Indicators` inside `app.py::stream_agent`. The frontend now natively hooks `cl.Step` elements to dynamically report which individual AI model is *currently formulating a response* during massive multi-agent round-robin broadcasts.
 
