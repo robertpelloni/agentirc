@@ -1,3 +1,9 @@
+## 0.28.0 - 2026-04-17
+- Executed the `GitHub PR Review Agents` product pivot outlined in `IDEAS.md`.
+- Added `fetch_github_pr` async tool utilizing `httpx` to grab raw `.diff` patches directly from PR URLs and safely truncate them for LLM context ingestion.
+- Updated `agents_config.json` with dedicated `Security_Auditor` and `Code_Critic` developer personas.
+- Added `pr_review` scenario preset to `simulator_core.py` to automatically orchestrate Code Reviews.
+
 ## 0.27.0 - 2026-04-17
 - Implemented the `discord` outbox bridge connector in `bridge_connectors.py` to seamlessly POST simulator chat payloads directly to a live Discord Webhook URL `--endpoint`.
 - Automatically translates `room_snapshot` and `bridge_note` internal dictionaries into Discord's expected markdown strings, capping to 2000 characters to prevent API rejection.

@@ -100,6 +100,38 @@ async def fetch_webpage(url: str) -> str:
     except Exception as exc:
         return f"Error fetching webpage: {exc}"
 
+async def fetch_github_pr(url: str) -> str:
+    """
+    Fetches the raw .diff or .patch file from a GitHub Pull Request URL.
+    Use this tool to analyze code changes for review.
+    Example URL: https://github.com/owner/repo/pull/123
+    """
+    try:
+        import httpx
+        # GitHub PRs can append .diff to the URL to get the raw patch text
+        if not url.endswith(".diff") and not url.endswith(".patch"):
+            # Strip trailing slashes or subpaths like /commits
+            url = url.split("/commits")[0].split("/files")[0].rstrip("/")
+            diff_url = url + ".diff"
+        else:
+            diff_url = url
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(diff_url, timeout=10.0)
+            response.raise_for_status()
+            diff_text = response.text
+
+            if not diff_text.strip():
+                return f"Error: No diff content found at {diff_url}"
+
+            # Limit diff size to ~12k chars to prevent LLM context explosion
+            if len(diff_text) > 12000:
+                diff_text = diff_text[:12000] + "\n\n...[Diff Truncated for Context Size]..."
+
+            return f"Raw Diff from {diff_url}:\n\n```diff\n{diff_text}\n```"
+    except Exception as exc:
+        return f"Error fetching GitHub PR diff: {exc}"
+
 
 TOOL_CATALOG = {
     "get_current_time": get_current_time,
@@ -110,6 +142,7 @@ TOOL_CATALOG = {
     "fetch_webpage": fetch_webpage,
     "sandbox_read_file": sandbox_read_file,
     "sandbox_write_file": sandbox_write_file,
+    "fetch_github_pr": fetch_github_pr,
 }
 
 def get_tools_by_names(names: list[str]) -> list:

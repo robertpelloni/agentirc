@@ -69,6 +69,12 @@ SCENARIO_PRESETS: dict[str, dict[str, Any]] = {
         "max_rounds": 16,
         "description": "Governance-heavy deliberation with policy and safety tradeoffs.",
     },
+    "pr_review": {
+        "mode": "discuss",
+        "topic": "Use fetch_github_pr to audit a pull request URL. Evaluate diffs for security, scale, and elegance.",
+        "max_rounds": 10,
+        "description": "Cross-model code review using the fetch_github_pr tool to analyze diff patches.",
+    },
 }
 
 MODERATOR_MODES: dict[str, str] = {
@@ -146,8 +152,6 @@ def get_db_connection():
     return conn
 
 def load_persistent_state(path: Path = STATE_FILE) -> dict[str, Any]:
-    # path is now a generic key string (e.g. data/state_admin.json). We extract the username.
-    # We maintain the `path` param for backwards compatibility with test files for now.
     username = path.stem.replace("state_", "") if path.stem.startswith("state_") else "default"
 
     try:
@@ -157,6 +161,13 @@ def load_persistent_state(path: Path = STATE_FILE) -> dict[str, Any]:
         conn.close()
 
         if not row:
+            # Migration check: If SQLite lacks state, see if a legacy JSON flat file exists
+            if path.exists():
+                try:
+                    payload = json.loads(path.read_text(encoding="utf-8"))
+                    return payload
+                except (json.JSONDecodeError, OSError):
+                    return make_default_store()
             return make_default_store()
 
         payload = json.loads(row[0])

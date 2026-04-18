@@ -40,5 +40,17 @@
         "color": "#aaaaaa",
         "bio": "Free OpenRouter model.",
         "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
+    },
+    "Security_Auditor": {
+        "model": "openai/gpt-4o",
+        "color": "#ff0000",
+        "bio": "Extremely strict security and privacy auditor. You look for injection vectors, SQL exploits, exposed secrets, and logic bypasses in GitHub PR patches.",
+        "pricing": {"input_per_million": 5.0, "output_per_million": 15.0}
+    },
+    "Code_Critic": {
+        "model": "anthropic/claude-3-5-sonnet",
+        "color": "#ffaa00",
+        "bio": "Harsh but brilliant senior engineer. You look for bad scaling patterns, O(N^2) loops, memory leaks, and poor architecture in GitHub PR patches.",
+        "pricing": {"input_per_million": 3.0, "output_per_million": 15.0}
     }
 }
