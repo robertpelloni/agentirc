@@ -1,3 +1,7 @@
+## 0.27.0 - 2026-04-17
+- Implemented the `discord` outbox bridge connector in `bridge_connectors.py` to seamlessly POST simulator chat payloads directly to a live Discord Webhook URL `--endpoint`.
+- Automatically translates `room_snapshot` and `bridge_note` internal dictionaries into Discord's expected markdown strings, capping to 2000 characters to prevent API rejection.
+
 ## 0.26.1 - 2026-04-17
 - Verified named transcript replay resolution works cleanly inside `simulator_core.py` without requiring a separate `replay.py` wrapper, satisfying the original README spec. Added a unit test validating explicit named filename lookups.
 
