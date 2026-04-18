@@ -1,3 +1,11 @@
+## 0.30.0 - 2026-04-17
+- Executed the `Operator Polling` feature.
+- Added a `/poll "Question?" Opt1 Opt2` command to `app.py` that formats a markdown voting UI and streams it directly into the active AI model context, forcing them to vote on the topic.
+
+## 0.29.0 - 2026-04-17
+- Executed the `MMORPG Mechanics` product pivot outlined in `IDEAS.md`.
+- Added a `/go <room>` command to `app.py` that automatically triggers the `mud_exploration` scenario mode, forcing active agents into roleplaying as environmental NPCs in a text-based MUD adventure.
+
 ## 0.28.0 - 2026-04-17
 - Executed the `GitHub PR Review Agents` product pivot outlined in `IDEAS.md`.
 - Added `fetch_github_pr` async tool utilizing `httpx` to grab raw `.diff` patches directly from PR URLs and safely truncate them for LLM context ingestion.

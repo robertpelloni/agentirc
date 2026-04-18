@@ -75,6 +75,12 @@ SCENARIO_PRESETS: dict[str, dict[str, Any]] = {
         "max_rounds": 10,
         "description": "Cross-model code review using the fetch_github_pr tool to analyze diff patches.",
     },
+    "mud_exploration": {
+        "mode": "discuss",
+        "topic": "Roleplay as NPCs in a text-based Multi-User Dungeon (MUD).",
+        "max_rounds": 8,
+        "description": "MMORPG physical room simulation.",
+    },
 }
 
 MODERATOR_MODES: dict[str, str] = {
@@ -445,6 +451,7 @@ def build_help_text() -> str:
 - `/mode <broadcast|discuss>` - Switch between one-pass replies and group discussion.
 - `/topic <text>` - Set or inspect the current topic.
 - `/nick <name>` - Change your IRC nick.
+- `/poll "Question?" Opt1 Opt2` - Start a vote across active agents.
 - `/status` - Show the live simulator configuration.
 - `/dashboard` - Show a high-level operator dashboard across rooms.
 - `/observer` - Show a richer ranked observer view across rooms.
@@ -452,6 +459,7 @@ def build_help_text() -> str:
 - `/leaderboard` - Show room and agent leaderboards across the session.
 - `/room-summary [count]` - Summarize room activity across the session.
 - `/room-analytics [name]` - Show analytics for one room.
+- `/go <room>` - Travel to another room and force agents into MMORPG/MUD roleplay.
 - `/bridge <source> <target> [count]` - Send a summarized bridge note from one room into another.
 - `/bridge-ai <source> <target> [role] [focus]` - Use a role-specific model-generated bridge note between rooms.
 - `/bridge-roles` - List available bridge agent roles.

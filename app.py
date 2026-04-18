@@ -568,6 +568,34 @@ async def handle_command(command: str, args: str) -> bool:
         await play_terminal_sound()
         return True
 
+    if command == "/poll":
+        import shlex
+        try:
+            parts = shlex.split(args)
+        except ValueError:
+            await send_system_notice("Usage: `/poll \"Question?\" Option1 Option2 Option3`")
+            return True
+
+        if len(parts) < 3:
+            await send_system_notice("A poll requires a question and at least two options. Usage: `/poll \"Question?\" Yes No`")
+            return True
+
+        question = parts[0]
+        options = parts[1:]
+
+        poll_text = f"**{config.get('nick', 'operator')} has started a poll:**\n\n**{question}**\n\n"
+        for i, opt in enumerate(options):
+            poll_text += f"*{i+1}. {opt}*\n"
+        poll_text += "\n*(Please explicitly state your vote and provide a short explanation why.)*"
+
+        await send_system_notice(poll_text)
+        add_history_entry(author="system", content=poll_text, kind="system")
+
+        team = cl.user_session.get(SESSION_TEAM_KEY)
+        if team:
+            await stream_agent(team, poll_text, count_prompt_telemetry=False)
+        return True
+
     if command == "/status":
         await cl.Message(content=build_status_text(config, len(get_history()), persistent_state)).send()
         return True
@@ -824,6 +852,31 @@ async def handle_command(command: str, args: str) -> bool:
         await stop_automation_task()
         activate_room(room_name)
         await send_system_notice(response)
+        return True
+
+    if command == "/go":
+        if not args:
+            await send_system_notice("Usage: `/go <room_name>`")
+            return True
+        save_current_room_state()
+        changed, response, room_name = switch_room(get_rooms(), args)
+        if not changed or room_name is None:
+            await send_system_notice(response)
+            return True
+
+        await stop_automation_task()
+        activate_room(room_name)
+
+        # MUD Override: Force the room into MUD mode
+        config = get_config()
+        config["scenario"] = "mud_exploration"
+        config["topic"] = f"You are physically present in {room_name.upper()}. Act as an NPC providing atmospheric details."
+        config["mode"] = "discuss"
+        rebuild_team()
+
+        action_msg = f"* {config.get('nick', 'operator')} travels to {room_name}."
+        await send_system_notice(action_msg)
+        add_history_entry(author="system", content=action_msg, kind="system")
         return True
 
     if command == "/new-room":
