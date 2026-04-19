@@ -493,6 +493,7 @@ def create_team(config: dict):
         spec = specs.get(name)
         if not spec:
             continue
+        spec = get_agent_specs()[name]
         peers = [display_agent_name(peer) for peer in enabled_agents if peer != name]
         persona = config.get("persona_overrides", {}).get(name, spec["bio"])
         system_message = (
@@ -1170,6 +1171,17 @@ async def handle_command(command: str, args: str) -> bool:
             await sync_nick_panel()
         await send_system_notice(response)
         return True
+        changed, response = set_agent_enabled(
+            config=config,
+            raw_name=args,
+            enabled=command == "/enable",
+            agent_specs=get_agent_specs(),
+        )
+        if changed:
+            rebuild_team()
+        await update_settings_ui()
+        await send_system_notice(response)
+        return True
         return True
 
     if command == "/rounds":
@@ -1598,6 +1610,24 @@ async def stream_agent(
             await cl.Message(author=author, content=render_entry(entry)).send()
     except Exception as e:
         await send_system_notice(f"Streaming error: {e}. Moving to next participant...")
+        author = telemetry_name or (display_agent_name(source) if source in get_agent_specs() else source)
+        telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
+        usage = extract_usage_metrics(event)
+        resolved_pricing = pricing
+        if resolved_pricing is None and source in get_agent_specs():
+            resolved_pricing = get_agent_specs()[source].get("pricing")
+        latency_ms = round((perf_counter() - start_time) * 1000, 2)
+        record_agent_response(
+            config,
+            telemetry_agent_name,
+            prompt,
+            content,
+            latency_ms,
+            pricing=resolved_pricing,
+            usage=usage,
+        )
+        entry = add_history_entry(author=author, content=content, kind="message", target=reply_target)
+        await cl.Message(author=author, content=render_entry(entry)).send()
 
     if count_prompt_telemetry and telemetry_name is None and target_name is None:
         await maybe_run_auto_bridge()
@@ -1708,6 +1738,10 @@ async def start():
     update_agent_specs(current_specs)
     
     rooms = make_initial_rooms(current_specs, persistent_state)
+    agent_specs = persistent_state.get("agent_specs", {})
+    cl.user_session.set("agent_specs", agent_specs)
+
+    rooms = make_initial_rooms(agent_specs, persistent_state)
     cl.user_session.set(SESSION_ROOMS_KEY, rooms)
     cl.user_session.set(SESSION_ROOM_KEY, DEFAULT_ROOM_NAME)
     
@@ -1783,6 +1817,8 @@ async def handle_message(message: cl.Message):
 
     if images:
         content += "\n[User attached images]"
+        content += "
+[User attached images]"
 
     add_history_entry(author=config["nick"], content=content, kind="user")
 
