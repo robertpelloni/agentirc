@@ -6,3 +6,5 @@ outbox/
 inbox/
 processed/
 data/archives/
+data/simulator.db
+chainlit.log

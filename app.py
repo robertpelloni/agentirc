@@ -11,16 +11,31 @@ from time import perf_counter
 import chainlit as cl
 from dotenv import load_dotenv
 
+import os
+
+# Optional Basic Auth hook
+@cl.password_auth_callback
+def auth_callback(username: str, password: str) -> cl.User | None:
+    """
+    Validates users against environment variables.
+    In a real app, this would query a database.
+    We check if an env var like 'AGENTIRC_USER_JULES' exists and matches the password.
+    """
+    env_key = f"AGENTIRC_USER_{username.upper()}"
+    expected_password = os.environ.get(env_key)
+
+    # If the user isn't configured in the environment, reject them to prevent unauthorized room access.
+    if not expected_password or password != expected_password:
+        return None
+
+    return cl.User(identifier=username)
+
 # --- Python 3.14 Compatibility Patch ---
 import anyio.to_thread
 
-from autogen_agentchat.agents import AssistantAgent
-from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermination
-from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
-from autogen_ext.models.openai import OpenAIChatCompletionClient
-
 from bridge_connectors import build_connector_catalog_text
 from simulator_tools import get_tools_by_names
+from services.agents import get_client, create_team, create_judge_agent, create_bridge_agent
 from simulator_core import (
     DEFAULT_ROOM_NAME,
     EXPORT_DIR,
@@ -321,6 +336,16 @@ def save_history(history: list[dict]):
 
 
 
+from pathlib import Path
+
+def get_state_file_path() -> Path:
+    user = cl.user_session.get("user")
+    if user and user.identifier:
+        # Sanitize username for db key usage
+        safe_user = "".join(c for c in user.identifier if c.isalnum() or c in ("-", "_"))
+        return Path(f"data/state_{safe_user}.json")
+    return Path(STATE_FILE)
+
 def get_persistent_state() -> dict:
     state = cl.user_session.get(SESSION_STATE_KEY)
     if state is None:
@@ -394,7 +419,8 @@ def append_entry_to_room(
 
 def persist_state():
     state = get_persistent_state()
-    save_persistent_state(state, STATE_FILE)
+    target_file = get_state_file_path()
+    save_persistent_state(state, target_file)
 
 
 
@@ -559,7 +585,7 @@ def create_bridge_agent(config: dict):
 
 def rebuild_team():
     config = get_config()
-    team = create_team(config)
+    team = create_team(config, AGENT_SPECS, GLOBAL_CONFIG)
     cl.user_session.set(SESSION_TEAM_KEY, team)
     return team
 
@@ -667,7 +693,7 @@ async def execute_bridge_ai(source_room_name: str, target_room_name: str, role: 
         role,
         focus,
     )
-    bridge_agent = create_bridge_agent(get_config())
+    bridge_agent = create_bridge_agent(get_config(), GLOBAL_CONFIG)
     await send_system_notice(
         f"Bridge agent summarizing **{resolved_source}** for **{resolved_target}**..."
     )
@@ -1107,6 +1133,31 @@ async def handle_command(command: str, args: str) -> bool:
         await send_system_notice(response)
         return True
 
+    if command == "/go":
+        if not args:
+            await send_system_notice("Usage: `/go <room_name>`")
+            return True
+        save_current_room_state()
+        changed, response, room_name = switch_room(get_rooms(), args)
+        if not changed or room_name is None:
+            await send_system_notice(response)
+            return True
+
+        await stop_automation_task()
+        activate_room(room_name)
+
+        # MUD Override: Force the room into MUD mode
+        config = get_config()
+        config["scenario"] = "mud_exploration"
+        config["topic"] = f"You are physically present in {room_name.upper()}. Act as an NPC providing atmospheric details."
+        config["mode"] = "discuss"
+        rebuild_team()
+
+        action_msg = f"* {config.get('nick', 'operator')} travels to {room_name}."
+        await send_system_notice(action_msg)
+        add_history_entry(author="system", content=action_msg, kind="system")
+        return True
+
     if command == "/new-room":
         if not args:
             await send_system_notice("Usage: `/new-room <name>`")
@@ -1233,7 +1284,7 @@ async def handle_command(command: str, args: str) -> bool:
         if not get_history():
             await send_system_notice("Judge evaluation requires transcript history.")
             return True
-        judge_agent = create_judge_agent(config)
+        judge_agent = create_judge_agent(config, GLOBAL_CONFIG)
         judge_prompt = build_judge_prompt(get_history(), config, args)
         record_judge_run(config, judge_prompt)
         await send_system_notice(f"Judge model `{config['judge_model']}` evaluating the recent transcript...")
@@ -1778,6 +1829,11 @@ async def start():
         with open("VERSION", "r") as vf:
             version = vf.read().strip()
 
+    version = "Unknown"
+    if os.path.exists("VERSION"):
+        with open("VERSION", "r") as vf:
+            version = vf.read().strip()
+
     welcome_banner = f"""
 *** Connected to #agentirc (AutoGen Network) [AgentIRC v{version}]
 *** Current Room: {config['room_name']}
@@ -1800,6 +1856,15 @@ async def end():
     await stop_automation_task()
 
 
+# Note: Chainlit currently binds Audio elements directly to visible messages.
+# Sending a blank message pollutes the chat history UI heavily.
+# For authentic UI retro beeps, this requires custom JS in `public/` rather than backend messages.
+# We will temporarily remove the backend injection mechanism to prevent UI pollution
+# until a custom JS frontend bridge is established.
+async def play_terminal_sound():
+    """Reserved for future frontend sound integration via JS hooks."""
+    pass
+
 @cl.on_message
 async def handle_message(message: cl.Message):
     content = message.content.strip()
@@ -1821,6 +1886,9 @@ async def handle_message(message: cl.Message):
 [User attached images]"
 
     add_history_entry(author=config["nick"], content=content, kind="user")
+
+    # Play sound on any valid human user message entering the active chat stream
+    await play_terminal_sound()
 
     parsed_command = parse_command(content)
     if parsed_command:

@@ -15,6 +15,7 @@ CONNECTOR_CATALOG: dict[str, str] = {
     "inbox": "Deliver payloads into the local `inbox/` directory for manual or app-driven import.",
     "jsonl": "Append delivery events to a JSONL file for downstream automation or auditing.",
     "webhook": "Deliver payloads via HTTP POST to a remote endpoint. Requires --endpoint flag.",
+    "discord": "Deliver payloads formatted as Discord chat messages. Requires --endpoint flag with Discord Webhook URL.",
 }
 
 JSONL_OUTPUT = Path("processed/connector_output.jsonl")
@@ -102,6 +103,52 @@ def deliver_to_webhook(payload: dict[str, Any], endpoint: str | None) -> dict[st
 
 
 
+def deliver_to_discord(payload: dict[str, Any], endpoint: str | None) -> dict[str, Any]:
+    if not endpoint:
+        raise ValueError("Discord connector requires a webhook endpoint URL.")
+
+    # Map the internal AgentIRC payload into a Discord-friendly text message
+    kind = payload.get("kind", "unknown")
+    if kind == "room_snapshot":
+        text_content = f"**Room Snapshot: {payload.get('room', 'n/a')}**\n"
+        text_content += f"*Topic: {payload.get('topic', 'n/a')}*\n\n"
+        for entry in payload.get("entries", []):
+            author = entry.get("author", "unknown")
+            content = entry.get("content", "")
+            text_content += f"**{author}**: {content}\n"
+    elif kind == "bridge_note":
+        source = payload.get("source", "n/a")
+        target = payload.get("target", "n/a")
+        content = payload.get("content", "")
+        text_content = f"**Bridge Note from {source} to {target}**\n\n{content}"
+    else:
+        text_content = build_connector_payload_message(payload)
+
+    # Discord 'content' restricts to 2000 chars. Truncate gracefully.
+    discord_payload = {
+        "content": text_content[:1990] + ("..." if len(text_content) > 1990 else "")
+    }
+
+    req = urllib.request.Request(
+        endpoint,
+        data=json.dumps(discord_payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as response:
+            status = response.status
+    except Exception as exc:
+        status = str(exc)
+
+    return {
+        "connector": "discord",
+        "destination": endpoint,
+        "status": status,
+    }
+
+
+
 def route_payload(payload: dict[str, Any], connector: str, endpoint: str | None = None) -> dict[str, Any]:
     normalized = connector.strip().lower()
     if normalized == "console":
@@ -112,4 +159,6 @@ def route_payload(payload: dict[str, Any], connector: str, endpoint: str | None 
         return deliver_to_jsonl(payload)
     if normalized == "webhook":
         return deliver_to_webhook(payload, endpoint)
+    if normalized == "discord":
+        return deliver_to_discord(payload, endpoint)
     raise ValueError(f"Unknown connector: {connector}")

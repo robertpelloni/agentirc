@@ -69,6 +69,18 @@ SCENARIO_PRESETS: dict[str, dict[str, Any]] = {
         "max_rounds": 16,
         "description": "Governance-heavy deliberation with policy and safety tradeoffs.",
     },
+    "pr_review": {
+        "mode": "discuss",
+        "topic": "Use fetch_github_pr to audit a pull request URL. Evaluate diffs for security, scale, and elegance.",
+        "max_rounds": 10,
+        "description": "Cross-model code review using the fetch_github_pr tool to analyze diff patches.",
+    },
+    "mud_exploration": {
+        "mode": "discuss",
+        "topic": "Roleplay as NPCs in a text-based Multi-User Dungeon (MUD).",
+        "max_rounds": 8,
+        "description": "MMORPG physical room simulation.",
+    },
 }
 
 MODERATOR_MODES: dict[str, str] = {
@@ -168,13 +180,44 @@ def make_default_store() -> dict[str, Any]:
 
 
 
+import sqlite3
+
+def get_db_connection():
+    db_path = STATE_FILE.parent / "simulator.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_states (
+            username TEXT PRIMARY KEY,
+            state_json TEXT
+        )
+        """
+    )
+    conn.commit()
+    return conn
+
 def load_persistent_state(path: Path = STATE_FILE) -> dict[str, Any]:
-    if not path.exists():
-        return make_default_store()
+    username = path.stem.replace("state_", "") if path.stem.startswith("state_") else "default"
 
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+        conn = get_db_connection()
+        cursor = conn.execute("SELECT state_json FROM user_states WHERE username = ?", (username,))
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            # Migration check: If SQLite lacks state, see if a legacy JSON flat file exists
+            if path.exists():
+                try:
+                    payload = json.loads(path.read_text(encoding="utf-8"))
+                    return payload
+                except (json.JSONDecodeError, OSError):
+                    return make_default_store()
+            return make_default_store()
+
+        payload = json.loads(row[0])
+    except Exception:
         return make_default_store()
 
     state = make_default_store()
@@ -194,8 +237,20 @@ def load_persistent_state(path: Path = STATE_FILE) -> dict[str, Any]:
 
 
 def save_persistent_state(state: dict[str, Any], path: Path = STATE_FILE) -> Path:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+    username = path.stem.replace("state_", "") if path.stem.startswith("state_") else "default"
+    state_json = json.dumps(state, ensure_ascii=False)
+
+    conn = get_db_connection()
+    conn.execute(
+        """
+        INSERT INTO user_states (username, state_json)
+        VALUES (?, ?)
+        ON CONFLICT(username) DO UPDATE SET state_json=excluded.state_json
+        """,
+        (username, state_json)
+    )
+    conn.commit()
+    conn.close()
     return path
 
 
@@ -265,13 +320,17 @@ def make_default_config(
     if persistent_state and isinstance(persistent_state.get("saved_personas"), dict):
         persona_overrides = deepcopy(persistent_state["saved_personas"])
 
+    # Optimization: Automatically limit default enabled agents if the catalog is massive
+    all_agents = list(agent_specs.keys())
+    default_agents = all_agents[:10] if len(all_agents) > 10 else all_agents
+
     return {
         "room_name": room_name,
         "mode": DEFAULT_MODE,
         "topic": DEFAULT_TOPIC,
         "nick": DEFAULT_NICK,
         "max_rounds": DEFAULT_MAX_ROUNDS,
-        "enabled_agents": list(agent_specs.keys()),
+        "enabled_agents": default_agents,
         "enabled_tools": [],
         "scenario": "omni",
         "simulation_count": 0,
@@ -434,6 +493,7 @@ def build_help_text() -> str:
 - `/mode <broadcast|discuss>` - Switch between one-pass replies and group discussion.
 - `/topic <text>` - Set or inspect the current topic.
 - `/nick <name>` - Change your IRC nick.
+- `/poll "Question?" Opt1 Opt2` - Start a vote across active agents.
 - `/status` - Show the live simulator configuration.
 - `/dashboard` - Show a high-level operator dashboard across rooms.
 - `/observer` - Show a richer ranked observer view across rooms.
@@ -441,6 +501,7 @@ def build_help_text() -> str:
 - `/leaderboard` - Show room and agent leaderboards across the session.
 - `/room-summary [count]` - Summarize room activity across the session.
 - `/room-analytics [name]` - Show analytics for one room.
+- `/go <room>` - Travel to another room and force agents into MMORPG/MUD roleplay.
 - `/bridge <source> <target> [count]` - Send a summarized bridge note from one room into another.
 - `/bridge-ai <source> <target> [role] [focus]` - Use a role-specific model-generated bridge note between rooms.
 - `/bridge-roles` - List available bridge agent roles.
