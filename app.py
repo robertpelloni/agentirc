@@ -194,6 +194,10 @@ def load_agents_config():
 
 AGENT_SPECS = load_agents_config()
 
+def save_agents_config():
+    with open("agents_config.json", "w") as f:
+        json.dump(AGENT_SPECS, f, indent=4)
+
 def load_global_config():
     if os.path.exists("config.toml"):
         with open("config.toml", "rb") as f:
@@ -530,6 +534,42 @@ async def handle_command(command: str, args: str) -> bool:
 
     if command == "/help":
         await cl.Message(content=build_help_text()).send()
+        return True
+
+    if command == "/add-model":
+        import shlex
+        try:
+            parts = shlex.split(args)
+        except ValueError as e:
+            await send_system_notice(f"Parse error: {e}")
+            return True
+
+        if len(parts) < 3:
+            await send_system_notice('Usage: `/add-model <name> <provider> <model_id> ["persona override"]`')
+            return True
+
+        name = parts[0]
+        provider = parts[1]
+        model_id = parts[2]
+        bio = parts[3] if len(parts) > 3 else f"A new model instantiated as {name}."
+
+        AGENT_SPECS[name] = {
+            "model": f"{provider}/{model_id}",
+            "color": "#aaaaaa",
+            "bio": bio,
+            "pricing": {"input_per_million": 0.0, "output_per_million": 0.0},
+        }
+
+        # Persist the new model definition
+        save_agents_config()
+
+        # Enable it in the active room configuration so it's usable right away
+        config["enabled_agents"].append(name)
+
+        await send_system_notice(f"Model **{name}** added to catalog and enabled. Restart session if needed to fully map catalog changes.")
+        rebuild_team()
+        if 'update_settings_panel' in globals():
+            await globals()['update_settings_panel']()
         return True
 
     if command == "/mode":
