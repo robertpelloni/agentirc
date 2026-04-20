@@ -449,6 +449,7 @@ def build_help_text() -> str:
 **Available Commands**
 - `/help` - Show this command list.
 - `/add-model <name> <provider> <model_id> ["persona override"]` - Add a new model dynamically.
+- `/remove-model <name>` - Remove a model from the catalog dynamically.
 - `/mode <broadcast|discuss>` - Switch between one-pass replies and group discussion.
 - `/topic <text>` - Set or inspect the current topic.
 - `/nick <name>` - Change your IRC nick.

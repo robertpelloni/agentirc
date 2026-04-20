@@ -572,6 +572,30 @@ async def handle_command(command: str, args: str) -> bool:
             await globals()['update_settings_panel']()
         return True
 
+    if command == "/remove-model":
+        name = args.strip()
+        if not name:
+            await send_system_notice("Usage: `/remove-model <name>`")
+            return True
+
+        if name not in AGENT_SPECS:
+            await send_system_notice(f"Model **{name}** not found in catalog.")
+            return True
+
+        # Remove from global config
+        del AGENT_SPECS[name]
+        save_agents_config()
+
+        # Remove from active room if present
+        if name in config["enabled_agents"]:
+            config["enabled_agents"].remove(name)
+
+        await send_system_notice(f"Model **{name}** removed from catalog.")
+        rebuild_team()
+        if 'update_settings_panel' in globals():
+            await globals()['update_settings_panel']()
+        return True
+
     if command == "/mode":
         new_mode = args.lower()
         if new_mode not in {"broadcast", "discuss"}:
