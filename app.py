@@ -12,23 +12,7 @@ import chainlit as cl
 from dotenv import load_dotenv
 
 
-
-# Optional Basic Auth hook
-@cl.password_auth_callback
-def auth_callback(username: str, password: str) -> cl.User | None:
-    """
-    Validates users against environment variables.
-    In a real app, this would query a database.
-    We check if an env var like 'AGENTIRC_USER_JULES' exists and matches the password.
-    """
-    env_key = f"AGENTIRC_USER_{username.upper()}"
-    expected_password = os.environ.get(env_key)
-
-    # If the user isn't configured in the environment, reject them to prevent unauthorized room access.
-    if not expected_password or password != expected_password:
-        return None
-
-    return cl.User(identifier=username)
+# Auth disabled — no login required
 
 
 # --- Python 3.14 Compatibility Patch ---
