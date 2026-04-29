@@ -8,6 +8,11 @@ import re
 from datetime import datetime, timedelta
 from time import perf_counter
 
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermination
+from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
+
 import chainlit as cl
 from dotenv import load_dotenv
 
@@ -143,10 +148,6 @@ async def patched_run_sync(func: typing.Callable, *args, **kwargs):
 anyio.to_thread.run_sync = patched_run_sync
 # ---------------------------------------
 
-from autogen_ext.models.openai import OpenAIChatCompletionClient  # noqa: E402
-from autogen_agentchat.agents import AssistantAgent  # noqa: E402
-from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermination  # noqa: E402
-from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat  # noqa: E402
 
 load_dotenv(override=True)
 
