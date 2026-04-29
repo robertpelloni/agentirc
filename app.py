@@ -143,6 +143,11 @@ async def patched_run_sync(func: typing.Callable, *args, **kwargs):
 anyio.to_thread.run_sync = patched_run_sync
 # ---------------------------------------
 
+from autogen_ext.models.openai import OpenAIChatCompletionClient  # noqa: E402
+from autogen_agentchat.agents import AssistantAgent  # noqa: E402
+from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermination  # noqa: E402
+from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat  # noqa: E402
+
 load_dotenv(override=True)
 
 LOG_FILE = "irc_session.log"
