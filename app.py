@@ -595,7 +595,7 @@ def create_bridge_agent(config: dict):
 
 def rebuild_team():
     config = get_config()
-    team = create_team(config, AGENT_SPECS, GLOBAL_CONFIG)
+    team = create_team(config)
     cl.user_session.set(SESSION_TEAM_KEY, team)
     return team
 
@@ -1820,6 +1820,15 @@ async def stream_agent(
     reply_target = config["nick"] if target_name else None
     start_time = perf_counter()
 
+    if agent_or_team is None:
+        await send_system_notice("No agent/team available. Rebuilding team...")
+        rebuild_team()
+        return
+
+    source = None
+    content = None
+    event = None
+
     try:
         async for event in agent_or_team.run_stream(task=prompt):
             source = getattr(event, "source", None)
@@ -1863,28 +1872,6 @@ async def stream_agent(
             await cl.Message(author=author, content=render_entry(entry)).send()
     except Exception as e:
         await send_system_notice(f"Streaming error: {e}. Moving to next participant...")
-        author = telemetry_name or (
-            display_agent_name(source) if source in get_agent_specs() else source
-        )
-        telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
-        usage = extract_usage_metrics(event)
-        resolved_pricing = pricing
-        if resolved_pricing is None and source in get_agent_specs():
-            resolved_pricing = get_agent_specs()[source].get("pricing")
-        latency_ms = round((perf_counter() - start_time) * 1000, 2)
-        record_agent_response(
-            config,
-            telemetry_agent_name,
-            prompt,
-            content,
-            latency_ms,
-            pricing=resolved_pricing,
-            usage=usage,
-        )
-        entry = add_history_entry(
-            author=author, content=content, kind="message", target=reply_target
-        )
-        await cl.Message(author=author, content=render_entry(entry)).send()
 
     if count_prompt_telemetry and telemetry_name is None and target_name is None:
         await maybe_run_auto_bridge()
