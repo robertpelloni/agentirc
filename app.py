@@ -11,7 +11,7 @@ from time import perf_counter
 import chainlit as cl
 from dotenv import load_dotenv
 
-import os
+
 
 # Optional Basic Auth hook
 @cl.password_auth_callback
@@ -30,12 +30,18 @@ def auth_callback(username: str, password: str) -> cl.User | None:
 
     return cl.User(identifier=username)
 
+
 # --- Python 3.14 Compatibility Patch ---
 import anyio.to_thread
 
 from bridge_connectors import build_connector_catalog_text
 from simulator_tools import get_tools_by_names
-from services.agents import get_client, create_team, create_judge_agent, create_bridge_agent
+from services.agents import (
+    get_client,
+    create_team,
+    create_judge_agent,
+    create_bridge_agent,
+)
 from simulator_core import (
     DEFAULT_ROOM_NAME,
     EXPORT_DIR,
@@ -50,7 +56,6 @@ from simulator_core import (
     build_bridge_note,
     build_bridge_prompt,
     build_costs_text,
-    build_external_bridge_payload,
     build_external_room_payload,
     build_dashboard_text,
     build_bridge_policies_text,
@@ -169,6 +174,7 @@ SESSION_REPLAY_STATE_KEY = "replay_state"
 SESSION_BENCHED_KEY = "benched_agents"  # Agents that errored out this session
 JUDGE_PRICING = {"input_per_million": 0.15, "output_per_million": 0.6}
 
+
 async def fetch_free_models():
     """Fetch free models from OpenRouter."""
     try:
@@ -181,28 +187,31 @@ async def fetch_free_models():
                     pricing = m.get("pricing", {})
                     # Some free models have "0" as string or float
                     is_free = (
-                        float(pricing.get("prompt", 1)) == 0 and 
-                        float(pricing.get("completion", 1)) == 0
+                        float(pricing.get("prompt", 1)) == 0
+                        and float(pricing.get("completion", 1)) == 0
                     )
                     if is_free or ":free" in m.get("id", ""):
-                        free_models.append({
-                            "id": m.get("id"),
-                            "name": m.get("name") or m.get("id"),
-                            "description": m.get("description", "Free model from OpenRouter.")
-                        })
+                        free_models.append(
+                            {
+                                "id": m.get("id"),
+                                "name": m.get("name") or m.get("id"),
+                                "description": m.get(
+                                    "description", "Free model from OpenRouter."
+                                ),
+                            }
+                        )
                 return free_models
     except Exception as e:
         print(f"Failed to fetch free models: {e}")
     return []
+
 
 async def identify_model_nick(model_id: str, base_url: str | None = None) -> str:
     """Ask a model for its name and return the first three words."""
     client = get_client(model_id, base_url_override=base_url)
     prompt = "What is your name? Respond with your model name only, no punctuation."
     try:
-        response = await client.create(
-            messages=[{"role": "user", "content": prompt}]
-        )
+        response = await client.create(messages=[{"role": "user", "content": prompt}])
         content = response.choices[0].message.content.strip()
         # Get first three words
         words = re.findall(r"\w+", content)
@@ -211,7 +220,14 @@ async def identify_model_nick(model_id: str, base_url: str | None = None) -> str
     except Exception:
         pass
     # Fallback to sanitized ID part if name check fails
-    return model_id.split("/")[-1].split(":")[0].replace("-", "").replace(".", "").capitalize()
+    return (
+        model_id.split("/")[-1]
+        .split(":")[0]
+        .replace("-", "")
+        .replace(".", "")
+        .capitalize()
+    )
+
 
 def update_agent_specs(new_specs: dict):
     cl.user_session.set("agent_specs", new_specs)
@@ -220,14 +236,18 @@ def update_agent_specs(new_specs: dict):
     ps["agent_specs"] = new_specs
     persist_state()
 
+
 def load_agents_config():
     return {}
 
+
 AGENT_SPECS = load_agents_config()
+
 
 def save_agents_config():
     with open("agents_config.json", "w") as f:
         json.dump(AGENT_SPECS, f, indent=4)
+
 
 def load_global_config():
     if os.path.exists("config.toml"):
@@ -235,13 +255,13 @@ def load_global_config():
             return tomli.load(f)
     return {}
 
+
 GLOBAL_CONFIG = load_global_config()
 
 
 def log_irc(message: str):
     with open(LOG_FILE, "a", encoding="utf-8") as handle:
         handle.write(f"{message}\n")
-
 
 
 class ResilientChatCompletionClient:
@@ -254,48 +274,51 @@ class ResilientChatCompletionClient:
     async def create(self, messages, **kwargs):
         try:
             return await asyncio.wait_for(
-                self._client.create(messages, **kwargs),
-                timeout=self.TIMEOUT_SECONDS
+                self._client.create(messages, **kwargs), timeout=self.TIMEOUT_SECONDS
             )
         except asyncio.TimeoutError:
             from autogen_core.models import CreateResult, RequestUsage
+
             content = f"[SYSTEM: TimeoutError - No response after {self.TIMEOUT_SECONDS}s. Model turn skipped.]"
             return CreateResult(
                 finish_reason="stop",
                 content=content,
                 usage=RequestUsage(prompt_tokens=0, completion_tokens=0),
-                cached=False
+                cached=False,
             )
         except Exception as e:
             # Create a real CreateResult object to keep the GroupChat moving
             from autogen_core.models import CreateResult, RequestUsage
-            
+
             err_type = type(e).__name__
-            err_msg = str(e).split('\n')[0]
+            err_msg = str(e).split("\n")[0]
             content = f"[SYSTEM: {err_type} - {err_msg}. Model turn skipped.]"
-            
+
             return CreateResult(
                 finish_reason="stop",
                 content=content,
                 usage=RequestUsage(prompt_tokens=0, completion_tokens=0),
-                cached=False
+                cached=False,
             )
 
     def __getattr__(self, name):
         return getattr(self._client, name)
 
+
 def get_client(model_name: str, base_url_override: str | None = None):
     provider_config = GLOBAL_CONFIG.get("provider", {})
-    base_url = base_url_override or provider_config.get("base_url", "https://openrouter.ai/api/v1")
+    base_url = base_url_override or provider_config.get(
+        "base_url", "https://openrouter.ai/api/v1"
+    )
     api_key_env = provider_config.get("api_key_env", "OPENROUTER_API_KEY")
-    
+
     # Handle specific provider env vars if they exist
     api_key = None
     if base_url and "kilo.ai" in base_url:
         api_key = os.environ.get("KILOCODE_API_KEY")
     elif base_url and "cline.bot" in base_url:
         api_key = os.environ.get("CLINE_API_KEY")
-    
+
     if not api_key:
         api_key = os.environ.get(api_key_env)
 
@@ -316,14 +339,12 @@ def get_client(model_name: str, base_url_override: str | None = None):
     return ResilientChatCompletionClient(client)
 
 
-
-
 def get_agent_specs():
     return cl.user_session.get("agent_specs", {})
 
+
 def get_config() -> dict:
     return cl.user_session.get(SESSION_CONFIG_KEY)
-
 
 
 def get_history() -> list[dict]:
@@ -334,21 +355,23 @@ def get_history() -> list[dict]:
     return history
 
 
-
 def save_history(history: list[dict]):
     cl.user_session.set(SESSION_HISTORY_KEY, history)
 
 
-
 from pathlib import Path
+
 
 def get_state_file_path() -> Path:
     user = cl.user_session.get("user")
     if user and user.identifier:
         # Sanitize username for db key usage
-        safe_user = "".join(c for c in user.identifier if c.isalnum() or c in ("-", "_"))
+        safe_user = "".join(
+            c for c in user.identifier if c.isalnum() or c in ("-", "_")
+        )
         return Path(f"data/state_{safe_user}.json")
     return Path(STATE_FILE)
+
 
 def get_persistent_state() -> dict:
     state = cl.user_session.get(SESSION_STATE_KEY)
@@ -361,7 +384,6 @@ def get_persistent_state() -> dict:
     return state
 
 
-
 def get_rooms() -> dict[str, dict]:
     rooms = cl.user_session.get(SESSION_ROOMS_KEY)
     if rooms is None:
@@ -370,14 +392,12 @@ def get_rooms() -> dict[str, dict]:
     return rooms
 
 
-
 def get_current_room_name() -> str:
     room_name = cl.user_session.get(SESSION_ROOM_KEY)
     if room_name is None:
         room_name = DEFAULT_ROOM_NAME
         cl.user_session.set(SESSION_ROOM_KEY, room_name)
     return room_name
-
 
 
 def save_current_room_state():
@@ -390,7 +410,6 @@ def save_current_room_state():
     cl.user_session.set(SESSION_ROOMS_KEY, rooms)
 
 
-
 def activate_room(room_name: str):
     rooms = get_rooms()
     room_state = rooms[room_name]
@@ -398,7 +417,6 @@ def activate_room(room_name: str):
     cl.user_session.set(SESSION_CONFIG_KEY, room_state["config"])
     cl.user_session.set(SESSION_HISTORY_KEY, room_state["history"])
     rebuild_team()
-
 
 
 def append_entry_to_room(
@@ -411,7 +429,9 @@ def append_entry_to_room(
     rooms = get_rooms()
     room_state = rooms[room_name]
     history = room_state["history"]
-    entry = append_history(history, make_entry(author=author, content=content, kind=kind, target=target))
+    entry = append_history(
+        history, make_entry(author=author, content=content, kind=kind, target=target)
+    )
     room_state["history"] = history
     log_irc(render_entry(entry))
     if room_name == get_current_room_name():
@@ -420,27 +440,22 @@ def append_entry_to_room(
     return entry
 
 
-
 def persist_state():
     state = get_persistent_state()
     target_file = get_state_file_path()
     save_persistent_state(state, target_file)
 
 
-
 def get_automation_task() -> asyncio.Task | None:
     return cl.user_session.get(SESSION_AUTOMATION_TASK_KEY)
-
 
 
 def set_automation_task(task: asyncio.Task | None):
     cl.user_session.set(SESSION_AUTOMATION_TASK_KEY, task)
 
 
-
 def get_replay_state() -> dict | None:
     return cl.user_session.get(SESSION_REPLAY_STATE_KEY)
-
 
 
 def set_replay_state(state: dict | None):
@@ -458,10 +473,13 @@ async def stop_automation_task():
             pass
 
 
-
-def add_history_entry(author: str, content: str, kind: str = "message", target: str | None = None) -> dict:
+def add_history_entry(
+    author: str, content: str, kind: str = "message", target: str | None = None
+) -> dict:
     history = get_history()
-    entry = append_history(history, make_entry(author=author, content=content, kind=kind, target=target))
+    entry = append_history(
+        history, make_entry(author=author, content=content, kind=kind, target=target)
+    )
     save_history(history)
     log_irc(render_entry(entry))
     return entry
@@ -480,21 +498,24 @@ async def sync_nick_panel():
 
     agents_json = []
     for name, spec in specs.items():
-        agents_json.append({
-            "name": name,
-            "display": display_agent_name(name),
-            "enabled": name in config.get("enabled_agents", []),
-            "benched": name in benched
-        })
+        agents_json.append(
+            {
+                "name": name,
+                "display": display_agent_name(name),
+                "enabled": name in config.get("enabled_agents", []),
+                "benched": name in benched,
+            }
+        )
 
     import json
+
     payload = {
         "agents": agents_json,
         "status": {
             "room": config.get("room_name", "lobby"),
             "mode": config.get("mode", "broadcast").upper(),
-            "topic": config.get("topic", "")
-        }
+            "topic": config.get("topic", ""),
+        },
     }
 
     # Write to public/agents.json — JS fetches this directly
@@ -508,10 +529,8 @@ async def sync_nick_panel():
     # Also inject a sync signal into the page via a lightweight message
     # The JS picks this up and re-fetches agents.json
     await cl.Message(
-        content="<div class=\"irc-sync-ping\"></div>",
-        author="irc-sync"
+        content='<div class="irc-sync-ping"></div>', author="irc-sync"
     ).send()
-
 
 
 def create_team(config: dict):
@@ -547,7 +566,9 @@ def create_team(config: dict):
 
         agent = AssistantAgent(
             name=name,
-            model_client=get_client(spec["model"], base_url_override=spec.get("base_url")),
+            model_client=get_client(
+                spec["model"], base_url_override=spec.get("base_url")
+            ),
             system_message=system_message,
             tools=get_tools_by_names(config.get("enabled_tools", [])) or None,
         )
@@ -557,10 +578,13 @@ def create_team(config: dict):
         termination = MaxMessageTermination(len(agents) + 1)
         return RoundRobinGroupChat(agents, termination_condition=termination)
 
-    termination = TextMentionTermination("TERMINATE") | MaxMessageTermination(config["max_rounds"])
+    termination = TextMentionTermination("TERMINATE") | MaxMessageTermination(
+        config["max_rounds"]
+    )
     selector_client = get_client("openrouter/auto")
-    return SelectorGroupChat(agents, model_client=selector_client, termination_condition=termination)
-
+    return SelectorGroupChat(
+        agents, model_client=selector_client, termination_condition=termination
+    )
 
 
 def create_judge_agent(config: dict):
@@ -574,7 +598,6 @@ def create_judge_agent(config: dict):
     )
 
 
-
 def create_bridge_agent(config: dict):
     return AssistantAgent(
         name="BridgeAgent",
@@ -584,7 +607,6 @@ def create_bridge_agent(config: dict):
             "Create concise, high-signal bridge notes for other rooms."
         ),
     )
-
 
 
 def rebuild_team():
@@ -651,7 +673,6 @@ async def auto_replace_agent(failed_agent: str):
     save_current_room_state()
 
 
-
 def format_export_result(paths: list[str]) -> str:
     if not paths:
         return "No export files were created."
@@ -659,7 +680,9 @@ def format_export_result(paths: list[str]) -> str:
     return f"Transcript export completed:\n{joined}"
 
 
-async def execute_bridge(source_room_name: str, target_room_name: str, count: int) -> bool:
+async def execute_bridge(
+    source_room_name: str, target_room_name: str, count: int
+) -> bool:
     changed, response, resolved_source = switch_room(get_rooms(), source_room_name)
     if not changed or resolved_source is None:
         await send_system_notice(response)
@@ -668,8 +691,12 @@ async def execute_bridge(source_room_name: str, target_room_name: str, count: in
     if not changed or resolved_target is None:
         await send_system_notice(response)
         return False
-    bridge_note = build_bridge_note(resolved_source, resolved_target, get_rooms()[resolved_source], count)
-    append_entry_to_room(resolved_target, author="system", content=bridge_note, kind="system")
+    bridge_note = build_bridge_note(
+        resolved_source, resolved_target, get_rooms()[resolved_source], count
+    )
+    append_entry_to_room(
+        resolved_target, author="system", content=bridge_note, kind="system"
+    )
     record_bridge_event(get_rooms()[resolved_target]["config"])
     if resolved_target == get_current_room_name():
         await cl.Message(content=f"*** {bridge_note}").send()
@@ -680,7 +707,9 @@ async def execute_bridge(source_room_name: str, target_room_name: str, count: in
     return True
 
 
-async def execute_bridge_ai(source_room_name: str, target_room_name: str, role: str, focus: str) -> bool:
+async def execute_bridge_ai(
+    source_room_name: str, target_room_name: str, role: str, focus: str
+) -> bool:
     changed, response, resolved_source = switch_room(get_rooms(), source_room_name)
     if not changed or resolved_source is None:
         await send_system_notice(response)
@@ -729,7 +758,9 @@ async def execute_bridge_ai(source_room_name: str, target_room_name: str, role: 
         pricing=JUDGE_PRICING,
         usage=bridge_usage,
     )
-    entry = append_entry_to_room(resolved_target, author="BridgeAgent", content=bridge_content, kind="message")
+    entry = append_entry_to_room(
+        resolved_target, author="BridgeAgent", content=bridge_content, kind="message"
+    )
     if resolved_target == get_current_room_name():
         await cl.Message(author="BridgeAgent", content=render_entry(entry)).send()
     else:
@@ -755,7 +786,12 @@ async def maybe_run_auto_bridge():
     if target_room == source_room:
         return
     if auto_bridge.get("mode") == "ai":
-        await execute_bridge_ai(source_room, target_room, auto_bridge.get("role", ""), auto_bridge.get("focus", ""))
+        await execute_bridge_ai(
+            source_room,
+            target_room,
+            auto_bridge.get("role", ""),
+            auto_bridge.get("focus", ""),
+        )
     else:
         await execute_bridge(source_room, target_room, 5)
 
@@ -768,7 +804,9 @@ async def run_automation_loop():
             if not automation["enabled"] or automation["remaining_runs"] <= 0:
                 break
 
-            next_run_at = datetime.now() + timedelta(seconds=automation["interval_seconds"])
+            next_run_at = datetime.now() + timedelta(
+                seconds=automation["interval_seconds"]
+            )
             automation["next_run_at"] = next_run_at.isoformat()
             await asyncio.sleep(automation["interval_seconds"])
 
@@ -819,9 +857,7 @@ async def handle_command(command: str, args: str) -> bool:
         await cl.Message(author="system", content=content).send()
         # Feed it to the models
         await stream_agent(
-            cl.user_session.get(SESSION_TEAM_KEY),
-            content,
-            telemetry_name="system"
+            cl.user_session.get(SESSION_TEAM_KEY), content, telemetry_name="system"
         )
         return True
 
@@ -831,12 +867,11 @@ async def handle_command(command: str, args: str) -> bool:
         await cl.Message(author="system", content=content).send()
         # Feed it to the models
         await stream_agent(
-            cl.user_session.get(SESSION_TEAM_KEY),
-            content,
-            telemetry_name="system"
+            cl.user_session.get(SESSION_TEAM_KEY), content, telemetry_name="system"
         )
     if command == "/add-model":
         import shlex
+
         try:
             parts = shlex.split(args)
         except ValueError as e:
@@ -844,7 +879,9 @@ async def handle_command(command: str, args: str) -> bool:
             return True
 
         if len(parts) < 3:
-            await send_system_notice('Usage: `/add-model <name> <provider> <model_id> ["persona override"]`')
+            await send_system_notice(
+                'Usage: `/add-model <name> <provider> <model_id> ["persona override"]`'
+            )
             return True
 
         name = parts[0]
@@ -865,10 +902,12 @@ async def handle_command(command: str, args: str) -> bool:
         # Enable it in the active room configuration so it's usable right away
         config["enabled_agents"].append(name)
 
-        await send_system_notice(f"Model **{name}** added to catalog and enabled. Restart session if needed to fully map catalog changes.")
+        await send_system_notice(
+            f"Model **{name}** added to catalog and enabled. Restart session if needed to fully map catalog changes."
+        )
         rebuild_team()
-        if 'update_settings_panel' in globals():
-            await globals()['update_settings_panel']()
+        if "update_settings_panel" in globals():
+            await globals()["update_settings_panel"]()
         return True
 
     if command == "/remove-model":
@@ -891,8 +930,8 @@ async def handle_command(command: str, args: str) -> bool:
 
         await send_system_notice(f"Model **{name}** removed from catalog.")
         rebuild_team()
-        if 'update_settings_panel' in globals():
-            await globals()['update_settings_panel']()
+        if "update_settings_panel" in globals():
+            await globals()["update_settings_panel"]()
         return True
 
     if command == "/mode":
@@ -930,31 +969,43 @@ async def handle_command(command: str, args: str) -> bool:
 
     if command == "/slap":
         target = args if args else "someone"
-        nick = config.get('nick', 'operator')
+        nick = config.get("nick", "operator")
         action_msg = f"* {nick} slaps {target} around a bit with a large trout"
         await send_system_notice(action_msg)
         add_history_entry(author="system", content=action_msg, kind="system")
         return True
 
     if command == "/status":
-        await cl.Message(content=build_status_text(config, len(get_history()), persistent_state)).send()
+        await cl.Message(
+            content=build_status_text(config, len(get_history()), persistent_state)
+        ).send()
         return True
 
     if command == "/dashboard":
-        await cl.Message(content=build_dashboard_text(get_rooms(), get_current_room_name(), persistent_state)).send()
+        await cl.Message(
+            content=build_dashboard_text(
+                get_rooms(), get_current_room_name(), persistent_state
+            )
+        ).send()
         return True
 
     if command == "/observer":
         record_observer_view(config)
-        await cl.Message(content=build_observer_text(get_rooms(), get_current_room_name())).send()
+        await cl.Message(
+            content=build_observer_text(get_rooms(), get_current_room_name())
+        ).send()
         return True
 
     if command == "/health":
-        await cl.Message(content=build_room_health_text(get_rooms(), get_current_room_name())).send()
+        await cl.Message(
+            content=build_room_health_text(get_rooms(), get_current_room_name())
+        ).send()
         return True
 
     if command == "/leaderboard":
-        await cl.Message(content=build_leaderboard_text(get_rooms(), get_agent_specs())).send()
+        await cl.Message(
+            content=build_leaderboard_text(get_rooms(), get_agent_specs())
+        ).send()
         return True
 
     if command == "/room-summary":
@@ -963,7 +1014,9 @@ async def handle_command(command: str, args: str) -> bool:
             try:
                 count = max(1, min(10, int(args)))
             except ValueError:
-                await send_system_notice("Room summary count must be an integer between 1 and 10.")
+                await send_system_notice(
+                    "Room summary count must be an integer between 1 and 10."
+                )
                 return True
         await cl.Message(content=build_room_summary_text(get_rooms(), count)).send()
         return True
@@ -976,7 +1029,11 @@ async def handle_command(command: str, args: str) -> bool:
                 await send_system_notice(response)
                 return True
             room_name = resolved_room_name
-        await cl.Message(content=build_room_analytics_text(room_name, get_rooms()[room_name], get_agent_specs())).send()
+        await cl.Message(
+            content=build_room_analytics_text(
+                room_name, get_rooms()[room_name], get_agent_specs()
+            )
+        ).send()
         return True
 
     if command == "/bridge":
@@ -991,7 +1048,9 @@ async def handle_command(command: str, args: str) -> bool:
             try:
                 count = max(1, min(20, int(parts[2])))
             except ValueError:
-                await send_system_notice("Bridge count must be an integer between 1 and 20.")
+                await send_system_notice(
+                    "Bridge count must be an integer between 1 and 20."
+                )
                 return True
         await execute_bridge(source_room_name, target_room_name, count)
         return True
@@ -999,7 +1058,9 @@ async def handle_command(command: str, args: str) -> bool:
     if command == "/bridge-ai":
         parts = args.split(" ", 3)
         if len(parts) < 2:
-            await send_system_notice("Usage: `/bridge-ai <source> <target> [role] [focus]`")
+            await send_system_notice(
+                "Usage: `/bridge-ai <source> <target> [role] [focus]`"
+            )
             return True
         source_room_name = parts[0]
         target_room_name = parts[1]
@@ -1016,7 +1077,9 @@ async def handle_command(command: str, args: str) -> bool:
             try:
                 count = max(1, min(100, int(parts[1])))
             except ValueError:
-                await send_system_notice("Bridge export count must be an integer between 1 and 100.")
+                await send_system_notice(
+                    "Bridge export count must be an integer between 1 and 100."
+                )
                 return True
         changed, response, resolved_room_name = switch_room(get_rooms(), room_name)
         if not changed or resolved_room_name is None:
@@ -1038,14 +1101,18 @@ async def handle_command(command: str, args: str) -> bool:
             return True
         parts = args.split(" ", 4)
         if len(parts) < 2:
-            await send_system_notice("Usage: `/auto-bridge <target> <interval> [note|ai] [role] [focus]`")
+            await send_system_notice(
+                "Usage: `/auto-bridge <target> <interval> [note|ai] [role] [focus]`"
+            )
             return True
         target_room = parts[0]
         interval_text = parts[1]
         mode = parts[2] if len(parts) > 2 else "note"
         role = parts[3] if len(parts) > 3 else ""
         focus = parts[4] if len(parts) > 4 else ""
-        changed, response = configure_auto_bridge(config, target_room, interval_text, mode, role, focus)
+        changed, response = configure_auto_bridge(
+            config, target_room, interval_text, mode, role, focus
+        )
         await send_system_notice(response)
         return True
 
@@ -1102,9 +1169,15 @@ async def handle_command(command: str, args: str) -> bool:
             await send_system_notice("Room archive not found.")
             return True
         payload = load_room_archive(archive_path)
-        room_name = parts[1] if len(parts) > 1 else payload.get("room_name", get_current_room_name())
+        room_name = (
+            parts[1]
+            if len(parts) > 1
+            else payload.get("room_name", get_current_room_name())
+        )
         save_current_room_state()
-        changed, response, resolved_room = create_room(get_rooms(), room_name, get_agent_specs(), persistent_state)
+        changed, response, resolved_room = create_room(
+            get_rooms(), room_name, get_agent_specs(), persistent_state
+        )
         if not changed and resolved_room is None:
             switched, _, resolved_room = switch_room(get_rooms(), room_name)
             if not switched or resolved_room is None:
@@ -1113,7 +1186,9 @@ async def handle_command(command: str, args: str) -> bool:
         get_rooms()[resolved_room] = payload["room_state"]
         await stop_automation_task()
         activate_room(resolved_room)
-        await send_system_notice(f"Restored archive `{archive_path.name}` into room **{resolved_room}**.")
+        await send_system_notice(
+            f"Restored archive `{archive_path.name}` into room **{resolved_room}**."
+        )
         return True
 
     if command == "/bridge-runtime":
@@ -1150,12 +1225,16 @@ async def handle_command(command: str, args: str) -> bool:
             return True
         payload = load_external_payload(payload_path)
         imported_text = build_imported_payload_text(payload)
-        append_entry_to_room(resolved_target, author="system", content=imported_text, kind="system")
+        append_entry_to_room(
+            resolved_target, author="system", content=imported_text, kind="system"
+        )
         record_external_import(get_rooms()[resolved_target]["config"])
         if resolved_target == get_current_room_name():
             await cl.Message(content=f"*** {imported_text}").send()
         else:
-            await send_system_notice(f"Imported `{file_name}` into **{resolved_target}**.")
+            await send_system_notice(
+                f"Imported `{file_name}` into **{resolved_target}**."
+            )
         return True
 
     if command == "/bridge-roles":
@@ -1170,7 +1249,9 @@ async def handle_command(command: str, args: str) -> bool:
         if not args:
             await send_system_notice(f"Usage: `{command} <tool>`")
             return True
-        changed, response = set_tool_enabled(config, args, enabled=command == "/enable-tool")
+        changed, response = set_tool_enabled(
+            config, args, enabled=command == "/enable-tool"
+        )
         if changed:
             rebuild_team()
         await update_settings_ui()
@@ -1178,7 +1259,9 @@ async def handle_command(command: str, args: str) -> bool:
         return True
 
     if command == "/rooms":
-        await cl.Message(content=build_rooms_text(get_rooms(), get_current_room_name())).send()
+        await cl.Message(
+            content=build_rooms_text(get_rooms(), get_current_room_name())
+        ).send()
         return True
 
     if command == "/room":
@@ -1211,7 +1294,9 @@ async def handle_command(command: str, args: str) -> bool:
         # MUD Override: Force the room into MUD mode
         config = get_config()
         config["scenario"] = "mud_exploration"
-        config["topic"] = f"You are physically present in {room_name.upper()}. Act as an NPC providing atmospheric details."
+        config["topic"] = (
+            f"You are physically present in {room_name.upper()}. Act as an NPC providing atmospheric details."
+        )
         config["mode"] = "discuss"
         rebuild_team()
 
@@ -1225,7 +1310,9 @@ async def handle_command(command: str, args: str) -> bool:
             await send_system_notice("Usage: `/new-room <name>`")
             return True
         save_current_room_state()
-        changed, response, room_name = create_room(get_rooms(), args, get_agent_specs(), persistent_state)
+        changed, response, room_name = create_room(
+            get_rooms(), args, get_agent_specs(), persistent_state
+        )
         if not changed or room_name is None:
             await send_system_notice(response)
             return True
@@ -1239,7 +1326,9 @@ async def handle_command(command: str, args: str) -> bool:
             await send_system_notice("Usage: `/delete-room <name>`")
             return True
         save_current_room_state()
-        changed, response, next_room_name = delete_room(get_rooms(), get_current_room_name(), args)
+        changed, response, next_room_name = delete_room(
+            get_rooms(), get_current_room_name(), args
+        )
         if not changed:
             await send_system_notice(response)
             return True
@@ -1250,11 +1339,17 @@ async def handle_command(command: str, args: str) -> bool:
         return True
 
     if command == "/lineup":
-        await cl.Message(content=build_lineup_text(get_agent_specs(), config["enabled_agents"])).send()
+        await cl.Message(
+            content=build_lineup_text(get_agent_specs(), config["enabled_agents"])
+        ).send()
         return True
 
     if command == "/agents":
-        await cl.Message(content=build_agents_text(get_agent_specs(), config["enabled_agents"], config)).send()
+        await cl.Message(
+            content=build_agents_text(
+                get_agent_specs(), config["enabled_agents"], config
+            )
+        ).send()
         return True
 
     if command == "/whois":
@@ -1265,7 +1360,11 @@ async def handle_command(command: str, args: str) -> bool:
         if not agent_name:
             await send_system_notice(f"Unknown agent: `{args}`")
             return True
-        await cl.Message(content=build_agent_detail_text(agent_name, get_agent_specs(), config["enabled_agents"], config)).send()
+        await cl.Message(
+            content=build_agent_detail_text(
+                agent_name, get_agent_specs(), config["enabled_agents"], config
+            )
+        ).send()
         return True
 
     if command in {"/enable", "/disable"}:
@@ -1299,7 +1398,9 @@ async def handle_command(command: str, args: str) -> bool:
 
     if command == "/rounds":
         if not args:
-            await send_system_notice(f"Current discuss-mode max rounds: {config['max_rounds']}")
+            await send_system_notice(
+                f"Current discuss-mode max rounds: {config['max_rounds']}"
+            )
             return True
         changed, response = set_rounds(config, args)
         if changed and config["mode"] == "discuss":
@@ -1335,7 +1436,9 @@ async def handle_command(command: str, args: str) -> bool:
         return True
 
     if command == "/analytics":
-        await cl.Message(content=build_analytics_text(config, get_history(), get_agent_specs())).send()
+        await cl.Message(
+            content=build_analytics_text(config, get_history(), get_agent_specs())
+        ).send()
         return True
 
     if command == "/costs":
@@ -1349,7 +1452,9 @@ async def handle_command(command: str, args: str) -> bool:
         judge_agent = create_judge_agent(config, GLOBAL_CONFIG)
         judge_prompt = build_judge_prompt(get_history(), config, args)
         record_judge_run(config, judge_prompt)
-        await send_system_notice(f"Judge model `{config['judge_model']}` evaluating the recent transcript...")
+        await send_system_notice(
+            f"Judge model `{config['judge_model']}` evaluating the recent transcript..."
+        )
         await stream_agent(
             judge_agent,
             judge_prompt,
@@ -1365,18 +1470,26 @@ async def handle_command(command: str, args: str) -> bool:
 
     if command == "/persona":
         if not args:
-            await send_system_notice("Usage: `/persona <agent> <text>` or `/persona clear <agent>`")
+            await send_system_notice(
+                "Usage: `/persona <agent> <text>` or `/persona clear <agent>`"
+            )
             return True
 
         if args.lower().startswith("clear "):
             clear_target = args.split(" ", 1)[1].strip()
-            changed, response = set_persona_override(config, persistent_state, clear_target, "", get_agent_specs())
+            changed, response = set_persona_override(
+                config, persistent_state, clear_target, "", get_agent_specs()
+            )
         else:
             parts = args.split(" ", 1)
             if len(parts) < 2:
-                await send_system_notice("Usage: `/persona <agent> <text>` or `/persona clear <agent>`")
+                await send_system_notice(
+                    "Usage: `/persona <agent> <text>` or `/persona clear <agent>`"
+                )
                 return True
-            changed, response = set_persona_override(config, persistent_state, parts[0], parts[1], get_agent_specs())
+            changed, response = set_persona_override(
+                config, persistent_state, parts[0], parts[1], get_agent_specs()
+            )
 
         if changed:
             persist_state()
@@ -1403,7 +1516,9 @@ async def handle_command(command: str, args: str) -> bool:
         if not args:
             await send_system_notice("Usage: `/load-lineup <name>`")
             return True
-        changed, response = load_lineup(config, persistent_state, args, get_agent_specs())
+        changed, response = load_lineup(
+            config, persistent_state, args, get_agent_specs()
+        )
         if changed:
             rebuild_team()
         await update_settings_ui()
@@ -1515,7 +1630,9 @@ async def handle_command(command: str, args: str) -> bool:
         return True
 
     if command == "/replays":
-        await cl.Message(content=build_replays_text(list_export_files(EXPORT_DIR))).send()
+        await cl.Message(
+            content=build_replays_text(list_export_files(EXPORT_DIR))
+        ).send()
         return True
 
     if command == "/replay":
@@ -1526,7 +1643,9 @@ async def handle_command(command: str, args: str) -> bool:
             try:
                 count = max(1, min(100, int(parts[1])))
             except ValueError:
-                await send_system_notice("Replay line count must be an integer between 1 and 100.")
+                await send_system_notice(
+                    "Replay line count must be an integer between 1 and 100."
+                )
                 return True
         replay_path = resolve_replay_file(replay_name, EXPORT_DIR)
         if replay_path is None:
@@ -1534,7 +1653,9 @@ async def handle_command(command: str, args: str) -> bool:
             return True
         payload = load_replay_payload(replay_path)
         record_replay_view(config)
-        await cl.Message(content=build_replay_text(payload, replay_path.name, count)).send()
+        await cl.Message(
+            content=build_replay_text(payload, replay_path.name, count)
+        ).send()
         return True
 
     if command == "/replay-open":
@@ -1545,22 +1666,30 @@ async def handle_command(command: str, args: str) -> bool:
             try:
                 count = max(1, min(100, int(parts[1])))
             except ValueError:
-                await send_system_notice("Replay window count must be an integer between 1 and 100.")
+                await send_system_notice(
+                    "Replay window count must be an integer between 1 and 100."
+                )
                 return True
         replay_path = resolve_replay_file(replay_name, EXPORT_DIR)
         if replay_path is None:
             await send_system_notice("No matching replay export found.")
             return True
         payload = load_replay_payload(replay_path)
-        set_replay_state({"name": replay_path.name, "payload": payload, "index": 0, "count": count})
+        set_replay_state(
+            {"name": replay_path.name, "payload": payload, "index": 0, "count": count}
+        )
         record_replay_view(config)
-        await cl.Message(content=build_replay_window_text(payload, replay_path.name, 0, count)).send()
+        await cl.Message(
+            content=build_replay_window_text(payload, replay_path.name, 0, count)
+        ).send()
         return True
 
     if command == "/replay-step":
         replay_state = get_replay_state()
         if not replay_state:
-            await send_system_notice("No replay is currently open. Use `/replay-open` first.")
+            await send_system_notice(
+                "No replay is currently open. Use `/replay-open` first."
+            )
             return True
         parts = args.split()
         action = parts[0].lower() if parts else "next"
@@ -1569,7 +1698,9 @@ async def handle_command(command: str, args: str) -> bool:
             try:
                 count = max(1, min(100, int(parts[1])))
             except ValueError:
-                await send_system_notice("Replay window count must be an integer between 1 and 100.")
+                await send_system_notice(
+                    "Replay window count must be an integer between 1 and 100."
+                )
                 return True
 
         payload = replay_state["payload"]
@@ -1587,7 +1718,9 @@ async def handle_command(command: str, args: str) -> bool:
             try:
                 new_index = int(action)
             except ValueError:
-                await send_system_notice("Usage: `/replay-step [next|prev|start|end|index] [count]`")
+                await send_system_notice(
+                    "Usage: `/replay-step [next|prev|start|end|index] [count]`"
+                )
                 return True
 
         new_index, _ = resolve_replay_window(len(history), new_index, count)
@@ -1595,7 +1728,11 @@ async def handle_command(command: str, args: str) -> bool:
         replay_state["count"] = count
         set_replay_state(replay_state)
         record_replay_view(config)
-        await cl.Message(content=build_replay_window_text(payload, replay_state["name"], new_index, count)).send()
+        await cl.Message(
+            content=build_replay_window_text(
+                payload, replay_state["name"], new_index, count
+            )
+        ).send()
         return True
 
     if command == "/compare":
@@ -1610,12 +1747,16 @@ async def handle_command(command: str, args: str) -> bool:
             try:
                 count = max(1, min(100, int(parts[2])))
             except ValueError:
-                await send_system_notice("Comparison line count must be an integer between 1 and 100.")
+                await send_system_notice(
+                    "Comparison line count must be an integer between 1 and 100."
+                )
                 return True
         left_path = resolve_replay_file(left_name, EXPORT_DIR)
         right_path = resolve_replay_file(right_name, EXPORT_DIR)
         if left_path is None or right_path is None:
-            await send_system_notice("One or both replay exports could not be resolved.")
+            await send_system_notice(
+                "One or both replay exports could not be resolved."
+            )
             return True
         left_payload = load_replay_payload(left_path)
         right_payload = load_replay_payload(right_path)
@@ -1637,7 +1778,9 @@ async def handle_command(command: str, args: str) -> bool:
             try:
                 count = max(1, min(50, int(args)))
             except ValueError:
-                await send_system_notice("History count must be an integer between 1 and 50.")
+                await send_system_notice(
+                    "History count must be an integer between 1 and 50."
+                )
                 return True
         await cl.Message(content=build_history_text(get_history(), count)).send()
         return True
@@ -1660,7 +1803,12 @@ async def handle_command(command: str, args: str) -> bool:
     if command == "/reset":
         await stop_automation_task()
         room_name = get_current_room_name()
-        cl.user_session.set(SESSION_CONFIG_KEY, make_default_config(get_agent_specs(), persistent_state, room_name=room_name))
+        cl.user_session.set(
+            SESSION_CONFIG_KEY,
+            make_default_config(
+                get_agent_specs(), persistent_state, room_name=room_name
+            ),
+        )
         save_history([])
         save_current_room_state()
         rebuild_team()
@@ -1697,14 +1845,20 @@ async def stream_agent(
 
             # If it's an error message from our Resilient client, bench the agent and swap in a replacement
             if content.startswith("[SYSTEM:") and "skipped" in content:
-                await send_system_notice(f"Agent {display_agent_name(source)} skipped: {content}")
+                await send_system_notice(
+                    f"Agent {display_agent_name(source)} skipped: {content}"
+                )
                 # Auto-replace: bench the failed agent, promote a fresh one
                 if source in get_agent_specs():
                     await auto_replace_agent(source)
                 continue
 
-            author = telemetry_name or (display_agent_name(source) if source in get_agent_specs() else source)
-            telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
+            author = telemetry_name or (
+                display_agent_name(source) if source in get_agent_specs() else source
+            )
+            telemetry_agent_name = (
+                author.replace("-", "_") if author == "GPT-5" else author
+            )
             usage = extract_usage_metrics(event)
             resolved_pricing = pricing
             if resolved_pricing is None and source in get_agent_specs():
@@ -1719,11 +1873,15 @@ async def stream_agent(
                 pricing=resolved_pricing,
                 usage=usage,
             )
-            entry = add_history_entry(author=author, content=content, kind="message", target=reply_target)
+            entry = add_history_entry(
+                author=author, content=content, kind="message", target=reply_target
+            )
             await cl.Message(author=author, content=render_entry(entry)).send()
     except Exception as e:
         await send_system_notice(f"Streaming error: {e}. Moving to next participant...")
-        author = telemetry_name or (display_agent_name(source) if source in get_agent_specs() else source)
+        author = telemetry_name or (
+            display_agent_name(source) if source in get_agent_specs() else source
+        )
         telemetry_agent_name = author.replace("-", "_") if author == "GPT-5" else author
         usage = extract_usage_metrics(event)
         resolved_pricing = pricing
@@ -1739,26 +1897,24 @@ async def stream_agent(
             pricing=resolved_pricing,
             usage=usage,
         )
-        entry = add_history_entry(author=author, content=content, kind="message", target=reply_target)
+        entry = add_history_entry(
+            author=author, content=content, kind="message", target=reply_target
+        )
         await cl.Message(author=author, content=render_entry(entry)).send()
 
     if count_prompt_telemetry and telemetry_name is None and target_name is None:
         await maybe_run_auto_bridge()
 
 
+from chainlit.input_widget import TextInput, Switch
 
-from chainlit.input_widget import Select, TextInput, Switch
 
 async def update_settings_ui():
     agent_specs = get_agent_specs()
     config = get_config()
 
     widgets = [
-        TextInput(
-            id="topic",
-            label="Room Topic",
-            initial=config.get("topic", "")
-        )
+        TextInput(id="topic", label="Room Topic", initial=config.get("topic", ""))
     ]
 
     for agent_name in agent_specs.keys():
@@ -1766,11 +1922,12 @@ async def update_settings_ui():
             Switch(
                 id=f"agent_{agent_name}",
                 label=f"Enable {agent_name}",
-                initial=agent_name in config["enabled_agents"]
+                initial=agent_name in config["enabled_agents"],
             )
         )
 
     settings = await cl.ChatSettings(widgets).send()
+
 
 @cl.on_settings_update
 async def setup_agent(settings):
@@ -1799,6 +1956,7 @@ async def setup_agent(settings):
         await sync_nick_panel()
         save_current_room_state()
 
+
 @cl.on_chat_start
 async def start():
     target_file = STATE_FILE
@@ -1806,6 +1964,7 @@ async def start():
     cl.user_session.set(SESSION_STATE_KEY, persistent_state)
 
     import random
+
     def random_color():
         return "#" + "".join(random.choices("0123456789ABCDEF", k=6))
 
@@ -1815,14 +1974,17 @@ async def start():
     try:
         await send_system_notice("Fetching available free models from OpenRouter...")
         all_free = await fetch_free_models()
-        
+
         # Ensure openrouter/free is at the top
         if not any(m["id"] == "openrouter/free" for m in all_free):
-            all_free.insert(0, {
-                "id": "openrouter/free", 
-                "name": "OpenRouter: Free Models", 
-                "description": "General-purpose free model aggregator."
-            })
+            all_free.insert(
+                0,
+                {
+                    "id": "openrouter/free",
+                    "name": "OpenRouter: Free Models",
+                    "description": "General-purpose free model aggregator.",
+                },
+            )
 
         for m in all_free:
             m_id = m["id"]
@@ -1831,25 +1993,25 @@ async def start():
             clean_name = " ".join(full_name.split()[:3])
             # AutoGen requires alphanumeric name
             name = re.sub(r"[^a-zA-Z0-9]", "_", clean_name).strip("_")
-            
+
             # Ensure unique internal keys
             key = name
             counter = 1
             while key in current_specs:
                 key = f"{name}_{counter}"
                 counter += 1
-            
+
             current_specs[key] = {
                 "model": m_id,
                 "color": random_color(),
                 "bio": m["description"][:200],
-                "pricing": {"input_per_million": 0.0, "output_per_million": 0.0}
+                "pricing": {"input_per_million": 0.0, "output_per_million": 0.0},
             }
     except Exception as e:
         await send_system_notice(f"Warning: model fetch failed: {e}")
 
     update_agent_specs(current_specs)
-    
+
     rooms = make_initial_rooms(current_specs, persistent_state)
     agent_specs = persistent_state.get("agent_specs", {})
     cl.user_session.set("agent_specs", agent_specs)
@@ -1857,10 +2019,10 @@ async def start():
     rooms = make_initial_rooms(agent_specs, persistent_state)
     cl.user_session.set(SESSION_ROOMS_KEY, rooms)
     cl.user_session.set(SESSION_ROOM_KEY, DEFAULT_ROOM_NAME)
-    
+
     # Update config
     config = rooms[DEFAULT_ROOM_NAME]["config"]
-    
+
     # Default to enabling just OpenRouter Free on a fresh start
     if not config.get("enabled_agents"):
         core_names = []
@@ -1869,20 +2031,24 @@ async def start():
                 core_names.append(name)
         # Cap initial enabled agents to 5 to avoid heavy rate-limiting
         config["enabled_agents"] = core_names[:5]
-    
+
     # Ensure current lineup only contains valid discovered agents
-    config["enabled_agents"] = [a for a in config.get("enabled_agents", []) if a in current_specs]
-    
+    config["enabled_agents"] = [
+        a for a in config.get("enabled_agents", []) if a in current_specs
+    ]
+
     # FILTER: Prevent huge lineups from triggering the "429 Avalanche"
     if len(config["enabled_agents"]) > 8:
-        await send_system_notice("Lineup exceeds 8 agents. Throttling to keep simulation stable.")
+        await send_system_notice(
+            "Lineup exceeds 8 agents. Throttling to keep simulation stable."
+        )
         config["enabled_agents"] = config["enabled_agents"][:8]
-    
+
     cl.user_session.set(SESSION_CONFIG_KEY, config)
     cl.user_session.set(SESSION_HISTORY_KEY, rooms[DEFAULT_ROOM_NAME]["history"])
     cl.user_session.set(SESSION_AUTOMATION_TASK_KEY, None)
     cl.user_session.set(SESSION_REPLAY_STATE_KEY, None)
-    
+
     rebuild_team()
     await update_settings_ui()
 
@@ -1898,13 +2064,13 @@ async def start():
 
     welcome_banner = f"""
 *** Connected to #agentirc (AutoGen Network) [AgentIRC v{version}]
-*** Current Room: {config['room_name']}
-*** Your nick is {config['nick']}
-*** Current Topic: {config['topic']}
-*** Current Mode: {config['mode'].upper()}
-*** Scenario: {config['scenario']}
-*** Moderator: {config['moderator_mode']}
-*** Enabled Agents: {', '.join(display_agent_name(name) for name in config['enabled_agents'])}
+*** Current Room: {config["room_name"]}
+*** Your nick is {config["nick"]}
+*** Current Topic: {config["topic"]}
+*** Current Mode: {config["mode"].upper()}
+*** Scenario: {config["scenario"]}
+*** Moderator: {config["moderator_mode"]}
+*** Enabled Agents: {", ".join(display_agent_name(name) for name in config["enabled_agents"])}
 *** Type /help for commands.
 """
     await cl.Message(content=welcome_banner).send()
@@ -1927,6 +2093,7 @@ async def play_terminal_sound():
     """Reserved for future frontend sound integration via JS hooks."""
     pass
 
+
 @cl.on_message
 async def handle_message(message: cl.Message):
     content = message.content.strip()
@@ -1944,8 +2111,6 @@ async def handle_message(message: cl.Message):
 
     if images:
         content += "\n[User attached images]"
-        content += "
-[User attached images]"
 
     add_history_entry(author=config["nick"], content=content, kind="user")
 
@@ -1966,7 +2131,9 @@ async def handle_message(message: cl.Message):
     target_name, body = parse_direct_message(content, active_agents)
     if content.startswith("@") and target_name is None:
         available = ", ".join(display_agent_name(name) for name in active_agents)
-        await send_system_notice(f"Unknown or ambiguous DM target. Active agents: {available}")
+        await send_system_notice(
+            f"Unknown or ambiguous DM target. Active agents: {available}"
+        )
         return
 
     prompt = body or f"Please respond to the current topic: {config['topic']}"
@@ -1974,6 +2141,7 @@ async def handle_message(message: cl.Message):
     images = []
     if getattr(message, "elements", None):
         from autogen_core import Image as AGImage
+
         for element in message.elements:
             if "image" in element.mime.lower():
                 try:
@@ -1993,15 +2161,28 @@ async def handle_message(message: cl.Message):
     try:
         if target_name:
             team = cl.user_session.get(SESSION_TEAM_KEY)
-            target_agent = next((agent for agent in team.participants if agent.name == target_name), None)
+            target_agent = next(
+                (agent for agent in team.participants if agent.name == target_name),
+                None,
+            )
             if target_agent is None:
-                await send_system_notice(f"{display_agent_name(target_name)} is not available in the active lineup.")
+                await send_system_notice(
+                    f"{display_agent_name(target_name)} is not available in the active lineup."
+                )
                 return
-            await send_system_notice(f"Private message to {display_agent_name(target_name)}...")
+            await send_system_notice(
+                f"Private message to {display_agent_name(target_name)}..."
+            )
             try:
-                await stream_agent(target_agent, task_payload, target_name=display_agent_name(target_name))
+                await stream_agent(
+                    target_agent,
+                    task_payload,
+                    target_name=display_agent_name(target_name),
+                )
             except Exception as e:
-                await send_system_notice(f"Agent {display_agent_name(target_name)} encountered an error and was skipped: {e}")
+                await send_system_notice(
+                    f"Agent {display_agent_name(target_name)} encountered an error and was skipped: {e}"
+                )
             return
 
         team = cl.user_session.get(SESSION_TEAM_KEY)

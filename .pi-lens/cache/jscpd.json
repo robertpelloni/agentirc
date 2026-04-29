@@ -1,0 +1,200 @@
+{
+  "success": true,
+  "clones": [
+    {
+      "fileA": "replace_agent_specs.py",
+      "startA": 1,
+      "fileB": "archive\\replace_agent_specs.py",
+      "startB": 1,
+      "lines": 28,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_topic_command.py",
+      "startA": 1,
+      "fileB": "archive\\patch_topic_command.py",
+      "startB": 1,
+      "lines": 23,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_slap.py",
+      "startA": 1,
+      "fileB": "archive\\patch_slap.py",
+      "startB": 1,
+      "lines": 41,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_simulator_tools_fix.py",
+      "startA": 1,
+      "fileB": "archive\\patch_simulator_tools_fix.py",
+      "startB": 1,
+      "lines": 13,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_simulator_tools.py",
+      "startA": 1,
+      "fileB": "archive\\patch_simulator_tools.py",
+      "startB": 1,
+      "lines": 58,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_make_default_store.py",
+      "startA": 1,
+      "fileB": "archive\\patch_make_default_store.py",
+      "startB": 1,
+      "lines": 65,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_load_state.py",
+      "startA": 1,
+      "fileB": "archive\\patch_load_state.py",
+      "startB": 1,
+      "lines": 37,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_handle_message.py",
+      "startA": 1,
+      "fileB": "archive\\patch_handle_message.py",
+      "startB": 1,
+      "lines": 125,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_enable_command.py",
+      "startA": 1,
+      "fileB": "archive\\patch_enable_command.py",
+      "startB": 1,
+      "lines": 30,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_create_team.py",
+      "startA": 1,
+      "fileB": "archive\\patch_create_team.py",
+      "startB": 1,
+      "lines": 24,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_chat_settings.py",
+      "startA": 1,
+      "fileB": "archive\\patch_chat_settings.py",
+      "startB": 1,
+      "lines": 73,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_app_images.py",
+      "startA": 1,
+      "fileB": "archive\\patch_app_images.py",
+      "startB": 1,
+      "lines": 34,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_app_globals.py",
+      "startA": 1,
+      "fileB": "archive\\patch_app_globals.py",
+      "startB": 1,
+      "lines": 34,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_app_add_model.py",
+      "startA": 1,
+      "fileB": "archive\\patch_app_add_model.py",
+      "startB": 1,
+      "lines": 36,
+      "tokens": 0
+    },
+    {
+      "fileA": "patch_agents.py",
+      "startA": 1,
+      "fileB": "archive\\patch_agents.py",
+      "startB": 1,
+      "lines": 61,
+      "tokens": 0
+    },
+    {
+      "fileA": "irc_bridge_runtime.py",
+      "startA": 116,
+      "fileB": "websocket_bridge_runtime.py",
+      "startB": 60,
+      "lines": 8,
+      "tokens": 0
+    },
+    {
+      "fileA": "irc_bridge_runtime.py",
+      "startA": 165,
+      "fileB": "websocket_bridge_runtime.py",
+      "startB": 103,
+      "lines": 8,
+      "tokens": 0
+    },
+    {
+      "fileA": "fix_app7.py",
+      "startA": 1,
+      "fileB": "archive\\fix_app7.py",
+      "startB": 1,
+      "lines": 14,
+      "tokens": 0
+    },
+    {
+      "fileA": "fix_app6.py",
+      "startA": 1,
+      "fileB": "archive\\fix_app6.py",
+      "startB": 1,
+      "lines": 14,
+      "tokens": 0
+    },
+    {
+      "fileA": "fix_agent_specs.py",
+      "startA": 1,
+      "fileB": "archive\\fix_agent_specs.py",
+      "startB": 1,
+      "lines": 10,
+      "tokens": 0
+    },
+    {
+      "fileA": "doc_generator.py",
+      "startA": 1,
+      "fileB": "archive\\doc_generator.py",
+      "startB": 1,
+      "lines": 126,
+      "tokens": 0
+    },
+    {
+      "fileA": "bridge_runtime.py",
+      "startA": 16,
+      "fileB": "websocket_bridge_runtime.py",
+      "startB": 15,
+      "lines": 8,
+      "tokens": 0
+    },
+    {
+      "fileA": "bridge_runtime.py",
+      "startA": 25,
+      "fileB": "websocket_bridge_runtime.py",
+      "startB": 58,
+      "lines": 9,
+      "tokens": 0
+    },
+    {
+      "fileA": "bridge_connectors.py",
+      "startA": 134,
+      "fileB": "bridge_connectors.py",
+      "startB": 88,
+      "lines": 12,
+      "tokens": 0
+    }
+  ],
+  "duplicatedLines": 867,
+  "totalLines": 3535,
+  "percentage": 24.53
+}
