@@ -14,6 +14,10 @@ When taking over, please review `ROADMAP.md` and `TODO.md`. The next major steps
 I have thoroughly analyzed the previous run logs and repository state.
 
 ### What was accomplished:
+- Completed the codebase audit to plan the next actions.
+- Added comprehensive integration tests for the `/add-model` command (`tests/test_add_model.py`) to satisfy the highest priority Short Term Roadmap task.
+- Fixed version hardcoding by enforcing `VERSION.md` as the single source of truth for versions.
+- Updated all related documentation (`TODO.md`, `ROADMAP.md`, `CHANGELOG.md`, `HANDOFF.md`, `VERSION.md`).
 - The user repeatedly issued "continue" commands and tasked the agent with finishing any undocumented, hidden, or native functionalities (specifically mentioning UI implementations for `replay.py`, `/room-analytics`, and Chainlit TypeScript integrations).
 - The prior agent successfully verified that *all* features (`replay_mode` with name resolution, `/room-analytics`, multi-tenant scaling) were perfectly and natively integrated into `simulator_core.py` and `app.py`. A dedicated `tests/test_simulator_core_replay_name.py` unit test was added to explicitly prove this functionality against the existing codebase.
 - The prior agent continuously answered user questions regarding Chainlit React Hooks (`@chainlit/react-client`), maintained all project documentation (including tracking the version string continuously up to `0.30.0`), and successfully concluded the loop gracefully when the codebase was confirmed 100% finished.
@@ -32,3 +36,21 @@ I have thoroughly analyzed the previous run logs and repository state.
 ### FINAL COMPLETION TIMESTAMP: Mon Apr 20 04:00:19 UTC 2026
 
 ### DEVELOPMENT BLOCK END TIMESTAMP: Mon Apr 20 09:43:52 UTC 2026
+
+## Codebase Audit
+1. **Completed Features**: Dynamic model loading via `/add-model` (now with full integration tests), web tools (search and fetch), image routing, multi-room simulation, and standard external bridge connectors. Replay tools, room analytics, and 90s CSS have also been fully integrated.
+2. **Partially Implemented Features**: External bridge connectors (`bridge_connectors.py`) have scaffold but need full MCP compliance. The `/poll` and `/go` features introduced previously have scaffolding but lack robust error bounds in production multi-user modes.
+3. **Backend Features Not Wired to Frontend**: Certain scheduling jobs and persistent MUD operations introduced in ideas/changelogs are technically active but not visually distinct beyond basic chat logging.
+4. **UI Features**: 90s CSS is implemented but feedback for tool calls in the retro aesthetic is noted as needing enhancement in ROADMAP.md. Admin UI for tool management is completely missing.
+5. **Bugs/Fragile Areas**: `chainlit` context variables are highly fragile during testing, requiring extensive mocking (e.g., `cl.user_session.get`) as observed while adding `test_add_model.py`. Any direct execution of `app.py` in test runs falls over without rigorous patching. `rebuild_team()` in `app.py` is closely coupled with global UI state variables.
+6. **Refactor Opportunities**: `app.py` is over 70,000 bytes. Moving command logic like `handle_command` out to its own command dispatcher in `simulator_core.py` would greatly alleviate testing burdens.
+7. **Documentation Gaps**: Tests were previously undocumented and the test suite lacked a proper `tests/` directory setup with `__init__.py`. Reconciled `VERSION` vs `VERSION.md` conflict. Added explicit model instructions for Claude, Gemini, GPT, and Copilot referencing `AGENTS.md`.
+8. **Dependency/Library/Submodule Gaps**:
+   - `chainlit`: Core UI framework.
+   - `autogen-agentchat`, `autogen-ext`: Multi-agent orchestration.
+   - `openai`: API compatibility.
+   - Submodules: No new submodules were added; the `SUBMODULE_INVENTORY.md` lists `agentirc` itself with commit `21ab68e`.
+9. **Deployment/Versioning Gaps**: Deployed via `python run.py`. Versioning was split across multiple files. Consolidated to `VERSION.md`.
+10. **Next Highest-Impact Implementation Tasks**: Implement true native MCP server support to replace legacy tool definitions, and establish a dedicated Admin UI for tool management.
+
+NOTE: No unavailable log files were found. All requested project context files (TODO.md, ROADMAP.md, HANDOFF.md, VISION.md, etc.) exist or were cleanly established.

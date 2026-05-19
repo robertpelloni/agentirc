@@ -2,7 +2,7 @@
 
 - [x] Refactor Agent Specs to persistent state.
 - [x] Add Chat Settings UI for topic and toggles.
-- [x] Add `/add-model` command.
+- [x] Add `/add-model` command (and integration tests).
 - [x] Update system prompt to prevent simulated users.
 - [x] Add `/slap` and `/me`.
 - [x] Add Web Search and Web Fetch tools.

@@ -1,1 +1,5 @@
-Please refer to `INSTRUCTIONS.md` for the universal guidelines when modifying this codebase.
+# Universal Agent Instructions
+1. **Never break the 90s aesthetic**: Any new UI elements must use the classes and styles defined in `public/style.css`.
+2. **Keep Core Logic Isolated**: Do not put complex business logic in `app.py`. Put it in `simulator_core.py` and test it in `tests/`.
+3. **Always Update Docs**: Every feature must be documented in `CHANGELOG.md`, `ROADMAP.md`, `TODO.md`, and the version bumped in `VERSION.md`.
+4. **Agent Integrity**: Do not prompt the agents to roleplay as fake users; they must roleplay as themselves (the model).

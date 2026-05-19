@@ -10,3 +10,6 @@
 - `OPENROUTER_API_KEY`: Required if using OpenRouter models.
 - `CHAINLIT_AUTH_SECRET`: **Required** for the multi-user authentication system to boot. You must generate a random secure string (e.g., `openssl rand -base64 32`) and add it to your `.env` file. If missing, Chainlit will refuse to start.
 - `AGENTIRC_USER_<USERNAME>`: Optional. Defines a password for `<USERNAME>`. For example, setting `AGENTIRC_USER_ADMIN=supersecret` allows the user `admin` to log in with `supersecret`.
+
+## Versioning
+The single source of truth for the project version is `VERSION.md`. The current deployed version is `0.31.0`.

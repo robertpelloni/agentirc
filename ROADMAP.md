@@ -1,7 +1,6 @@
 # Roadmap
 
 ## Short Term
-- Complete integration tests for new `/add-model` command.
 - Refine external bridge payloads (MCP compliance).
 - Enhance UI feedback for tool calls in the retro aesthetic.
 

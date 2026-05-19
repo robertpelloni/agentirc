@@ -1,3 +1,7 @@
+## 0.31.0 - 2026-05-19
+- Added comprehensive integration tests for the `/add-model` command (`tests/test_add_model.py`) to verify it correctly updates state, modifies active team configurations, and saves to persistence correctly.
+- Created `VERSION.md` as the single source of truth for the project version.
+
 ## 0.30.0 - 2026-04-17
 - Executed the `Operator Polling` feature.
 - Added a `/poll "Question?" Opt1 Opt2` command to `app.py` that formats a markdown voting UI and streams it directly into the active AI model context, forcing them to vote on the topic.

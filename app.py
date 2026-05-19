@@ -2030,12 +2030,10 @@ async def start():
     await update_settings_ui()
 
     version = "Unknown"
-    if os.path.exists("VERSION"):
-        with open("VERSION", "r") as vf:
+    if os.path.exists("VERSION.md"):
+        with open("VERSION.md", "r") as vf:
             version = vf.read().strip()
-
-    version = "Unknown"
-    if os.path.exists("VERSION"):
+    elif os.path.exists("VERSION"):
         with open("VERSION", "r") as vf:
             version = vf.read().strip()
 
