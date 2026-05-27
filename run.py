@@ -95,5 +95,5 @@ from chainlit.cli import cli
 
 if __name__ == "__main__":
     # Force the arguments for chainlit run app.py
-    sys.argv = ["chainlit", "run", "app.py"]
+    sys.argv = ["chainlit", "run", "app.py", "--port", "8888"]
     sys.exit(cli())
