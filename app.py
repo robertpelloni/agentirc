@@ -24,7 +24,7 @@ from dotenv import load_dotenv
 import anyio.to_thread
 
 from bridge_connectors import build_connector_catalog_text
-from simulator_tools import get_tools_by_names
+from simulator_tools import get_tools_by_names, TOOL_CATALOG
 from services.agents import (
     get_client,
     create_team,
@@ -1903,6 +1903,15 @@ async def update_settings_ui():
             )
         )
 
+    for tool_name in sorted(TOOL_CATALOG.keys()):
+        widgets.append(
+            Switch(
+                id=f"tool_{tool_name}",
+                label=f"Tool: {tool_name}",
+                initial=tool_name in config.get("enabled_tools", []),
+            )
+        )
+
     settings = await cl.ChatSettings(widgets).send()
 
 
@@ -1925,6 +1934,16 @@ async def setup_agent(settings):
 
     if set(enabled_agents) != set(config["enabled_agents"]):
         config["enabled_agents"] = enabled_agents
+        changed = True
+
+    enabled_tools = []
+    for tool_name in TOOL_CATALOG.keys():
+        key = f"tool_{tool_name}"
+        if key in settings and settings[key]:
+            enabled_tools.append(tool_name)
+
+    if set(enabled_tools) != set(config.get("enabled_tools", [])):
+        config["enabled_tools"] = enabled_tools
         changed = True
 
     if changed:

@@ -11,6 +11,6 @@
 - [x] Extensive Documentation.
 - [ ] Add more comprehensive tests for vision processing.
 - [ ] Implement true native MCP server support.
-- [ ] Create a dedicated Admin UI for tool management.
+- [x] Create a dedicated Admin UI for tool management.
 
 - [x] Refactor `fetch_webpage` and `web_search` to async.

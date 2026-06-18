@@ -58,3 +58,6 @@ NOTE: No unavailable log files were found. All requested project context files (
 
 ## Handoff 0.32.0
 - Async tool refactoring is complete. Next implementor should continue focusing on MCP server support and the Admin UI.
+
+## Handoff 0.33.0
+- Admin UI for tools is complete via Chainlit ChatSettings integration. Next focus should be true native MCP server support.

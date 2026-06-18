@@ -1,3 +1,6 @@
+## 0.33.0 - 2026-06-18
+- Implemented a dedicated Admin UI for tool management directly within the Chainlit `ChatSettings` interface, allowing users to interactively toggle `TOOL_CATALOG` features.
+
 ## 0.32.0 - 2026-06-18
 - Refactored `fetch_webpage` and `web_search` in `simulator_tools.py` to correctly use `httpx.AsyncClient` resolving duplicate definitions.
 - Completed comprehensive project state analysis, updating documentation in accordance with strict continuous execution protocols.

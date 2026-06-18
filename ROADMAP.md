@@ -13,3 +13,5 @@
 - Advanced agent autonomous scheduling with persistent memory.
 
 - [x] Improved UI latency via async tool I/O.
+
+- [x] Implemented Admin Tool Management UI.
