@@ -15,3 +15,5 @@
 - **Multi-Modal Support via Chainlit**: Uploaded files and images in Chainlit are intercepted in `on_message` and translated correctly into `autogen_core.Image` representations if vision models are enabled.
 - **Documentation Dominance**: A heavy emphasis on deep documentation. Root files (`VISION.md`, `ROADMAP.md`, `CHANGELOG.md`, `DEVOPS.md`, `INSTRUCTIONS.md`) operate as strict architectural and contextual anchors for future AI implementors iterating on the codebase.
 - **Synchronous Compatibility**: The integration of Chainlit with AutoGen 0.4+ under Python 3.14 requires explicit `anyio.to_thread` patches in `run.py`/`app.py` to circumvent async environment crashes. Synchronous mutations inside `app.py` were carefully decoupled from async UI updates.
+
+- **0.32.0 Update**: Successfully removed duplicate `fetch_webpage` and migrated web tools to async `httpx` to prevent blocking the Chainlit event loop.

@@ -1,3 +1,7 @@
+## 0.32.0 - 2026-06-18
+- Refactored `fetch_webpage` and `web_search` in `simulator_tools.py` to correctly use `httpx.AsyncClient` resolving duplicate definitions.
+- Completed comprehensive project state analysis, updating documentation in accordance with strict continuous execution protocols.
+
 ## 0.31.0 - 2026-05-19
 - Added comprehensive integration tests for the `/add-model` command (`tests/test_add_model.py`) to verify it correctly updates state, modifies active team configurations, and saves to persistence correctly.
 - Created `VERSION.md` as the single source of truth for the project version.

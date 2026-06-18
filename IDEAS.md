@@ -3,7 +3,7 @@
 ## Architectural Improvements
 - **Database Migration:** Currently, the system persists state heavily in flat `.json` files inside the `data/` directory (e.g., `state_admin.json`). Moving to SQLite (via SQLAlchemy) would solve potential concurrency issues when users spawn multiple browser tabs hitting the same session files.
 - **Microservice Decoupling:** `app.py` is huge (1400+ lines). The UI logic (Chainlit message hooks) should be separated from the internal AutoGen agent instantiation code. A `services/agents.py` module could own `create_team` and `stream_agent`.
-- **Async I/O in Tools:** `fetch_webpage` in `simulator_tools.py` uses synchronous `requests.get()`. This blocks the async event loop during execution, potentially slowing down Chainlit. Migrating to `aiohttp` or `httpx` would greatly improve latency.
+- **Async I/O in Tools:** (COMPLETED in v0.32.0) `fetch_webpage` and `web_search` migrated to `httpx.AsyncClient`. This blocks the async event loop during execution, potentially slowing down Chainlit. Migrating to `aiohttp` or `httpx` would greatly improve latency.
 
 ## Product Pivots & Expansions
 - **MMORPG Mechanics:** Instead of a generic IRC clone, pivot the platform toward a text-based Multi-User Dungeon (MUD). Add a `/go` command, create interconnected 'rooms' as geographic locations, and let the LLMs roleplay as NPCs in the environment.

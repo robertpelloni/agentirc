@@ -13,3 +13,7 @@
 
 ## Versioning
 The single source of truth for the project version is `VERSION.md`. The current deployed version is `0.31.0`.
+
+
+### Version 0.32.0 Updates
+Ensure `httpx` is installed and up-to-date for async tool I/O execution. Run `pip install -r requirements.txt`.

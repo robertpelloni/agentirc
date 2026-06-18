@@ -1,4 +1,4 @@
-import requests
+import httpx
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 from duckduckgo_search import DDGS
@@ -26,62 +26,38 @@ def memory_store(key: str, value: str) -> str:
 def memory_read(key: str) -> str:
     return _SHARED_MEMORY.get(key, f"Error: Key '{key}' not found.")
 
-def web_search(query: str, max_results: int = 5) -> str:
+import anyio.to_thread
+
+async def web_search(query: str, max_results: int = 5) -> str:
+    """Performs a web search using DuckDuckGo and returns the results. Use this tool for web search queries."""
+    def sync_search():
+        return list(DDGS().text(query, max_results=max_results))
+
     try:
-        results = DDGS().text(query, max_results=max_results)
+        results = await anyio.to_thread.run_sync(sync_search)
         if not results:
             return "No results found."
         formatted = []
         for i, res in enumerate(results):
-            formatted.append(f"{i+1}. {res.get('title', 'No Title')} - {res.get('href', 'No URL')}\\n{res.get('body', 'No snippet')}")
-        return "\\n\\n".join(formatted)
+            formatted.append(f"{i+1}. {res.get('title', 'No Title')} - {res.get('href', 'No URL')}\n{res.get('body', 'No snippet')}")
+        return "\n\n".join(formatted)
     except Exception as e:
         return f"Web search error: {e}"
 
-def fetch_webpage(url: str) -> str:
-    try:
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, 'html.parser')
-        for script in soup(["script", "style"]):
-            script.decompose()
-        return md(str(soup), heading_style="ATX").strip()[:10000]
-    except Exception as e:
-        return f"Error fetching webpage: {e}"
-    """Performs a web search using DuckDuckGo and returns the results. Use this tool for web search queries."""
-    try:
-        from duckduckgo_search import DDGS
-        with DDGS() as ddgs:
-            results = list(ddgs.text(query, max_results=max_results))
-            if not results:
-                return "No results found."
-            formatted_results = []
-            for idx, r in enumerate(results):
-                title = r.get("title", "No Title")
-                href = r.get("href", "No URL")
-                body = r.get("body", "No snippet")
-                formatted_results.append(f"{idx+1}. {title}\nURL: {href}\nSnippet: {body}\n")
-            return "\n".join(formatted_results)
-    except Exception as exc:
-        return f"Error performing web search: {exc}"
-
-def fetch_webpage(url: str) -> str:
+async def fetch_webpage(url: str) -> str:
     """Fetches a webpage and converts it to Markdown format. Useful for reading web content directly."""
     try:
-        import requests
-        from markdownify import markdownify as md
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        markdown_text = md(response.text, strip=['script', 'style'])
-        # Truncate to avoid blowing up context sizes too much, roughly 8k characters
-        return markdown_text[:8000] + "\n\n...[Content Truncated]..." if len(markdown_text) > 8000 else markdown_text
-    except Exception as exc:
-        return f"Error fetching webpage: {exc}"
-
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers, timeout=10.0)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.content, 'html.parser')
+            for script in soup(["script", "style"]):
+                script.decompose()
+            markdown_text = md(str(soup), heading_style="ATX").strip()
+            return markdown_text[:8000] + "\n\n...[Content Truncated]..." if len(markdown_text) > 8000 else markdown_text
+    except Exception as e:
+        return f"Error fetching webpage: {e}"
 
 TOOL_CATALOG = {
     "get_current_time": get_current_time,
