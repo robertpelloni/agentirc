@@ -73,3 +73,7 @@ NOTE: No unavailable log files were found. All requested project context files (
 
 ## Handoff 0.37.0
 - Frontend audio engine is complete. The application now fully mimics 90s IRC behavior natively.
+
+
+## Handoff 0.41.0
+- External bridge payloads are now fully MCP compliant. Next developer should examine the websocket bridging UI feature.

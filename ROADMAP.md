@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Short Term
-- Refine external bridge payloads (MCP compliance).
+- [x] Refine external bridge payloads (MCP compliance).
 - Enhance UI feedback for tool calls in the retro aesthetic.
 
 ## Medium Term

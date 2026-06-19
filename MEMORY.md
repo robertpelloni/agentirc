@@ -22,3 +22,5 @@
 - **0.36.0 Update**: Deployed local LLM support mapping `ollama/` prefixed models directly to `localhost:11434` without requiring valid API keys.
 
 - **0.37.0 Update**: Deployed silent `MutationObserver` audio engine in frontend to handle `beep.wav` playback on AI message nodes without visually polluting Chainlit.
+
+- **0.41.0 Update**: Configured `bridge_connectors.py` to support `mcp` JSON-RPC 2.0 payloads for external webhook integration.

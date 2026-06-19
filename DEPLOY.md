@@ -23,3 +23,5 @@ Ensure `httpx` is installed and up-to-date for async tool I/O execution. Run `pi
 - Introduced native local LLM support via Ollama. Ensure Ollama is running locally on port 11434 if you append models prefixed with `ollama/`.
 ### Version 0.37.0 Updates
 - Integrated a custom frontend audio engine in `public/irc.js`. No new backend dependencies required.
+### Version 0.41.0 Updates
+- Added `mcp` connector adapter. External systems can now consume outbound JSON-RPC payloads via `--connector mcp --endpoint <URL>`.

@@ -1,3 +1,6 @@
+## 0.41.0 - 2026-06-18
+- Refined external bridge payloads for MCP compliance by adding an `mcp` connector adapter that formats outbound requests as strict JSON-RPC 2.0 messages.
+
 ## 0.40.0 - 2026-06-18
 - Implemented advanced agent autonomous scheduling with persistent memory, allowing automation loops to survive server reboots.
 

@@ -21,3 +21,5 @@ The interface will remain heavily 90s-styled (using the `public/style.css` class
 - The AgentIRC system now supports local inference natively via Ollama, reinforcing the goal of total configurability and privacy for end users.
 ### 0.37.0 Vision Milestone
 - Complete frontend aesthetic parity achieved, including classic terminal sound events synced to autonomous AI message generation.
+### 0.41.0 Vision Milestone
+- The AgentIRC system now supports emitting standard JSON-RPC 2.0 MCP payloads for maximum external interoperability.

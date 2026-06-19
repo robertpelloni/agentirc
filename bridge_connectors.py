@@ -15,6 +15,7 @@ CONNECTOR_CATALOG: dict[str, str] = {
     "inbox": "Deliver payloads into the local `inbox/` directory for manual or app-driven import.",
     "jsonl": "Append delivery events to a JSONL file for downstream automation or auditing.",
     "webhook": "Deliver payloads via HTTP POST to a remote endpoint. Requires --endpoint flag.",
+    "mcp": "Deliver payloads wrapped in MCP-compliant JSON-RPC 2.0 format. Requires --endpoint flag.",
     "discord": "Deliver payloads formatted as Discord chat messages. Requires --endpoint flag with Discord Webhook URL.",
 }
 
@@ -103,6 +104,35 @@ def deliver_to_webhook(payload: dict[str, Any], endpoint: str | None) -> dict[st
 
 
 
+def deliver_to_mcp(payload: dict[str, Any], endpoint: str | None) -> dict[str, Any]:
+    if not endpoint:
+        raise ValueError("MCP connector requires an endpoint.")
+
+    mcp_payload = {
+        "jsonrpc": "2.0",
+        "method": "agentirc/payload",
+        "params": payload,
+        "id": int(datetime.now().timestamp() * 1000)
+    }
+
+    req = urllib.request.Request(
+        endpoint,
+        data=json.dumps(mcp_payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as response:
+            status = response.status
+    except Exception as exc:
+        status = str(exc)
+
+    return {
+        "connector": "mcp",
+        "destination": endpoint,
+        "status": status,
+    }
+
 def deliver_to_discord(payload: dict[str, Any], endpoint: str | None) -> dict[str, Any]:
     if not endpoint:
         raise ValueError("Discord connector requires a webhook endpoint URL.")
@@ -159,6 +189,8 @@ def route_payload(payload: dict[str, Any], connector: str, endpoint: str | None 
         return deliver_to_jsonl(payload)
     if normalized == "webhook":
         return deliver_to_webhook(payload, endpoint)
+    if normalized == "mcp":
+        return deliver_to_mcp(payload, endpoint)
     if normalized == "discord":
         return deliver_to_discord(payload, endpoint)
     raise ValueError(f"Unknown connector: {connector}")
