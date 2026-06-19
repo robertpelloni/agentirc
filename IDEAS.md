@@ -1,7 +1,7 @@
 # AgentIRC IDEAS & Improvement Log
 
 ## Architectural Improvements
-- **Database Migration:** Currently, the system persists state heavily in flat `.json` files inside the `data/` directory (e.g., `state_admin.json`). Moving to SQLite (via SQLAlchemy) would solve potential concurrency issues when users spawn multiple browser tabs hitting the same session files.
+- **Database Migration:** (COMPLETED in 0.39.0) Currently, the system persists state heavily in flat `.json` files inside the `data/` directory (e.g., `state_admin.json`). Moving to SQLite (via SQLAlchemy) would solve potential concurrency issues when users spawn multiple browser tabs hitting the same session files.
 - **Microservice Decoupling:** `app.py` is huge (1400+ lines). The UI logic (Chainlit message hooks) should be separated from the internal AutoGen agent instantiation code. A `services/agents.py` module could own `create_team` and `stream_agent`.
 - **Async I/O in Tools:** (COMPLETED in v0.32.0) `fetch_webpage` and `web_search` migrated to `httpx.AsyncClient`. This blocks the async event loop during execution, potentially slowing down Chainlit. Migrating to `aiohttp` or `httpx` would greatly improve latency.
 

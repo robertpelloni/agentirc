@@ -207,13 +207,6 @@ def load_persistent_state(path: Path = STATE_FILE) -> dict[str, Any]:
         conn.close()
 
         if not row:
-            # Migration check: If SQLite lacks state, see if a legacy JSON flat file exists
-            if path.exists():
-                try:
-                    payload = json.loads(path.read_text(encoding="utf-8"))
-                    return payload
-                except (json.JSONDecodeError, OSError):
-                    return make_default_store()
             return make_default_store()
 
         payload = json.loads(row[0])

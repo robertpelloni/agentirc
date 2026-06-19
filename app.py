@@ -314,7 +314,8 @@ def get_client(model_name: str, base_url_override: str | None = None):
 
     # Ollama native support
     if model_name.startswith("ollama/"):
-        base_url = "http://localhost:11434/v1"
+        base_url_override = "http://localhost:11434/v1"
+        base_url = base_url_override
         api_key = "ollama"  # placeholder API key required by OpenAI client
         model_name = model_name.replace("ollama/", "", 1)
 
@@ -885,15 +886,14 @@ async def handle_command(command: str, args: str) -> bool:
         model_id = parts[2]
         bio = parts[3] if len(parts) > 3 else f"A new model instantiated as {name}."
 
-        AGENT_SPECS[name] = {
+        agent_specs = get_agent_specs()
+        agent_specs[name] = {
             "model": f"{provider}/{model_id}",
             "color": "#aaaaaa",
             "bio": bio,
             "pricing": {"input_per_million": 0.0, "output_per_million": 0.0},
         }
-
-        # Persist the new model definition
-        save_agents_config()
+        update_agent_specs(agent_specs)
 
         # Enable it in the active room configuration so it's usable right away
         config["enabled_agents"].append(name)
@@ -1890,6 +1890,9 @@ async def stream_agent(
         step.output = "Responses completed."
         await step.update()
     except Exception as e:
+        if 'step' in locals():
+            step.output = f"Stream failed: {e}"
+            await step.update()
         await send_system_notice(f"Streaming error: {e}. Moving to next participant...")
 
     if count_prompt_telemetry and telemetry_name is None and target_name is None:
