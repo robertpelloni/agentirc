@@ -2061,6 +2061,11 @@ async def start():
     cl.user_session.set(SESSION_AUTOMATION_TASK_KEY, None)
     cl.user_session.set(SESSION_REPLAY_STATE_KEY, None)
 
+    if config.get("automation", {}).get("enabled", False):
+        import asyncio
+        task = asyncio.create_task(run_automation_loop())
+        set_automation_task(task)
+
     rebuild_team()
     await update_settings_ui()
 

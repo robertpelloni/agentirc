@@ -1,3 +1,6 @@
+## 0.40.0 - 2026-06-18
+- Implemented advanced agent autonomous scheduling with persistent memory, allowing automation loops to survive server reboots.
+
 ## 0.39.0 - 2026-06-18
 - Finalized SQLite database migration by deprecating `agents_config.json` and removing legacy flat JSON fallback routines, mitigating multi-tab concurrency issues.
 

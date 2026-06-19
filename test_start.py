@@ -1,2 +1,3 @@
-from app import *
-print("app imported")
+import asyncio
+from app import start
+print("Start function loaded successfully")

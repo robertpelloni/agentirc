@@ -225,6 +225,8 @@ def load_persistent_state(path: Path = STATE_FILE) -> dict[str, Any]:
             state["saved_bridge_policies"] = payload["saved_bridge_policies"]
         if isinstance(payload.get("agent_specs"), dict):
             state["agent_specs"] = payload["agent_specs"]
+        if isinstance(payload.get("automation"), dict):
+            state["automation"] = payload["automation"]
     return state
 
 

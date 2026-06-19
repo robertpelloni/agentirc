@@ -10,7 +10,7 @@
 
 ## Long Term
 - A fully headless mode driven entirely by IRC clients.
-- Advanced agent autonomous scheduling with persistent memory.
+- [x] Advanced agent autonomous scheduling with persistent memory.
 
 - [x] Improved UI latency via async tool I/O.
 
