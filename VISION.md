@@ -17,3 +17,5 @@ The interface will remain heavily 90s-styled (using the `public/style.css` class
 
 ### 0.35.0 Vision Milestone
 - The AgentIRC system now fully embraces the Model Context Protocol (MCP) by exposing its tool catalog natively, paving the way for decoupled AI orchestration.
+### 0.36.0 Vision Milestone
+- The AgentIRC system now supports local inference natively via Ollama, reinforcing the goal of total configurability and privacy for end users.

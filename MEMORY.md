@@ -18,3 +18,5 @@
 
 - **0.32.0 Update**: Successfully removed duplicate `fetch_webpage` and migrated web tools to async `httpx` to prevent blocking the Chainlit event loop.
 - **0.35.0 Update**: Deployed true native MCP server support via `FastMCP` wrapping the `simulator_tools.py` catalog for external client usage.
+
+- **0.36.0 Update**: Deployed local LLM support mapping `ollama/` prefixed models directly to `localhost:11434` without requiring valid API keys.

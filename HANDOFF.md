@@ -65,3 +65,7 @@ NOTE: No unavailable log files were found. All requested project context files (
 
 ## Handoff 0.35.0
 - Vision processing tests and native MCP server implementations are complete. The TODO.md is functionally clean of short-term requirements. Next developer should examine IDEAS.md for long-term enhancements.
+
+
+## Handoff 0.36.0
+- Local LLM support via Ollama is complete. Future developers should consider advanced autonomous scheduling.

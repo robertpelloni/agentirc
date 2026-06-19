@@ -1,3 +1,6 @@
+## 0.36.0 - 2026-06-18
+- Implemented native local LLM support via Ollama. Models prefixed with `ollama/` route automatically to `localhost:11434`.
+
 ## 0.35.0 - 2026-06-18
 - Implemented true native MCP server support exposing the simulator tool catalog via FastMCP.
 

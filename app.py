@@ -312,6 +312,12 @@ def get_client(model_name: str, base_url_override: str | None = None):
     if not api_key:
         api_key = os.environ.get(api_key_env)
 
+    # Ollama native support
+    if model_name.startswith("ollama/"):
+        base_url = "http://localhost:11434/v1"
+        api_key = "ollama"  # placeholder API key required by OpenAI client
+        model_name = model_name.replace("ollama/", "", 1)
+
     # Some providers like Kilo/Cline might just use 'free' as the model name at their endpoint
     # but we'll try the provided name first.
     client = OpenAIChatCompletionClient(

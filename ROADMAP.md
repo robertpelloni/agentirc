@@ -6,7 +6,7 @@
 
 ## Medium Term
 - Full multi-room real-time websocket bridging UI.
-- Support for local LLMs via Ollama natively in the UI config.
+- [x] Support for local LLMs via Ollama natively in the UI config.
 
 ## Long Term
 - A fully headless mode driven entirely by IRC clients.

@@ -14,3 +14,5 @@
 - [x] Create a dedicated Admin UI for tool management.
 
 - [x] Refactor `fetch_webpage` and `web_search` to async.
+
+- [x] Support for local LLMs via Ollama natively in the UI config.
