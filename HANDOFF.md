@@ -69,3 +69,7 @@ NOTE: No unavailable log files were found. All requested project context files (
 
 ## Handoff 0.36.0
 - Local LLM support via Ollama is complete. Future developers should consider advanced autonomous scheduling.
+
+
+## Handoff 0.37.0
+- Frontend audio engine is complete. The application now fully mimics 90s IRC behavior natively.

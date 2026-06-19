@@ -16,3 +16,5 @@
 - [x] Refactor `fetch_webpage` and `web_search` to async.
 
 - [x] Support for local LLMs via Ollama natively in the UI config.
+
+- [x] Integrate custom frontend audio engine for retro beeps.

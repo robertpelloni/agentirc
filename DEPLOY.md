@@ -21,3 +21,5 @@ Ensure `httpx` is installed and up-to-date for async tool I/O execution. Run `pi
 - Introduced a native MCP Server via `mcp.server.fastmcp`. Ensure the `mcp` package is installed (`pip install mcp`). To launch, run `python mcp_server.py`.
 ### Version 0.36.0 Updates
 - Introduced native local LLM support via Ollama. Ensure Ollama is running locally on port 11434 if you append models prefixed with `ollama/`.
+### Version 0.37.0 Updates
+- Integrated a custom frontend audio engine in `public/irc.js`. No new backend dependencies required.

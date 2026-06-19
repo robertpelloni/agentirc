@@ -211,7 +211,48 @@
     }
 
     // ── Init ──
+
+// ── Custom Audio Engine for Retro Beeps ──
+function setupAudioEngine() {
+    if (document.getElementById("irc-audio-player")) return;
+
+    const audio = document.createElement("audio");
+    audio.id = "irc-audio-player";
+    audio.src = "/public/sounds/beep.wav";
+    audio.style.display = "none";
+    document.body.appendChild(audio);
+
+    let nodeCount = 0;
+    const observer = new MutationObserver(mutations => {
+        for (const m of mutations) {
+            for (const node of m.addedNodes) {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    // Only beep on new actual text/agent messages, ignoring local user inputs and sync pings
+                    const isMessage = node.className && typeof node.className === 'string' &&
+                                      (node.className.includes("message") || node.className.includes("step"));
+                    const isNotUser = !node.querySelector('.user-message') && !node.className.includes("user");
+                    const isNotSync = !node.className.includes("irc-sync-ping");
+
+                    if (isMessage && isNotSync && isNotUser) {
+                        // Debounce beeps to avoid cacophony
+                        nodeCount++;
+                        if (nodeCount === 1) {
+                            audio.play().catch(e => console.warn("Audio play blocked by browser:", e));
+                            setTimeout(() => { nodeCount = 0; }, 100);
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Only observe the main chat window container for new messages
+    const chatContainer = document.querySelector('.main-content') || document.body;
+    observer.observe(chatContainer, { childList: true, subtree: true });
+}
+
     function init() {
+        setupAudioEngine();
         createPanel();
         createStatusBar();
         fetchAgents();

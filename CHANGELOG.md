@@ -1,3 +1,6 @@
+## 0.37.0 - 2026-06-18
+- Implemented custom frontend audio engine in `public/irc.js` to play classic terminal `beep.wav` silently on incoming agent messages without rendering visual audio blocks.
+
 ## 0.36.0 - 2026-06-18
 - Implemented native local LLM support via Ollama. Models prefixed with `ollama/` route automatically to `localhost:11434`.
 
