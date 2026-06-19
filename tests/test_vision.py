@@ -6,10 +6,10 @@ import os
 
 from simulator_core import extract_images_from_elements
 
-def test_vision_image_extraction():
+def test_vision_image_extraction(tmp_path):
     # Create a dummy image
     img = PILImage.new('RGB', (10, 10), color='red')
-    img_path = "dummy_test_image.png"
+    img_path = str(tmp_path / "dummy_test_image.png")
     img.save(img_path)
 
     mock_element = Mock()
@@ -20,8 +20,6 @@ def test_vision_image_extraction():
 
     assert len(result) == 1
     assert isinstance(result[0], AGImage)
-
-    os.remove(img_path)
 
 def test_vision_ignores_non_images():
     mock_element = Mock()

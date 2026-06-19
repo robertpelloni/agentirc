@@ -17,3 +17,5 @@ The single source of truth for the project version is `VERSION.md`. The current 
 
 ### Version 0.32.0 Updates
 Ensure `httpx` is installed and up-to-date for async tool I/O execution. Run `pip install -r requirements.txt`.
+### Version 0.35.0 Updates
+- Introduced a native MCP Server via `mcp.server.fastmcp`. Ensure the `mcp` package is installed (`pip install mcp`). To launch, run `python mcp_server.py`.

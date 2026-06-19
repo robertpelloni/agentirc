@@ -10,7 +10,7 @@
 - [x] 90s CSS Styling.
 - [x] Extensive Documentation.
 - [x] Add more comprehensive tests for vision processing.
-- [ ] Implement true native MCP server support.
+- [x] Implement true native MCP server support.
 - [x] Create a dedicated Admin UI for tool management.
 
 - [x] Refactor `fetch_webpage` and `web_search` to async.

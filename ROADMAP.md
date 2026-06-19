@@ -17,3 +17,5 @@
 - [x] Implemented Admin Tool Management UI.
 
 - [x] Comprehensive tests for vision processing.
+
+- [x] Native MCP server support.

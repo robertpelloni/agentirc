@@ -17,3 +17,4 @@
 - **Synchronous Compatibility**: The integration of Chainlit with AutoGen 0.4+ under Python 3.14 requires explicit `anyio.to_thread` patches in `run.py`/`app.py` to circumvent async environment crashes. Synchronous mutations inside `app.py` were carefully decoupled from async UI updates.
 
 - **0.32.0 Update**: Successfully removed duplicate `fetch_webpage` and migrated web tools to async `httpx` to prevent blocking the Chainlit event loop.
+- **0.35.0 Update**: Deployed true native MCP server support via `FastMCP` wrapping the `simulator_tools.py` catalog for external client usage.

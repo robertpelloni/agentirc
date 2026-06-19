@@ -14,3 +14,6 @@ We are currently in a high-iteration phase, implementing features like vision mo
 
 ## Design Direction
 The interface will remain heavily 90s-styled (using the `public/style.css` classes). Any new features (such as Admin tool UIs) must adhere to the green-on-black or similarly retro themes, avoiding modern React/Tailwind styling paradigms. Focus is on textual density and terminal aesthetics.
+
+### 0.35.0 Vision Milestone
+- The AgentIRC system now fully embraces the Model Context Protocol (MCP) by exposing its tool catalog natively, paving the way for decoupled AI orchestration.
