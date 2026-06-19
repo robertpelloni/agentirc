@@ -2129,3 +2129,22 @@ def export_transcript(
         written_paths.append(str(json_path))
 
     return written_paths
+
+
+from autogen_core import Image as AGImage
+from PIL import Image as PILImage
+def extract_images_from_elements(elements):
+    images = []
+    if not elements:
+        return images
+    for element in elements:
+        if 'image' in getattr(element, 'mime', ''):
+            if hasattr(element, 'path') and element.path:
+                try:
+                    pil_img = PILImage.open(element.path)
+                    if pil_img.mode != 'RGB':
+                        pil_img = pil_img.convert('RGB')
+                    images.append(AGImage(pil_img))
+                except Exception:
+                    pass
+    return images

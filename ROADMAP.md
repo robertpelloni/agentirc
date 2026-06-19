@@ -15,3 +15,5 @@
 - [x] Improved UI latency via async tool I/O.
 
 - [x] Implemented Admin Tool Management UI.
+
+- [x] Comprehensive tests for vision processing.

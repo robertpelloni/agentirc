@@ -9,7 +9,7 @@
 - [x] Add Vision support for images.
 - [x] 90s CSS Styling.
 - [x] Extensive Documentation.
-- [ ] Add more comprehensive tests for vision processing.
+- [x] Add more comprehensive tests for vision processing.
 - [ ] Implement true native MCP server support.
 - [x] Create a dedicated Admin UI for tool management.
 

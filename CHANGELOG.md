@@ -1,3 +1,6 @@
+## 0.34.0 - 2026-06-18
+- Added comprehensive tests for vision processing covering Chainlit image element extraction and AutoGen PIL Image wrapping.
+
 ## 0.33.0 - 2026-06-18
 - Implemented a dedicated Admin UI for tool management directly within the Chainlit `ChatSettings` interface, allowing users to interactively toggle `TOOL_CATALOG` features.
 
