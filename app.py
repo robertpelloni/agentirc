@@ -1842,6 +1842,11 @@ async def stream_agent(
     event = None
 
     try:
+        step = cl.Step(name="Agent Swarm", type="run")
+        step.input = prompt
+        step.output = "Formulating responses..."
+        await step.send()
+
         async for event in agent_or_team.run_stream(task=prompt):
             source = getattr(event, "source", None)
             content = coerce_message_content(getattr(event, "content", None))
@@ -1882,6 +1887,8 @@ async def stream_agent(
                 author=author, content=content, kind="message", target=reply_target
             )
             await cl.Message(author=author, content=render_entry(entry)).send()
+        step.output = "Responses completed."
+        await step.update()
     except Exception as e:
         await send_system_notice(f"Streaming error: {e}. Moving to next participant...")
 

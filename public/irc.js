@@ -218,7 +218,7 @@ function setupAudioEngine() {
 
     const audio = document.createElement("audio");
     audio.id = "irc-audio-player";
-    audio.src = "/public/sounds/beep.wav";
+    audio.src = "/sounds/beep.wav";
     audio.style.display = "none";
     document.body.appendChild(audio);
 

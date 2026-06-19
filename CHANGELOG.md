@@ -1,3 +1,6 @@
+## 0.38.0 - 2026-06-18
+- Implemented typing indicators during multi-agent broadcasts via Chainlit's `cl.Step`.
+
 ## 0.37.0 - 2026-06-18
 - Implemented custom frontend audio engine in `public/irc.js` to play classic terminal `beep.wav` silently on incoming agent messages without rendering visual audio blocks.
 

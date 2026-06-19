@@ -13,4 +13,4 @@
 ## Frontend UI Refinements
 - **Authentic Terminal CRT Shader:** Include a WebGL or heavy CSS CRT shader in `public/style.css` to add scanlines, phosphor glow, and screen curvature to fully sell the 90s aesthetic.
 - **Custom Audio Engine:** (COMPLETED in 0.37.0) The current `cl.Audio` method was suspended because Chainlit binds audio to visible message blocks. Writing a custom React component for Chainlit (or injecting a raw HTML/JS audio orchestrator in `index.html`) to listen for websocket events and play `/sounds/beep.wav` silently in the background would complete the feature smoothly.
-- **Typing Indicators:** IRC didn't have typing indicators, but it would be useful to see which specific agent is currently 'thinking' rather than waiting silently.
+- **Typing Indicators:** (COMPLETED in 0.38.0) IRC didn't have typing indicators, but it would be useful to see which specific agent is currently 'thinking' rather than waiting silently.
