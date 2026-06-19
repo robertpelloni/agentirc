@@ -1,3 +1,6 @@
+## 0.42.0 - 2026-06-18
+- Implemented full multi-room real-time websocket bridging UI via `/bridge-websocket <uri>` command, allowing the Chainlit frontend to directly consume cross-room event streams.
+
 ## 0.41.0 - 2026-06-18
 - Refined external bridge payloads for MCP compliance by adding an `mcp` connector adapter that formats outbound requests as strict JSON-RPC 2.0 messages.
 

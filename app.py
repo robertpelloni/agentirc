@@ -1065,6 +1065,27 @@ async def handle_command(command: str, args: str) -> bool:
         await execute_bridge_ai(source_room_name, target_room_name, role, focus)
         return True
 
+    if command == "/bridge-websocket":
+        if not args:
+            await send_system_notice("Usage: `/bridge-websocket <uri>` (e.g. ws://localhost:8765)")
+            return True
+        uri = args.strip()
+        await send_system_notice(f"Attempting to establish WebSocket bridge UI listener on `{uri}`...")
+
+        async def websocket_listener():
+            try:
+                from websockets.asyncio.client import connect
+                async with connect(uri) as websocket:
+                    await send_system_notice(f"**WebSocket bridge connected to {uri}**")
+                    async for message in websocket:
+                        await cl.Message(author="WebSocket Bridge", content=f"Incoming cross-room transmission:\n```json\n{message}\n```").send()
+            except Exception as e:
+                await send_system_notice(f"WebSocket bridge to `{uri}` terminated: {e}")
+
+        import asyncio
+        asyncio.create_task(websocket_listener())
+        return True
+
     if command == "/bridge-export":
         parts = args.split()
         room_name = parts[0] if parts else get_current_room_name()
