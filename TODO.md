@@ -18,3 +18,5 @@
 - [x] Support for local LLMs via Ollama natively in the UI config.
 
 - [x] Integrate custom frontend audio engine for retro beeps.
+
+- [x] Implement a fully headless mode driven entirely by IRC clients (`headless_irc.py`).

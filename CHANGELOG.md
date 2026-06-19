@@ -1,3 +1,6 @@
+## 0.43.0 - 2026-06-19
+- Implemented a fully headless mode driven entirely by IRC clients (`headless_irc.py`), bypassing Chainlit and allowing users to interact directly with the agent simulation from standard IRC networks.
+
 ## 0.42.0 - 2026-06-18
 - Implemented full multi-room real-time websocket bridging UI via `/bridge-websocket <uri>` command, allowing the Chainlit frontend to directly consume cross-room event streams.
 

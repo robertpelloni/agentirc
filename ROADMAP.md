@@ -9,7 +9,7 @@
 - [x] Support for local LLMs via Ollama natively in the UI config.
 
 ## Long Term
-- A fully headless mode driven entirely by IRC clients.
+- [x] A fully headless mode driven entirely by IRC clients.
 - [x] Advanced agent autonomous scheduling with persistent memory.
 
 - [x] Improved UI latency via async tool I/O.
