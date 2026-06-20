@@ -10,7 +10,7 @@ The project has been significantly updated.
 - All tests pass (except those explicitly skipped for live integration).
 
 ## Next Implementor
-When taking over, please review `ROADMAP.md` and `TODO.md`. The next major steps involve refining the fully headless mode (`headless_irc.py`), managing persistent connections, and improving real-time external stream integration.
+When taking over, please review `ROADMAP.md` and `TODO.md`. The next major steps involve native MCP server integration and more robust testing for the vision endpoints.
 I have thoroughly analyzed the previous run logs and repository state.
 
 ### What was accomplished:

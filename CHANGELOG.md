@@ -1,8 +1,5 @@
-## 0.43.0 - 2026-06-19
-- Implemented a fully headless mode driven entirely by IRC clients (`headless_irc.py`), bypassing Chainlit and allowing users to interact directly with the agent simulation from standard IRC networks.
-
-## 0.42.0 - 2026-06-18
-- Implemented full multi-room real-time websocket bridging UI via `/bridge-websocket <uri>` command, allowing the Chainlit frontend to directly consume cross-room event streams.
+## 0.44.0 - 2026-06-19
+- Enhanced UI feedback for tool calls in the frontend retro aesthetic by wrapping `ToolCallRequestEvent` and `ToolCallExecutionEvent` in Chainlit `cl.Step` elements, bringing the `ROADMAP.md` to completion.
 
 ## 0.41.0 - 2026-06-18
 - Refined external bridge payloads for MCP compliance by adding an `mcp` connector adapter that formats outbound requests as strict JSON-RPC 2.0 messages.

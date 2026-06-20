@@ -509,7 +509,6 @@ def build_help_text() -> str:
 - `/auto-bridge stop` - Stop the active auto-bridge.
 - `/auto-bridge` - Show auto-bridge status.
 - `/bridge-export <room> [count]` - Export a room snapshot as an external bridge payload.
-- `/bridge-websocket <uri>` - Connect UI to a real-time websocket bridge for cross-room messaging.
 - `/bridge-runtime` - Show external bridge runtime directory status.
 - `/connectors` - List available external connector adapters.
 - `/outbox` - List recent external bridge payload files.

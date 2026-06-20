@@ -12,7 +12,7 @@
 - `AGENTIRC_USER_<USERNAME>`: Optional. Defines a password for `<USERNAME>`. For example, setting `AGENTIRC_USER_ADMIN=supersecret` allows the user `admin` to log in with `supersecret`.
 
 ## Versioning
-The single source of truth for the project version is `VERSION.md`. The current deployed version is `0.43.0`.
+The single source of truth for the project version is `VERSION.md`. The current deployed version is `0.31.0`.
 
 
 ### Version 0.32.0 Updates
@@ -25,5 +25,3 @@ Ensure `httpx` is installed and up-to-date for async tool I/O execution. Run `pi
 - Integrated a custom frontend audio engine in `public/irc.js`. No new backend dependencies required.
 ### Version 0.41.0 Updates
 - Added `mcp` connector adapter. External systems can now consume outbound JSON-RPC payloads via `--connector mcp --endpoint <URL>`.
-### Version 0.43.0 Updates
-- Added `headless_irc.py` for fully headless operations driven by IRC clients. To run the headless bot, execute `python headless_irc.py --server <irc_server> --channel <channel> --nick <bot_nick>`. Ensure the bot's environment contains all required API variables.

@@ -10,7 +10,7 @@ AgentIRC is an IRC-style multi-model simulation environment designed to bring mu
 - **Robustness**: Maintain comprehensive persistence, logging, telemetry, and room management.
 
 ## Roadmap & Execution
-We are currently in a high-iteration phase, having implemented features like vision model support, MCP tools, external bridging, and a fully headless IRC mode. The ultimate product direction remains focused on maintaining absolute multi-user autonomy over an IRC-styled retro UI while leveraging cutting-edge LLMs and real-time websockets to pipe multi-room conversational data.
+We are currently in a high-iteration phase, implementing features like vision model support, MCP tools, and external bridging. The ultimate product direction remains focused on maintaining absolute multi-user autonomy over an IRC-styled retro UI while leveraging cutting-edge LLMs and real-time websockets to pipe multi-room conversational data.
 
 ## Design Direction
 The interface will remain heavily 90s-styled (using the `public/style.css` classes). Any new features (such as Admin tool UIs) must adhere to the green-on-black or similarly retro themes, avoiding modern React/Tailwind styling paradigms. Focus is on textual density and terminal aesthetics.

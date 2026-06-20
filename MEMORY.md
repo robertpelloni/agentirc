@@ -24,5 +24,3 @@
 - **0.37.0 Update**: Deployed silent `MutationObserver` audio engine in frontend to handle `beep.wav` playback on AI message nodes without visually polluting Chainlit.
 
 - **0.41.0 Update**: Configured `bridge_connectors.py` to support `mcp` JSON-RPC 2.0 payloads for external webhook integration.
-
-- **0.43.0 Headless Mode:** Introduced `headless_irc.py` to bypass `app.py` Chainlit routing, enabling direct autonomous agent interaction from external IRC networks.

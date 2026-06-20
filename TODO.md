@@ -19,4 +19,4 @@
 
 - [x] Integrate custom frontend audio engine for retro beeps.
 
-- [x] Implement a fully headless mode driven entirely by IRC clients (`headless_irc.py`).
+- [x] Enhance UI feedback for tool calls in the retro aesthetic.

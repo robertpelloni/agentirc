@@ -12,6 +12,8 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermination
 from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
+from autogen_agentchat.messages import ToolCallExecutionEvent, ToolCallRequestEvent
+
 
 import chainlit as cl
 from dotenv import load_dotenv
@@ -1065,27 +1067,6 @@ async def handle_command(command: str, args: str) -> bool:
         await execute_bridge_ai(source_room_name, target_room_name, role, focus)
         return True
 
-    if command == "/bridge-websocket":
-        if not args:
-            await send_system_notice("Usage: `/bridge-websocket <uri>` (e.g. ws://localhost:8765)")
-            return True
-        uri = args.strip()
-        await send_system_notice(f"Attempting to establish WebSocket bridge UI listener on `{uri}`...")
-
-        async def websocket_listener():
-            try:
-                from websockets.asyncio.client import connect
-                async with connect(uri) as websocket:
-                    await send_system_notice(f"**WebSocket bridge connected to {uri}**")
-                    async for message in websocket:
-                        await cl.Message(author="WebSocket Bridge", content=f"Incoming cross-room transmission:\n```json\n{message}\n```").send()
-            except Exception as e:
-                await send_system_notice(f"WebSocket bridge to `{uri}` terminated: {e}")
-
-        import asyncio
-        asyncio.create_task(websocket_listener())
-        return True
-
     if command == "/bridge-export":
         parts = args.split()
         room_name = parts[0] if parts else get_current_room_name()
@@ -1870,6 +1851,24 @@ async def stream_agent(
 
         async for event in agent_or_team.run_stream(task=prompt):
             source = getattr(event, "source", None)
+
+            # Retro UI Tool Feedback
+            if isinstance(event, ToolCallRequestEvent):
+                tool_step = cl.Step(name=f"SYSTEM_TOOL::{source}", type="tool")
+                call_info = ", ".join([call.name for call in event.models]) if hasattr(event, "models") else "Unknown"
+                tool_step.input = f"EXECUTING: {call_info}"
+                tool_step.output = "WAITING FOR DATALINK..."
+                await tool_step.send()
+                continue
+
+            if isinstance(event, ToolCallExecutionEvent):
+                tool_step = cl.Step(name=f"SYSTEM_TOOL::{source}", type="tool")
+                tool_step.input = "DATALINK ESTABLISHED"
+                res_info = ", ".join([res.content for res in event.models]) if hasattr(event, "models") else "Unknown"
+                tool_step.output = f"RESULT: {res_info}"
+                await tool_step.send()
+                continue
+
             content = coerce_message_content(getattr(event, "content", None))
             if not source or not content or source.lower() == "user":
                 continue
