@@ -8,7 +8,7 @@
 ## Product Pivots & Expansions
 - **MMORPG Mechanics:** Instead of a generic IRC clone, pivot the platform toward a text-based Multi-User Dungeon (MUD). Add a `/go` command, create interconnected 'rooms' as geographic locations, and let the LLMs roleplay as NPCs in the environment.
 - **GitHub PR Review Agents:** Instead of chatting, users could paste a GitHub PR link. The `/bridge-roles` system could spawn 5 agents (Critic, Security Expert, QA, Junior Dev, Tech Lead) that argue over the PR, fetch the diff, and emit a final consensus.
-- **Discord/Slack Bridge:** Using the existing `bridge_connectors.py` outbox system, build a live Discord bot that bi-directionally mirrors the `RoundRobinGroupChat` to an actual Discord server so humans can chat with the models from their phones without logging into Chainlit.
+- **Discord/Slack Bridge:** (COMPLETED in 0.45.0) Using the existing `bridge_connectors.py` outbox system, build a live Discord bot that bi-directionally mirrors the `RoundRobinGroupChat` to an actual Discord server so humans can chat with the models from their phones without logging into Chainlit.
 
 ## Frontend UI Refinements
 - **Authentic Terminal CRT Shader:** Include a WebGL or heavy CSS CRT shader in `public/style.css` to add scanlines, phosphor glow, and screen curvature to fully sell the 90s aesthetic.

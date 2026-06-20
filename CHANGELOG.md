@@ -1,3 +1,7 @@
+## 0.45.0 - 2026-06-19
+- Implemented `discord_bridge_bot.py`, an autonomous, bidirectional live Discord bot bridge as requested in `IDEAS.md`.
+- The Discord bot mirrors the `RoundRobinGroupChat` directly into live Discord servers, allowing users to chat natively with the AI swarm without Chainlit.
+
 ## 0.44.0 - 2026-06-19
 - Enhanced UI feedback for tool calls in the frontend retro aesthetic by wrapping `ToolCallRequestEvent` and `ToolCallExecutionEvent` in Chainlit `cl.Step` elements, bringing the `ROADMAP.md` to completion.
 

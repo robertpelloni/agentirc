@@ -19,3 +19,5 @@
 - [x] Comprehensive tests for vision processing.
 
 - [x] Native MCP server support.
+
+- [x] Deep integration with live communication platforms like Slack or Discord.
