@@ -8,3 +8,4 @@ duckduckgo-search>=5.0.0
 markdownify>=0.11.0
 tomli>=2.0.1
 discord.py>=2.3.2
+mcp>=0.1.0

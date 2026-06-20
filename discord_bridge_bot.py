@@ -71,7 +71,7 @@ class AgentIRCDiscordBot(discord.Client):
                     display_name = display_agent_name(source)
                     # Stream the response chunk back to discord
                     # Discord limits messages to 2000 chars
-                    limit = 1990
+                    limit = 1900
                     remaining = msg_content
                     while remaining:
                         chunk = remaining[:limit]
