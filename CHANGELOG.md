@@ -1,6 +1,3 @@
-## 0.46.0 - 2026-06-19
-- Attempted to implement microservice decoupling but reverted due to Chainlit circular dependency constraints. No code changes executed.
-
 ## 0.41.0 - 2026-06-18
 - Refined external bridge payloads for MCP compliance by adding an `mcp` connector adapter that formats outbound requests as strict JSON-RPC 2.0 messages.
 
