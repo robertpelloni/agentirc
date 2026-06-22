@@ -18,7 +18,3 @@
 - [x] Support for local LLMs via Ollama natively in the UI config.
 
 - [x] Integrate custom frontend audio engine for retro beeps.
-
-- [x] Enhance UI feedback for tool calls in the retro aesthetic.
-
-- [x] Build bidirectional live Discord bot bridge.

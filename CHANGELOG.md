@@ -1,10 +1,5 @@
-## 0.45.0 - 2026-06-19
-- Added `mcp` to requirements.txt.
-- Implemented `discord_bridge_bot.py`, an autonomous, bidirectional live Discord bot bridge as requested in `IDEAS.md`.
-- The Discord bot mirrors the `RoundRobinGroupChat` directly into live Discord servers, allowing users to chat natively with the AI swarm without Chainlit.
-
-## 0.45.0 - 2026-06-19
-- Enhanced UI feedback for tool calls in the frontend retro aesthetic by wrapping `ToolCallRequestEvent` and `ToolCallExecutionEvent` in Chainlit `cl.Step` elements, bringing the `ROADMAP.md` to completion.
+## 0.46.0 - 2026-06-19
+- Attempted to implement microservice decoupling but reverted due to Chainlit circular dependency constraints. No code changes executed.
 
 ## 0.41.0 - 2026-06-18
 - Refined external bridge payloads for MCP compliance by adding an `mcp` connector adapter that formats outbound requests as strict JSON-RPC 2.0 messages.

@@ -2,7 +2,7 @@
 
 ## Short Term
 - [x] Refine external bridge payloads (MCP compliance).
-- [x] Enhance UI feedback for tool calls in the retro aesthetic.
+- Enhance UI feedback for tool calls in the retro aesthetic.
 
 ## Medium Term
 - Full multi-room real-time websocket bridging UI.
@@ -19,5 +19,3 @@
 - [x] Comprehensive tests for vision processing.
 
 - [x] Native MCP server support.
-
-- [x] Deep integration with live communication platforms like Slack or Discord.
