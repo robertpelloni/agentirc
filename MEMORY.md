@@ -24,3 +24,6 @@
 - **0.37.0 Update**: Deployed silent `MutationObserver` audio engine in frontend to handle `beep.wav` playback on AI message nodes without visually polluting Chainlit.
 
 - **0.41.0 Update**: Configured `bridge_connectors.py` to support `mcp` JSON-RPC 2.0 payloads for external webhook integration.
+
+## Merges
+- 2026-06-22: Completed an intelligent branch sync. Forward merged recent async refactor changes into the local working branch and bumped the version.

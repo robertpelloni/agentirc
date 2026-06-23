@@ -243,3 +243,8 @@
 - Fixed agent name rendering so internal names like `GPT_5` display correctly as `GPT-5`.
 - Added unit tests for the new simulation helper layer.
 - Added AI DevKit implementation/testing documentation for this feature pass.
+
+## 0.42.0 - 2026-06-22
+- Synced upstream repository and merged remote feature branches locally.
+- Forward merged active features to `main` branch.
+- Updated version numbering to 0.42.0.
