@@ -259,3 +259,6 @@
 ## 0.44.0 - 2026-06-25
 - Developed and integrated a FastMCP implementation in `mcp_server.py` to seamlessly expose `TOOL_CATALOG` functions natively over MCP standard out.
 - Added `mcp` explicitly to `requirements.txt`.
+
+## 0.44.1 - 2026-06-25
+- Verified `deliver_to_mcp` in `bridge_connectors.py` strictly adheres to JSON-RPC 2.0 payloads for outbox messages per the Nudge request.
