@@ -252,3 +252,6 @@
 ## 0.42.1 - 2026-06-24
 - Synced upstream repository and `.jules` session cache into working tree.
 - Updated version metadata to 0.42.1.
+
+## 0.43.0 - 2026-06-25
+- Implemented `headless_irc.py`, an autonomous background script that connects to external IRC servers natively.
