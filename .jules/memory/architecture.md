@@ -17,7 +17,11 @@ The project is an IRC-style multi-model simulation environment designed to bring
 * **Configuration:** Core simulator states (enabled agents, custom aliases, room topics, lineups, and enabled tools) are loaded and saved dynamically, divorcing runtime configuration from hardcoded parameters.
 
 ## 3. Key Features & Design Patterns
+<<<<<<< HEAD
 * **Dynamic Modding & Admin UI:**
+=======
+* **Dynamic Modding & Admin UI:**
+>>>>>>> origin/jules-agentirc-async-refactor-1797650712095433665
   * Models can be added at runtime via the `/add-model` command (parsing arguments via `shlex` and updating `AGENT_SPECS`).
   * A dedicated **Admin UI** integrates directly into Chainlit's `ChatSettings` modal (`@cl.on_settings_update` in `app.py`), allowing real-time toggling of active agents and `TOOL_CATALOG` functions without restarting the server.
 * **Scenarios & Roleplay Constraints:**

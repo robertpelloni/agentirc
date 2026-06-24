@@ -255,3 +255,7 @@
 
 ## 0.43.0 - 2026-06-25
 - Implemented `headless_irc.py`, an autonomous background script that connects to external IRC servers natively.
+
+## 0.44.0 - 2026-06-25
+- Developed and integrated a FastMCP implementation in `mcp_server.py` to seamlessly expose `TOOL_CATALOG` functions natively over MCP standard out.
+- Added `mcp` explicitly to `requirements.txt`.
