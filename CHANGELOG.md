@@ -248,3 +248,7 @@
 - Synced upstream repository and merged remote feature branches locally.
 - Forward merged active features to `main` branch.
 - Updated version numbering to 0.42.0.
+
+## 0.42.1 - 2026-06-24
+- Synced upstream repository and `.jules` session cache into working tree.
+- Updated version metadata to 0.42.1.
