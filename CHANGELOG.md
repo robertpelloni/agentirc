@@ -268,3 +268,6 @@
 
 ## 0.44.3 - 2026-06-25
 - Ensured MCP compliance in `simulator_tools.py` tools according to the Nudge request.
+
+## 0.45.0 - 2026-06-25
+- Started working on Full multi-room real-time websocket bridging UI.
