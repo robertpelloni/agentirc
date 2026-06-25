@@ -265,3 +265,6 @@
 
 ## 0.44.2 - 2026-06-25
 - Ensured MCP compliance in `deliver_to_mcp` by confirming the implementation correctly encapsulates outbox messages inside strict JSON-RPC 2.0 envelopes.
+
+## 0.44.3 - 2026-06-25
+- Ensured MCP compliance in `simulator_tools.py` tools according to the Nudge request.
