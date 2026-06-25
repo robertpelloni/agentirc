@@ -262,3 +262,6 @@
 
 ## 0.44.1 - 2026-06-25
 - Verified `deliver_to_mcp` in `bridge_connectors.py` strictly adheres to JSON-RPC 2.0 payloads for outbox messages per the Nudge request.
+
+## 0.44.2 - 2026-06-25
+- Ensured MCP compliance in `deliver_to_mcp` by confirming the implementation correctly encapsulates outbox messages inside strict JSON-RPC 2.0 envelopes.
