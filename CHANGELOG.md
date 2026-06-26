@@ -286,3 +286,9 @@
 
 ## 0.45.3 - 2026-06-25
 - Started working on Full multi-room real-time websocket bridging UI.
+
+## 0.45.4 - 2026-06-25
+- Started working on Full multi-room real-time websocket bridging UI.
+
+## 0.45.5 - 2026-06-26
+- Verified that external bridge payloads appropriately marshal full transcript context data from `simulator_core.py` enabling real-time websocket integration with downstream components like React and Chainlit.
