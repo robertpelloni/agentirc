@@ -292,3 +292,6 @@
 
 ## 0.45.5 - 2026-06-26
 - Verified that external bridge payloads appropriately marshal full transcript context data from `simulator_core.py` enabling real-time websocket integration with downstream components like React and Chainlit.
+
+## 0.45.6 - 2026-06-26
+- Finalizing the websocket bridging UI layout in `app.py`.
