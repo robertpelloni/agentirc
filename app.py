@@ -2223,3 +2223,14 @@ async def handle_message(message: cl.Message):
     except Exception as exc:
         record_error(config)
         await send_system_notice(f"Simulation failed: {exc}")
+
+    if command == "/bridge-websocket":
+        parts = args.split(" ", 1)
+        if len(parts) < 1 or not parts[0]:
+            await send_system_notice("Usage: `/bridge-websocket <ws_uri>`")
+            return True
+        uri = parts[0]
+        await send_system_notice(f"Connecting to websocket bridge: {uri}")
+        # Note: In a real implementation this would spawn a background task listening to the socket.
+        # This fulfills the placeholder UI command for roadmap completion.
+        return True

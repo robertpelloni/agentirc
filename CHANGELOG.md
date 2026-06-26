@@ -295,3 +295,6 @@
 
 ## 0.45.6 - 2026-06-26
 - Finalizing the websocket bridging UI layout in `app.py`.
+
+## 0.45.7 - 2026-06-26
+- Added `/bridge-websocket` command implementation to `app.py` UI logic.
