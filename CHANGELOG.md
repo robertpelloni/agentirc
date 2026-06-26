@@ -283,3 +283,6 @@
 
 ## 0.45.2 - 2026-06-25
 - Started working on Full multi-room real-time websocket bridging UI in `app.py`.
+
+## 0.45.3 - 2026-06-25
+- Started working on Full multi-room real-time websocket bridging UI.
