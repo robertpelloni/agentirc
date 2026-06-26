@@ -248,3 +248,26 @@
 - Synced upstream repository and merged remote feature branches locally.
 - Forward merged active features to `main` branch.
 - Updated version numbering to 0.42.0.
+
+## 0.42.1 - 2026-06-24
+- Synced upstream repository and `.jules` session cache into working tree.
+- Updated version metadata to 0.42.1.
+
+## 0.43.0 - 2026-06-25
+- Implemented `headless_irc.py`, an autonomous background script that connects to external IRC servers natively.
+
+## 0.44.0 - 2026-06-25
+- Developed and integrated a FastMCP implementation in `mcp_server.py` to seamlessly expose `TOOL_CATALOG` functions natively over MCP standard out.
+- Added `mcp` explicitly to `requirements.txt`.
+
+## 0.44.1 - 2026-06-25
+- Verified `deliver_to_mcp` in `bridge_connectors.py` strictly adheres to JSON-RPC 2.0 payloads for outbox messages per the Nudge request.
+
+## 0.44.2 - 2026-06-25
+- Ensured MCP compliance in `deliver_to_mcp` by confirming the implementation correctly encapsulates outbox messages inside strict JSON-RPC 2.0 envelopes.
+
+## 0.44.3 - 2026-06-25
+- Ensured MCP compliance in `simulator_tools.py` tools according to the Nudge request.
+
+## 0.45.0 - 2026-06-25
+- Began implementation of full multi-room real-time websocket bridging UI, starting with routing enhancements in `simulator_core.py`.

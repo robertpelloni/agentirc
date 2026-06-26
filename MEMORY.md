@@ -27,3 +27,6 @@
 
 ## Merges
 - 2026-06-22: Completed an intelligent branch sync. Forward merged recent async refactor changes into the local working branch and bumped the version.
+
+## Merges
+- 2026-06-24: Synced upstream. Resolved diverged branches by fast-forward merging incoming `.jules/` session context blocks into the active working tree.
