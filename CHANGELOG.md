@@ -280,3 +280,6 @@
 
 ## 0.45.1 - 2026-06-25
 - Reviewed MCP connector in `bridge_connectors.py` and validated full JSON-RPC 2.0 encapsulation.
+
+## 0.45.2 - 2026-06-25
+- Started working on Full multi-room real-time websocket bridging UI in `app.py`.
