@@ -298,3 +298,6 @@
 
 ## 0.45.7 - 2026-06-26
 - Added `/bridge-websocket` command implementation to `app.py` UI logic.
+
+## 0.45.8 - 2026-06-26
+- Validated that the multi-room real-time websocket bridging UI layout conforms to the AgentIRC design and roadmap.
