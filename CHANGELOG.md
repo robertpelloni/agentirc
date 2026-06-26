@@ -271,3 +271,12 @@
 
 ## 0.45.0 - 2026-06-25
 - Began implementation of full multi-room real-time websocket bridging UI, starting with routing enhancements in `simulator_core.py`.
+
+## 0.44.4 - 2026-06-25
+- Verified and finalized the MCP compliance updates across `bridge_connectors.py` and `simulator_tools.py`.
+
+## 0.44.5 - 2026-06-25
+- Finalized UI retro tool call execution visual rendering in `app.py`.
+
+## 0.45.1 - 2026-06-25
+- Reviewed MCP connector in `bridge_connectors.py` and validated full JSON-RPC 2.0 encapsulation.

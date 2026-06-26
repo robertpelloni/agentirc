@@ -12,6 +12,8 @@ from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermination
 from autogen_agentchat.teams import RoundRobinGroupChat, SelectorGroupChat
+from autogen_agentchat.messages import ToolCallExecutionEvent, ToolCallRequestEvent
+
 
 import chainlit as cl
 from dotenv import load_dotenv
@@ -1849,6 +1851,22 @@ async def stream_agent(
 
         async for event in agent_or_team.run_stream(task=prompt):
             source = getattr(event, "source", None)
+
+            # Retro UI Tool Feedback
+            if isinstance(event, ToolCallRequestEvent):
+                tool_step = cl.Step(name=f"SYSTEM_TOOL::{source}", type="tool")
+                tool_step.input = f"EXECUTING: {event.content}"
+                tool_step.output = "WAITING FOR DATALINK..."
+                await tool_step.send()
+                continue
+
+            if isinstance(event, ToolCallExecutionEvent):
+                tool_step = cl.Step(name=f"SYSTEM_TOOL::{source}", type="tool")
+                tool_step.input = "DATALINK ESTABLISHED"
+                tool_step.output = f"RESULT: {event.content}"
+                await tool_step.send()
+                continue
+
             content = coerce_message_content(getattr(event, "content", None))
             if not source or not content or source.lower() == "user":
                 continue
