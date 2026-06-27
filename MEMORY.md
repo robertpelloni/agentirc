@@ -33,3 +33,6 @@
 
 ## Merges
 - 2026-06-27: Completed multi-room real-time websocket bridging UI integration into `app.py` via the `/bridge-websocket` command block.
+
+## External Bridging
+- 2026-06-27: Completed the backend websocket server implementation (`websocket_server.py`) with support for real-time room broadcasting. The server properly parses and routes MCP-compliant `jsonrpc: "2.0"` payload envelopes. Added `WEBSOCKET_PORT` to environment considerations in `DEPLOY.md`.

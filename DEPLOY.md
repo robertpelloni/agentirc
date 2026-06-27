@@ -25,3 +25,10 @@ Ensure `httpx` is installed and up-to-date for async tool I/O execution. Run `pi
 - Integrated a custom frontend audio engine in `public/irc.js`. No new backend dependencies required.
 ### Version 0.41.0 Updates
 - Added `mcp` connector adapter. External systems can now consume outbound JSON-RPC payloads via `--connector mcp --endpoint <URL>`.
+## Websocket Bridging Deployment
+To run the full multi-room real-time websocket bridging UI:
+1. Ensure the `WEBSOCKET_PORT` environment variable is set (defaults to `8765`).
+2. Run the WebSocket server daemon in the background:
+   ```bash
+   python websocket_server.py
+   ```

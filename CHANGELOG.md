@@ -313,3 +313,6 @@
 
 ## 0.46.1 - 2026-06-27
 - Verified websocket bridging UI is fully integrated and correctly triggers backend MCP payloads.
+
+## 0.46.2 - 2026-06-27
+- Added a dedicated websocket server implementation (`websocket_server.py`) to handle real-time multi-room broadcasting and MCP-compliant payloads.
