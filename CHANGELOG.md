@@ -301,3 +301,6 @@
 
 ## 0.45.8 - 2026-06-26
 - Validated that the multi-room real-time websocket bridging UI layout conforms to the AgentIRC design and roadmap.
+
+## 0.45.9 - 2026-06-27
+- Refactored `websocket_bridge_runtime.py` to ensure all external outbound websocket payload deliveries are wrapped in MCP-compliant JSON-RPC 2.0 envelopes.

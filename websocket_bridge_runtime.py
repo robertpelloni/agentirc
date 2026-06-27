@@ -20,10 +20,15 @@ def log_websocket_event(event: dict) -> None:
 
 
 def build_websocket_message(payload: dict) -> str:
+    # MCP Compliant JSON-RPC 2.0 Notification over Websocket
     envelope = {
-        "transport": "websocket",
-        "sent_at": datetime.now().isoformat(),
-        "payload": payload,
+        "jsonrpc": "2.0",
+        "method": "agentirc/payload",
+        "params": {
+            "transport": "websocket",
+            "sent_at": datetime.now().isoformat(),
+            "payload": payload,
+        }
     }
     return json.dumps(envelope, ensure_ascii=False)
 
