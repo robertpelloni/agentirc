@@ -304,3 +304,6 @@
 
 ## 0.45.9 - 2026-06-27
 - Refactored `websocket_bridge_runtime.py` to ensure all external outbound websocket payload deliveries are wrapped in MCP-compliant JSON-RPC 2.0 envelopes.
+
+## 0.45.10 - 2026-06-27
+- Verified MCP compliance across all remaining bridge connectors to fulfill the supervisor request.
