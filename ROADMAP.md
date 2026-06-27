@@ -5,7 +5,7 @@
 - Enhance UI feedback for tool calls in the retro aesthetic.
 
 ## Medium Term
-- Full multi-room real-time websocket bridging UI.
+- [x] Full multi-room real-time websocket bridging UI.
 - [x] Support for local LLMs via Ollama natively in the UI config.
 
 ## Long Term

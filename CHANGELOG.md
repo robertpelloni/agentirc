@@ -307,3 +307,6 @@
 
 ## 0.45.10 - 2026-06-27
 - Verified MCP compliance across all remaining bridge connectors to fulfill the supervisor request.
+
+## 0.46.0 - 2026-06-27
+- Marked "Full multi-room real-time websocket bridging UI" as completed in the Roadmap after verifying tests and implementation state.

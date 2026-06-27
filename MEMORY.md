@@ -30,3 +30,6 @@
 
 ## Merges
 - 2026-06-24: Synced upstream. Resolved diverged branches by fast-forward merging incoming `.jules/` session context blocks into the active working tree.
+
+## Merges
+- 2026-06-27: Completed multi-room real-time websocket bridging UI integration into `app.py` via the `/bridge-websocket` command block.
