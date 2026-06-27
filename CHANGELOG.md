@@ -316,3 +316,6 @@
 
 ## 0.46.2 - 2026-06-27
 - Added a dedicated websocket server implementation (`websocket_server.py`) to handle real-time multi-room broadcasting and MCP-compliant payloads.
+
+## 0.46.3 - 2026-06-27
+- Refined `ROADMAP.md` tracking by officially marking "UI feedback for tool calls in retro aesthetic" and "fully headless mode" as completed.
