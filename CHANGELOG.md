@@ -310,3 +310,6 @@
 
 ## 0.46.0 - 2026-06-27
 - Marked "Full multi-room real-time websocket bridging UI" as completed in the Roadmap after verifying tests and implementation state.
+
+## 0.46.1 - 2026-06-27
+- Verified websocket bridging UI is fully integrated and correctly triggers backend MCP payloads.
