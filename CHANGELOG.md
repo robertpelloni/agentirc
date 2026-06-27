@@ -319,3 +319,6 @@
 
 ## 0.46.3 - 2026-06-27
 - Refined `ROADMAP.md` tracking by officially marking "UI feedback for tool calls in retro aesthetic" and "fully headless mode" as completed.
+
+## 0.46.4 - 2026-06-27
+- Enhanced UI feedback for tool calls by introducing 90s terminal CSS CRT styling (`.step-tool`) to `public/irc.css`.

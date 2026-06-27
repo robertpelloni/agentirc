@@ -36,3 +36,6 @@
 
 ## External Bridging
 - 2026-06-27: Completed the backend websocket server implementation (`websocket_server.py`) with support for real-time room broadcasting. The server properly parses and routes MCP-compliant `jsonrpc: "2.0"` payload envelopes. Added `WEBSOCKET_PORT` to environment considerations in `DEPLOY.md`.
+
+## Frontend CSS Updates
+- 2026-06-27: Appended `.step-tool` classes to `public/irc.css` with keyframe blinking to satisfy the "retro UI feedback" roadmap task.
