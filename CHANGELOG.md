@@ -322,3 +322,6 @@
 
 ## 0.46.4 - 2026-06-27
 - Enhanced UI feedback for tool calls by introducing 90s terminal CSS CRT styling (`.step-tool`) to `public/irc.css`.
+
+## 0.46.5 - 2026-06-27
+- Added real-time client-side UI updates in `public/irc.js` to parse inbound JSON-RPC 2.0 websocket payloads and render them into the Chainlit feed with retro aesthetic styling.
