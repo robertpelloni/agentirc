@@ -12,7 +12,7 @@
 - `AGENTIRC_USER_<USERNAME>`: Optional. Defines a password for `<USERNAME>`. For example, setting `AGENTIRC_USER_ADMIN=supersecret` allows the user `admin` to log in with `supersecret`.
 
 ## Versioning
-The single source of truth for the project version is `VERSION.md`. The current deployed version is `0.46.3`.
+The single source of truth for the project version is `VERSION.md`. The current deployed version is `0.31.0`.
 
 
 ### Version 0.32.0 Updates
@@ -25,10 +25,3 @@ Ensure `httpx` is installed and up-to-date for async tool I/O execution. Run `pi
 - Integrated a custom frontend audio engine in `public/irc.js`. No new backend dependencies required.
 ### Version 0.41.0 Updates
 - Added `mcp` connector adapter. External systems can now consume outbound JSON-RPC payloads via `--connector mcp --endpoint <URL>`.
-## Websocket Bridging Deployment
-To run the full multi-room real-time websocket bridging UI:
-1. Ensure the `WEBSOCKET_PORT` environment variable is set (defaults to `8765`).
-2. Run the WebSocket server daemon in the background:
-   ```bash
-   python websocket_server.py
-   ```

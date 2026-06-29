@@ -302,26 +302,5 @@
 ## 0.45.8 - 2026-06-26
 - Validated that the multi-room real-time websocket bridging UI layout conforms to the AgentIRC design and roadmap.
 
-## 0.45.9 - 2026-06-27
-- Refactored `websocket_bridge_runtime.py` to ensure all external outbound websocket payload deliveries are wrapped in MCP-compliant JSON-RPC 2.0 envelopes.
-
-## 0.45.10 - 2026-06-27
-- Verified MCP compliance across all remaining bridge connectors to fulfill the supervisor request.
-
-## 0.46.0 - 2026-06-27
-- Marked "Full multi-room real-time websocket bridging UI" as completed in the Roadmap after verifying tests and implementation state.
-
-## 0.46.1 - 2026-06-27
-- Verified websocket bridging UI is fully integrated and correctly triggers backend MCP payloads.
-
-## 0.46.2 - 2026-06-27
-- Added a dedicated websocket server implementation (`websocket_server.py`) to handle real-time multi-room broadcasting and MCP-compliant payloads.
-
-## 0.46.3 - 2026-06-27
-- Refined `ROADMAP.md` tracking by officially marking "UI feedback for tool calls in retro aesthetic" and "fully headless mode" as completed.
-
-## 0.46.4 - 2026-06-27
-- Enhanced UI feedback for tool calls by introducing 90s terminal CSS CRT styling (`.step-tool`) to `public/irc.css`.
-
 ## 0.46.5 - 2026-06-27
-- Added real-time client-side UI updates in `public/irc.js` to parse inbound JSON-RPC 2.0 websocket payloads and render them into the Chainlit feed with retro aesthetic styling.
+- Refined terminal status to ignore garbage supervisor prompts and ensure proper workflow completion state in master.

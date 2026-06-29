@@ -419,26 +419,3 @@ input * {
 [class*="message"] {
 	line-height: 1.3 !important;
 }
-
-/* Retro Tool Call Feedback Styles */
-.step-tool {
-    background-color: #000;
-    color: #0f0;
-    font-family: "Courier New", Courier, monospace !important;
-    border: 1px solid #0f0;
-    padding: 10px;
-    margin: 5px 0;
-    text-transform: uppercase;
-}
-
-.step-tool::before {
-    content: ">>> DATALINK ESTABLISHED <<<";
-    display: block;
-    border-bottom: 1px dashed #0f0;
-    margin-bottom: 5px;
-    animation: blink 1s step-end infinite;
-}
-
-@keyframes blink {
-    50% { opacity: 0; }
-}
