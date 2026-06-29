@@ -12,7 +12,7 @@
 - `AGENTIRC_USER_<USERNAME>`: Optional. Defines a password for `<USERNAME>`. For example, setting `AGENTIRC_USER_ADMIN=supersecret` allows the user `admin` to log in with `supersecret`.
 
 ## Versioning
-The single source of truth for the project version is `VERSION.md`. The current deployed version is `0.31.0`.
+The single source of truth for the project version is `VERSION.md`. The current deployed version is `0.46.3`.
 
 
 ### Version 0.32.0 Updates
