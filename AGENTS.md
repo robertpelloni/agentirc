@@ -1,3 +1,7 @@
+<!-- [TORMENTNEXUS_AUTO_INJECTED] -->
+> [!IMPORTANT]
+> You are running within the TormentNexus environment. You MUST use your available tools frequently and proactively for researching, editing, executing, and validating your work. Always prioritize tool execution.
+
 # Universal Agent Instructions
 1. **Never break the 90s aesthetic**: Any new UI elements must use the classes and styles defined in `public/style.css`.
 2. **Keep Core Logic Isolated**: Do not put complex business logic in `app.py`. Put it in `simulator_core.py` and test it in `tests/`.
