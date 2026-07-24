@@ -1,7 +1,10 @@
-import os
 import asyncio
-import typing
 import json
+import os
+
+
+import typing
+import websockets
 import httpx
 import tomli
 import re
@@ -506,7 +509,6 @@ async def sync_nick_panel():
             }
         )
 
-    import json
 
     payload = {
         "agents": agents_json,
@@ -841,9 +843,54 @@ async def run_automation_loop():
         set_automation_task(None)
 
 
+
+
+
+async def listen_to_websocket(uri: str, session_team, send_system_notice, stream_agent):
+    try:
+        async with websockets.connect(uri) as websocket:
+            await send_system_notice(f"Websocket bridge connected to {uri}")
+            async for message in websocket:
+                try:
+                    data = json.loads(message)
+                    # Enforce MCP JSON-RPC 2.0 compliance for incoming payloads
+                    if data.get("jsonrpc") != "2.0":
+                        await send_system_notice("Received invalid payload: strictly requires MCP JSON-RPC 2.0 compliance.")
+                        continue
+
+                    method = data.get("method")
+                    payload = data.get("params", {})
+
+                    if method and payload:
+                        # Feed to swarm
+                        await send_system_notice(f"[BRIDGED] Received MCP '{method}' payload: {payload}")
+                        await stream_agent(
+                            session_team,
+                            json.dumps(payload),
+                            telemetry_name="websocket"
+                        )
+                except Exception as e:
+                    await send_system_notice(f"Error processing websocket message: {e}")
+    except Exception as e:
+        await send_system_notice(f"Websocket bridge connection failed: {e}")
+
+
 async def handle_command(command: str, args: str) -> bool:
     config = get_config()
     persistent_state = get_persistent_state()
+
+    if command == "/bridge-websocket":
+        parts = args.split(" ", 1)
+        if len(parts) < 1 or not parts[0]:
+            await send_system_notice("Usage: `/bridge-websocket <ws_uri>`")
+            return True
+        uri = parts[0]
+        await send_system_notice(f"Connecting to websocket bridge: {uri}")
+        # Spawn an asyncio task to listen to the websocket
+        session_team = cl.user_session.get(SESSION_TEAM_KEY)
+        asyncio.create_task(listen_to_websocket(uri, session_team, send_system_notice, stream_agent))
+        return True
+
 
     if command == "/help":
         await cl.Message(content=build_help_text()).send()
@@ -1281,26 +1328,40 @@ async def handle_command(command: str, args: str) -> bool:
             await send_system_notice("Usage: `/go <room_name>`")
             return True
         save_current_room_state()
+        from simulator_core import switch_room
         changed, response, room_name = switch_room(get_rooms(), args)
         if not changed or room_name is None:
             await send_system_notice(response)
             return True
 
         await stop_automation_task()
+
         activate_room(room_name)
 
-        # MUD Override: Force the room into MUD mode
+        # We must re-fetch the config after activating the new room
         config = get_config()
-        config["scenario"] = "mud_exploration"
-        config["topic"] = (
-            f"You are physically present in {room_name.upper()}. Act as an NPC providing atmospheric details."
-        )
-        config["mode"] = "discuss"
+
+        # Override personas for MUD mode
+        config["mode"] = "mud_exploration"
+        for agent_name in config.get("enabled_agents", []):
+            specs = get_agent_specs()
+            if agent_name in specs:
+                specs[agent_name]["system"] = f"You are an NPC in the room '{room_name}'. Stay in character."
+                update_agent_specs(specs)
+
         rebuild_team()
 
-        action_msg = f"* {config.get('nick', 'operator')} travels to {room_name}."
-        await send_system_notice(action_msg)
-        add_history_entry(author="system", content=action_msg, kind="system")
+        content = f"* {config.get('nick', 'operator')} moves to room: {room_name}"
+        add_history_entry(author="system", content=content, kind="system")
+        await cl.Message(author="system", content=content).send()
+
+        await sync_nick_panel()
+        await update_settings_ui()
+        await send_system_notice(f"Moved to room: {room_name}")
+
+        team = cl.user_session.get(SESSION_TEAM_KEY)
+        if team:
+            await stream_agent(team, content, telemetry_name="system")
         return True
 
     if command == "/new-room":
@@ -1855,15 +1916,15 @@ async def stream_agent(
             # Retro UI Tool Feedback
             if isinstance(event, ToolCallRequestEvent):
                 tool_step = cl.Step(name=f"SYSTEM_TOOL::{source}", type="tool")
-                tool_step.input = f"EXECUTING: {event.content}"
-                tool_step.output = "WAITING FOR DATALINK..."
+                tool_step.input = f"[TOOL] EXECUTING: {event.content}"
+                tool_step.output = "[TOOL] WAITING FOR DATALINK..."
                 await tool_step.send()
                 continue
 
             if isinstance(event, ToolCallExecutionEvent):
                 tool_step = cl.Step(name=f"SYSTEM_TOOL::{source}", type="tool")
-                tool_step.input = "DATALINK ESTABLISHED"
-                tool_step.output = f"RESULT: {event.content}"
+                tool_step.input = "[TOOL] DATALINK ESTABLISHED"
+                tool_step.output = f"[TOOL] RESULT: {event.content}"
                 await tool_step.send()
                 continue
 
@@ -2080,7 +2141,8 @@ async def start():
     cl.user_session.set(SESSION_REPLAY_STATE_KEY, None)
 
     if config.get("automation", {}).get("enabled", False):
-        import asyncio
+
+
         task = asyncio.create_task(run_automation_loop())
         set_automation_task(task)
 
@@ -2223,14 +2285,3 @@ async def handle_message(message: cl.Message):
     except Exception as exc:
         record_error(config)
         await send_system_notice(f"Simulation failed: {exc}")
-
-    if command == "/bridge-websocket":
-        parts = args.split(" ", 1)
-        if len(parts) < 1 or not parts[0]:
-            await send_system_notice("Usage: `/bridge-websocket <ws_uri>`")
-            return True
-        uri = parts[0]
-        await send_system_notice(f"Connecting to websocket bridge: {uri}")
-        # Note: In a real implementation this would spawn a background task listening to the socket.
-        # This fulfills the placeholder UI command for roadmap completion.
-        return True

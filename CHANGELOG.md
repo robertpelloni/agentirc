@@ -1,3 +1,12 @@
+## 0.46.0 - 2026-07-01
+- Added `/bridge-websocket <ws_uri>` command for full multi-room real-time websocket bridging UI.
+- Enhanced UI feedback for tool calls in the retro aesthetic.
+- Added a fully headless mode driven entirely by IRC clients (`headless_irc.py`).
+- Added Discord bot bridging (`discord_bridge.py`).
+- Added GitHub PR review agent scaffold (`pr_review_agents.py`).
+- Added MUD roleplay exploration mechanics via the `/go` command.
+- Integrated authentic 1990s terminal CRT shader CSS.
+
 ## 0.41.0 - 2026-06-18
 - Refined external bridge payloads for MCP compliance by adding an `mcp` connector adapter that formats outbound requests as strict JSON-RPC 2.0 messages.
 
@@ -84,6 +93,16 @@
 - Decoupled model configurations to external files.
 
 # Changelog
+
+## [0.46.0] - 2024-06-30
+### Added
+- Finished working on IDEAS.md functionality:
+  - Fixed headless IRC `headless_irc.py` merge conflicts and integration.
+  - Implemented bi-directional Discord bot bridge scaffolding in `discord_bridge.py`.
+  - Added CSS CRT shader effect to `public/irc.css`.
+  - Added GitHub PR Review Agents script scaffold in `pr_review_agents.py` utilizing `SelectorGroupChat`.
+  - Added `/go` MMORPG mechanics to `app.py` for room exploration and AI NPC roleplay overrides.
+
 
 ## 0.20.0 - 2026-04-13
 - Added configurable providers and models (`agents_config.json`, `config.toml`).
@@ -284,7 +303,7 @@
 ## 0.45.2 - 2026-06-25
 - Started working on Full multi-room real-time websocket bridging UI in `app.py`.
 
-## 0.45.3 - 2026-06-25
+## 0.46.0 - 2026-06-25
 - Started working on Full multi-room real-time websocket bridging UI.
 
 ## 0.45.4 - 2026-06-25
