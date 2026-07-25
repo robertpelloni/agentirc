@@ -18,3 +18,7 @@
 - [x] Support for local LLMs via Ollama natively in the UI config.
 
 - [x] Integrate custom frontend audio engine for retro beeps.
+- [x] Build a live Discord bot bridge to mirror the swarm bi-directionally.
+- [x] Include a WebGL or heavy CSS CRT shader to add scanlines, phosphor glow, and screen curvature.
+- [x] GitHub PR Review Agents: Build a `/bridge-roles` system to spawn agents (Critic, Security Expert, QA, Junior Dev, Tech Lead) that argue over a PR diff and emit a consensus.
+- [x] MMORPG/MUD Mechanics: Add a `/go` command, create interconnected 'rooms' as geographic locations, and let the LLMs roleplay as NPCs in the environment.

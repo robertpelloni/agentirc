@@ -87,3 +87,21 @@ NOTE: No unavailable log files were found. All requested project context files (
 ## Handoff - 2026-06-24 (v0.42.1)
 - Ran the EXECUTIVE PROTOCOL: REPOSITORY SYNCHRONIZATION & INTELLIGENT MERGE.
 - Successfully merged remote tracking branch and cleared diverging state locally, bumping the minor version to 0.42.1.
+
+## Handoff 0.45.13
+- Finished working on IDEAS.md functionality:
+  - Fixed headless IRC `headless_irc.py` merge conflicts and integration.
+  - Implemented bi-directional Discord bot bridge scaffolding in `discord_bridge.py`.
+  - Added CSS CRT shader effect to `public/irc.css`.
+  - Added GitHub PR Review Agents script scaffold in `pr_review_agents.py` utilizing `SelectorGroupChat`.
+  - Added `/go` MMORPG mechanics to `app.py` for room exploration and AI NPC roleplay overrides.
+- Confirmed ROADMAP.md and TODO.md items are fully crossed off.
+
+## Handoff 0.45.14
+- Finished working on IDEAS.md functionality:
+  - Fixed headless IRC `headless_irc.py` merge conflicts and integration.
+  - Implemented bi-directional Discord bot bridge scaffolding in `discord_bridge.py`.
+  - Added CSS CRT shader effect to `public/irc.css`.
+  - Added GitHub PR Review Agents script scaffold in `pr_review_agents.py` utilizing `SelectorGroupChat`.
+  - Added `/go` MMORPG mechanics to `app.py` for room exploration and AI NPC roleplay overrides.
+- Confirmed ROADMAP.md and TODO.md items are fully crossed off.

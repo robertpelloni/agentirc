@@ -38,7 +38,6 @@ class HeadlessIRCClient:
                 break
             line_str = line.decode('utf-8', errors='ignore').strip()
             logger.debug(f"< {line_str}")
-<<<<<<< HEAD
 
             # Respond to PING
             if line_str.startswith("PING"):
@@ -48,17 +47,6 @@ class HeadlessIRCClient:
             if " 001 " in line_str or " 376 " in line_str:
                 await self.send(f"JOIN {self.channel}")
 
-=======
-
-            # Respond to PING
-            if line_str.startswith("PING"):
-                await self.send(line_str.replace("PING", "PONG", 1))
-
-            # Auto-join on 001 (welcome) or similar numeric
-            if " 001 " in line_str or " 376 " in line_str:
-                await self.send(f"JOIN {self.channel}")
-
->>>>>>> origin/jules-agentirc-async-refactor-1797650712095433665
             # Intercept PRIVMSG for the swarm
             if "PRIVMSG" in line_str:
                 self.handle_privmsg(line_str)
@@ -71,7 +59,6 @@ class HeadlessIRCClient:
             sender = parts[0][1:].split("!")[0]
             target = parts[2]
             message = parts[3][1:]
-<<<<<<< HEAD
 
             # Simple bypass if the message is from ourselves
             if sender == self.nick:
@@ -82,18 +69,6 @@ class HeadlessIRCClient:
             # Here we would normally pipe this message into simulator_core.py and the AutoGen swarm
             # For now, it's a stub to acknowledge receipt.
 
-=======
-
-            # Simple bypass if the message is from ourselves
-            if sender == self.nick:
-                return
-
-            logger.info(f"[{target}] <{sender}> {message}")
-
-            # Here we would normally pipe this message into simulator_core.py and the AutoGen swarm
-            # For now, it's a stub to acknowledge receipt.
-
->>>>>>> origin/jules-agentirc-async-refactor-1797650712095433665
         except Exception as e:
             logger.error(f"Error parsing PRIVMSG: {e}")
 

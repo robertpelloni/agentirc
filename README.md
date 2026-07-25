@@ -262,3 +262,7 @@ Operating on **Python 3.14.3** still requires defensive compatibility patching a
 - persistent archived room snapshots across restarts with optional startup restore flows
 - role-specific bridge-routing presets layered on top of saved bridge policies
 - websocket/IRC transport behavior tests with controlled local endpoints and richer metrics panels
+
+## Sub-Systems & Features
+- **Websocket Bridge:** Use `/bridge-websocket <ws_uri>` to stream real-time JSON payloads directly into the AgentIRC chat UI.
+- **MUD Mode:** Use `/go <room>` to navigate between interconnected rooms and roleplay as NPCs.
